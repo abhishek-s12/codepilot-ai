@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from api.repository import router as repo_router
 from api.scanner import router as scanner_router
+from api.indexer import router as indexer_router
+from api.search import router as search_router
 
 app = FastAPI(
     title="CodePilot AI",
@@ -25,3 +27,15 @@ app.include_router(
     prefix="/scanner",
     tags=["Scanner"]
 )    
+
+app.include_router(
+    indexer_router,
+    prefix="/indexer",
+    tags=["Indexer"]
+)
+
+app.include_router(
+    search_router,
+    prefix="/search",
+    tags=["Search"]
+)

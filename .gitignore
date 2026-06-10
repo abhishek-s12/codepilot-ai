@@ -25,3 +25,9 @@ Thumbs.db
 # ChromaDB
 chroma_db/
 
+backend/repos/
+
+backend/venv/
+backend/repos/
+__pycache__/
+*.pyc

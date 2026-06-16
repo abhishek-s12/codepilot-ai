@@ -1,40 +1,52 @@
-from services.scanner_service import scan_repository
-from services.reader_service import read_file
-from services.call_graph_service import (
-    extract_function_calls
-)
+import os
+import ast
 
 
-def build_repository_graph(repo_path: str):
+def generate_repository_graph(repo_path: str):
 
     graph = {}
-    all_functions = set()
 
-    scan_result = scan_repository(repo_path)
+    for root, _, files in os.walk(repo_path):
 
-    # First pass: collect all functions
-    for file in scan_result["files"]:
+        for file in files:
 
-        if file["extension"] != ".py":
-            continue
+            if not file.endswith(".py"):
+                continue
 
-        content = read_file(file["path"])
+            file_path = os.path.join(root, file)
 
-        file_graph = extract_function_calls(content)
+            try:
 
-        all_functions.update(file_graph.keys())
+                with open(
+                    file_path,
+                    "r",
+                    encoding="utf-8"
+                ) as f:
 
-        graph.update(file_graph)
+                    code = f.read()
 
-    # Second pass: keep only internal calls
-    filtered_graph = {}
+                tree = ast.parse(code)
 
-    for func, calls in graph.items():
+                imports = []
 
-        filtered_graph[func] = [
-            call
-            for call in calls
-            if call in all_functions
-        ]
+                for node in ast.walk(tree):
 
-    return filtered_graph
+                    if isinstance(node, ast.Import):
+
+                        for name in node.names:
+                            imports.append(name.name)
+
+                    elif isinstance(node, ast.ImportFrom):
+
+                        if node.module:
+                            imports.append(node.module)
+
+                graph[file] = imports
+
+            except Exception as e:
+
+                print(
+                    f"Graph Error: {file_path} -> {e}"
+                )
+
+    return graph

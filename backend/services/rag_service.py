@@ -36,6 +36,10 @@ QUESTION:
 {question}
 """
 
+    print("=" * 80)
+    print(prompt)
+    print("=" * 80)
+
     answer = generate_answer(prompt)
 
     return {

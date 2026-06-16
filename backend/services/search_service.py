@@ -23,7 +23,7 @@ def search_codebase(query: str):
         "symbol": meta.get("symbol"),
         "type": meta.get("symbol_type"),
         "score": round(distance, 4),
-        "snippet": doc[:300]
+        "snippet": doc
     })
 
     return formatted

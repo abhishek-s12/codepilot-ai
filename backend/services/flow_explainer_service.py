@@ -1,11 +1,33 @@
-print("Building graph...")
+from services.flow_service import generate_flow
+from services.llm_service import generate_answer
 
-graph = build_repository_graph(repo_path)
 
-print("Graph built")
+def explain_flow(repo_path: str):
+    
+    flow = generate_flow(repo_path)
+    
+    prompt = f"""
+You are a senior software architect.
 
-print("Sending prompt to LLM...")
+Explain the following code execution flow in simple terms.
 
-explanation = generate_answer(prompt)
+FLOW:
 
-print("LLM response received")
+{flow}
+
+Explain:
+1. What happens first
+2. What functions are called
+3. Overall purpose of the flow
+"""
+    
+
+    explanation = generate_answer(prompt)
+    
+    
+
+    return {
+        "flow": flow,
+        "explanation": explanation
+    }
+    

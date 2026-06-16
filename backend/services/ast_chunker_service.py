@@ -26,13 +26,16 @@ def chunk_python_file(code: str):
                 )
 
                 chunks.append({
-                    
-                    "name": "clone_repo",
-                    "type": "FunctionDef",
-                    "file": "repository.py",
-                    "content": "...",
-                    "line_start": 5,
-                    "line_end": 12
+
+                    "name": node.name,
+
+                    "type": type(node).__name__,
+
+                    "content": chunk_code,
+
+                    "line_start": node.lineno,
+
+                    "line_end": node.end_lineno
 
                 })
 

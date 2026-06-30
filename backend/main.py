@@ -34,6 +34,15 @@ def root():
     return {"message": "CodePilot AI Running"}
 
 
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy",
+        "service": "CodePilot AI",
+        "version": settings.api_version,
+    }
+
+
 app.include_router(scanner_router, prefix="/scanner", tags=["Scanner"])
 
 app.include_router(indexer_router, prefix="/indexer", tags=["Indexer"])

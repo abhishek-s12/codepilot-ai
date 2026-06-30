@@ -1,168 +1,253 @@
-# codepilot-ai
+# 🚀 CodePilot AI
 
-An AI-powered repository analysis platform that helps developers understand unfamiliar codebases through intelligent code explanations, repository indexing, and architecture insights.
+<p align="center">
+  <b>An AI-powered codebase intelligence platform that helps developers understand unfamiliar GitHub repositories using Retrieval-Augmented Generation (RAG), semantic search, and Large Language Models.</b>
+</p>
 
-CodePilot AI scans source code, processes project structures, and leverages Large Language Models (LLMs) to generate contextual explanations for files, functions, and repository workflows.
+<p align="center">
 
----
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)
+![Render](https://img.shields.io/badge/Backend-Render-46E3B7)
+![Vercel](https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Overview
-
-Understanding large codebases is difficult, especially when joining new projects or exploring open-source repositories.
-
-CodePilot AI simplifies this process by:
-
-- Scanning repositories
-- Extracting source code information
-- Building repository context
-- Generating AI-powered explanations
-- Visualizing project structure
-- Helping developers navigate code faster
+</p>
 
 ---
 
-## Current Features
-
-### Repository Scanner
-
-- Recursively scans project directories
-- Detects supported source code files
-- Ignores unnecessary files and folders
-- Collects repository metadata
-
-### AI Code Explanation
-
-- Explains files and code snippets
-- Generates human-readable summaries
-- Helps understand unfamiliar code
-
-### Repository Indexing
-
-- Processes source files
-- Builds searchable repository context
-- Prepares repository data for AI analysis
-
-### Flow Generation
-
-- Analyzes repository structure
-- Generates project flow descriptions
-- Helps visualize component interactions
-
-### REST API Backend
-
-Built using FastAPI with dedicated endpoints for:
-
-- Repository indexing
-- Flow generation
-- AI-powered repository analysis
-
----
-
-## Tech Stack
+## 🌐 Live Demo
 
 ### Frontend
 
-- React 19
-- Vite 8
-- TailwindCSS v4
-- JavaScript (ES Modules)
-- Axios
+https://codepilot-ai-wine.vercel.app/
 
-### Backend
+### Backend API
 
-- FastAPI
-- Python
-- Uvicorn
-- ChromaDB (vector store)
-- Sentence Transformers (local embeddings)
+https://codepilot-backend-wx7u.onrender.com/
 
-### AI Layer
+### Swagger Documentation
 
-- OpenRouter API (OpenAI-compatible)
-- Any model supported by OpenRouter (default: `openai/gpt-4o-mini`)
-
-### Development Tools
-
-- Git
-- GitHub
-- VS Code
+https://codepilot-backend-wx7u.onrender.com/docs
 
 ---
 
-## Project Structure
+# 📖 Overview
+
+Understanding a large codebase can be difficult, especially when:
+
+- Joining a new company
+- Exploring open-source repositories
+- Reviewing legacy projects
+- Preparing for interviews
+- Understanding project architecture
+
+**CodePilot AI** uses **AI + Semantic Search + Repository Analysis** to make understanding any repository significantly easier.
+
+Instead of manually navigating hundreds of files, developers can simply ask questions in natural language.
+
+---
+
+# ✨ Features
+
+| Feature | Status |
+|----------|--------|
+| Clone GitHub Repository | ✅ |
+| Repository Scanner | ✅ |
+| Semantic Code Indexing | ✅ |
+| ChromaDB Vector Store | ✅ |
+| Local Embeddings (Sentence Transformers) | ✅ |
+| AI Repository Chat (RAG) | ✅ |
+| Architecture Analysis | ✅ |
+| Repository Call Graph | ✅ |
+| Execution Flow Generation | ✅ |
+| FastAPI REST Backend | ✅ |
+| React Frontend | ✅ |
+| Docker Support | ✅ |
+| Render Deployment | ✅ |
+| Vercel Deployment | ✅ |
+
+---
+
+# 🏗 System Architecture
 
 ```text
-CodePilot-AI
-│
-├── frontend
-│   ├── src
-│   │   ├── App.jsx                     # Main UI with all tabs and panels
-│   │   ├── index.css                   # Design system (glassmorphism, fonts, animations)
-│   │   └── services
-│   │       └── api.js                  # Axios API client
-│   │
-│   └── package.json
+                    User
+                     │
+                     ▼
+            React + Vite Frontend
+                     │
+                 Axios API
+                     │
+                     ▼
+              FastAPI Backend
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+ Repository      ChromaDB      OpenRouter
+  Scanner      Vector Store        LLM
+      │              │              │
+      └──────────────┼──────────────┘
+                     ▼
+           AI-Powered Responses
+```
+
+---
+
+# 🔥 What CodePilot AI Can Do
+
+### 📂 Clone GitHub Repositories
+
+Clone any public GitHub repository directly from the application.
+
+---
+
+### 📑 Repository Scanning
+
+- Recursive project scanning
+- File discovery
+- Metadata extraction
+- Intelligent filtering
+
+---
+
+### 🧠 Semantic Repository Indexing
+
+Builds vector embeddings of the repository for intelligent semantic search.
+
+Powered by:
+
+- Sentence Transformers
+- ChromaDB
+
+---
+
+### 🤖 AI Repository Chat
+
+Ask questions such as:
+
+> Where is authentication implemented?
+
+> Explain the project architecture.
+
+> Which files define the API routes?
+
+> How does user login work?
+
+The AI answers using repository context instead of hallucinating.
+
+---
+
+### 🏛 Architecture Analysis
+
+Automatically generates:
+
+- High-level project overview
+- Module relationships
+- Directory structure insights
+
+---
+
+### 📈 Call Graph Generation
+
+Analyze relationships between:
+
+- Functions
+- Modules
+- Components
+
+---
+
+### 🔄 Repository Flow Analysis
+
+Understand how:
+
+- Requests move through the application
+- Components communicate
+- Business logic executes
+
+---
+
+# 🛠 Tech Stack
+
+## Frontend
+
+- React 19
+- Vite 8
+- Tailwind CSS v4
+- Axios
+
+---
+
+## Backend
+
+- FastAPI
+- Python 3.11
+- Uvicorn
+- GitPython
+
+---
+
+## AI
+
+- OpenRouter
+- GPT-4o Mini (default)
+- OpenAI-compatible API
+
+---
+
+## Vector Database
+
+- ChromaDB
+
+---
+
+## Embeddings
+
+- Sentence Transformers
+- all-MiniLM-L6-v2
+
+---
+
+## Deployment
+
+- Docker
+- Render
+- Vercel
+
+---
+
+# 📁 Project Structure
+
+```text
+codepilot-ai
 │
 ├── backend
-│   │
-│   ├── api
-│   │   ├── architecture.py             # Endpoints for architecture explanation
-│   │   ├── ask.py                      # Endpoint for querying AI assistant
-│   │   ├── call_graph.py               # Endpoints for call graph generation
-│   │   ├── flow.py                     # Endpoints for execution flow tracing
-│   │   ├── graph.py                    # Endpoints for import dependency graph
-│   │   ├── indexer.py                  # Endpoints for repository indexing
-│   │   ├── repository.py               # Endpoints for cloning and repository info
-│   │   ├── review.py                   # Endpoints for repository code review
-│   │   ├── scanner.py                  # Endpoints for scanning file paths
-│   │   ├── search.py                   # Endpoints for semantic searching
-│   │   └── schemas.py                  # Shared Pydantic request models
-│   │
-│   ├── services
-│   │   ├── architecture_ai_service.py  # AI service to generate architecture reports
-│   │   ├── architecture_service.py     # Base service for architecture scanning
-│   │   ├── ast_chunker_service.py      # Extracts code structures (AST) for chunks
-│   │   ├── call_graph_service.py       # Extracts call metrics inside a file
-│   │   ├── chunker_service.py          # Base chunk splitting logic
-│   │   ├── embedding_service.py        # Connects with Local SentenceTransformers
-│   │   ├── flow_explainer_service.py   # AI flow explanation logic
-│   │   ├── flow_service.py             # Base flow analysis service
-│   │   ├── indexing_service.py         # Indexes repos into vector store
-│   │   ├── llm_service.py              # LLM wrapper client (OpenRouter)
-│   │   ├── rag_service.py              # Retrieval QA chat processor
-│   │   ├── reader_service.py           # Helper for reading files safely
-│   │   ├── repo_service.py             # Git clone wrapper logic
-│   │   ├── repository_call_graph_service.py # Core cross-file call resolver
-│   │   ├── repository_graph_service.py # Core import dependency builder
-│   │   ├── review_service.py           # AI code reviewer engine
-│   │   ├── scanner_service.py          # Scans files and filters extensions
-│   │   ├── search_service.py           # ChromaDB search service
-│   │   └── symbol_service.py           # Symbol/function registry helper
-│   │
-│   ├── vector_store
-│   │   └── chroma_service.py           # ChromaDB collection wrapper
-│   │
-│   ├── test_architecture.py            # Script to test architecture generator
-│   ├── test_ast.py                     # Script to test AST parsing
-│   ├── test_call_graph.py              # Script to test call graph resolution
-│   ├── test_chroma.py                  # Script to check ChromaDB document counts
-│   ├── test_flow.py                    # Script to test flow generation
-│   ├── test_flow_explainer.py          # Script to test AI flow explainer
-│   ├── test_repo_graph.py              # Script to test import dependency graph
-│   ├── test_repository_call_graph.py   # Script to test multi-file call graphs
-│   ├── test_symbols.py                 # Script to test symbol extraction
-│   ├── settings.py                     # Centralized settings and .env loader
-│   ├── main.py                         # FastAPI App Entrypoint
-│   └── requirements.txt                # Python package list
+│   ├── api/
+│   ├── services/
+│   ├── vector_store/
+│   ├── main.py
+│   ├── settings.py
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── frontend
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
 │
 └── README.md
 ```
 
 ---
 
-## API Endpoints
+# 📡 REST API
 
-### Clone Repository
+## Clone Repository
 
 ```http
 POST /repository/clone
@@ -170,11 +255,13 @@ POST /repository/clone
 
 ```json
 {
-  "repo_url": "https://github.com/owner/repo"
+  "repo_url":"https://github.com/user/repository"
 }
 ```
 
-### Index Repository
+---
+
+## Index Repository
 
 ```http
 POST /indexer/index
@@ -182,11 +269,13 @@ POST /indexer/index
 
 ```json
 {
-  "repo_path": "repos/my-repo"
+  "repo_path":"repos/my-project"
 }
 ```
 
-### Ask AI Questions
+---
+
+## Ask AI
 
 ```http
 POST /ai/ask
@@ -194,180 +283,182 @@ POST /ai/ask
 
 ```json
 {
-  "question": "Which files define the API routes?"
+  "question":"Explain the authentication flow."
 }
 ```
 
-### Generate Architecture Report
+---
+
+## Architecture
 
 ```http
 POST /repository/architecture
 ```
 
-```json
-{
-  "repo_path": "repos/my-repo"
-}
-```
+---
 
-### Generate Call Graph
+## Call Graph
 
 ```http
 POST /repository/call-graph
 ```
 
-```json
-{
-  "repo_path": "repos/my-repo"
-}
-```
+---
 
-### Generate Execution Flow
+## Execution Flow
 
 ```http
 POST /repository/flow
 ```
 
-```json
-{
-  "repo_path": "repos/my-repo"
-}
-```
+---
 
-### Get Dependency Graph
+# ⚙ Environment Variables
 
-```http
-GET /repository/graph?repo_path=repos/my-repo
-```
-
-### Review Repository
-
-```http
-POST /repository/review?repo_path=repos/my-repo
-```
-
-### Scan Repository Directory
-
-```http
-GET /scanner/scan?repo_path=repos/my-repo
-```
-
-### Semantic / Keyword Search
-
-```http
-GET /search/search?query=explain_flow
-```
-
-----
-
-## Backend LLM Configuration
-
-The backend uses an OpenAI-compatible client. Configure your LLM provider in `backend/.env`:
+Backend `.env`
 
 ```env
-LLM_BASE_URL=https://openrouter.ai/api/v1
-LLM_API_KEY=your-openrouter-api-key
-LLM_MODEL=openai/gpt-4o-mini
-LLM_APP_NAME=CodePilot AI
-LLM_SITE_URL=http://localhost:5173
+OPENROUTER_API_KEY=your-api-key
+
+OPENROUTER_MODEL=openai/gpt-4o-mini
+
+CORS_ORIGINS=http://localhost:5173,https://codepilot-ai-wine.vercel.app
 ```
 
 ---
 
-## Local Setup
+# 🐳 Docker
 
-### 1. Clone Repository
+## Build
+
+```bash
+docker build -t codepilot-backend .
+```
+
+## Run
+
+```bash
+docker run --env-file .env -p 8000:8000 codepilot-backend
+```
+
+---
+
+# 🚀 Local Installation
+
+## Clone Repository
 
 ```bash
 git clone https://github.com/abhishek-s12/codepilot-ai.git
+
 cd codepilot-ai
 ```
 
-### 2. Backend Setup
+---
+
+## Backend
 
 ```bash
 cd backend
+
 python -m venv venv
 
 # Windows
+
 venv\Scripts\activate
 
-# Linux/Mac
+# Linux / macOS
+
 source venv/bin/activate
 
 pip install -r requirements.txt
+
 uvicorn main:app --reload
 ```
 
-Expected output:
+Runs on
 
 ```
-INFO:     Uvicorn running on http://127.0.0.1:8000
+http://127.0.0.1:8000
 ```
 
-### 3. Frontend Setup
+---
+
+## Frontend
 
 ```bash
 cd frontend
+
 npm install
+
 npm run dev
 ```
 
-Expected output:
+Runs on
 
 ```
-Local: http://localhost:5173
-```
-
----
-
-## Verification Scripts
-
-The backend includes several quick test scripts to verify individual components (AST parsing, database storage, call graph analysis, etc.) without launching the API server:
-
-```bash
-cd backend
-# Make sure virtual environment is active (venv\Scripts\activate or source venv/bin/activate)
-
-# Verify AST extraction and symbol parsing
-python test_ast.py
-python test_symbols.py
-
-# Verify ChromaDB connection and check total indexed documents
-python test_chroma.py
-
-# Verify import dependency and call graph resolution
-python test_repo_graph.py
-python test_repository_call_graph.py
-
-# Verify AI/analysis flow logic
-python test_flow_explainer.py
-python test_architecture.py
+http://localhost:5173
 ```
 
 ---
 
-## Development Status
+# 🚀 Deployment
 
-- Repository Scanning ✅
-- Repository Indexing ✅
-- ChromaDB Vector Store ✅
-- Local Semantic Embeddings ✅
-- AI Chat (RAG) ✅
-- Architecture Analysis ✅
-- Call Graph Generation ✅
-- Execution Flow Tracing ✅
-- Premium Frontend UI ✅
-- OpenRouter / OpenAI-compatible LLM ✅
+| Service | Platform |
+|----------|----------|
+| Frontend | Vercel |
+| Backend | Render |
+| Containerization | Docker |
+| Vector Database | ChromaDB |
+| LLM Provider | OpenRouter |
 
 ---
 
-## Author
+# 🛣 Roadmap
 
-Abhishek Kumar
+- ✅ Repository cloning
+- ✅ Repository indexing
+- ✅ Semantic search
+- ✅ AI repository chat
+- ✅ Architecture analysis
+- ✅ Call graph generation
+- ✅ Execution flow generation
+- ✅ Docker support
+- ✅ Render deployment
+- ✅ Vercel deployment
+- ⏳ Authentication
+- ⏳ Repository history
+- ⏳ Streaming AI responses
+- ⏳ Interactive dependency graph
+- ⏳ Multi-repository workspace
+- ⏳ Export documentation (PDF / Markdown)
 
 ---
 
-## License
+# 🤝 Contributing
 
-MIT License
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Open a Pull Request
+
+---
+
+# 👨‍💻 Author
+
+**Abhishek Singh**
+
+GitHub: https://github.com/abhishek-s12
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+<p align="center">
+⭐ If you found this project useful, consider giving it a star on GitHub!
+</p>

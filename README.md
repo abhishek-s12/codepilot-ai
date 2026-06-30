@@ -361,9 +361,6 @@ Current Phase:
 
 Abhishek Kumar
 
-B.Tech Computer Science & Engineering
-
-Passionate about AI Engineering, Full Stack Development, and Developer Tools.
 
 ---
 

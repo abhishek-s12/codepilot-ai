@@ -62,9 +62,10 @@ Built using FastAPI with dedicated endpoints for:
 
 ### Frontend
 
-- React
-- Vite
-- JavaScript
+- React 19
+- Vite 8
+- TailwindCSS v4
+- JavaScript (ES Modules)
 - Axios
 
 ### Backend
@@ -72,11 +73,13 @@ Built using FastAPI with dedicated endpoints for:
 - FastAPI
 - Python
 - Uvicorn
+- ChromaDB (vector store)
+- Sentence Transformers (local embeddings)
 
 ### AI Layer
 
-- Google Gemini API
-- Generative AI Models
+- OpenRouter API (OpenAI-compatible)
+- Any model supported by OpenRouter (default: `openai/gpt-4o-mini`)
 
 ### Development Tools
 
@@ -93,25 +96,45 @@ CodePilot-AI
 │
 ├── frontend
 │   ├── src
-│   │   ├── components
-│   │   ├── pages
+│   │   ├── App.jsx        # Main UI with all tabs and panels
+│   │   ├── index.css      # Design system (glassmorphism, fonts, animations)
 │   │   └── services
+│   │       └── api.js     # Axios API client
 │   │
 │   └── package.json
 │
 ├── backend
 │   │
 │   ├── api
-│   │   ├── chat.py
+│   │   ├── architecture.py
+│   │   ├── ask.py
+│   │   ├── call_graph.py
 │   │   ├── flow.py
-│   │   └── repository.py
+│   │   ├── graph.py
+│   │   ├── indexer.py
+│   │   ├── repository.py
+│   │   ├── review.py
+│   │   ├── scanner.py
+│   │   ├── search.py
+│   │   └── schemas.py
 │   │
 │   ├── services
 │   │   ├── scanner_service.py
 │   │   ├── repo_service.py
 │   │   ├── flow_explainer_service.py
-│   │   └── llm_service.py
+│   │   ├── repository_call_graph_service.py
+│   │   ├── repository_graph_service.py
+│   │   ├── call_graph_service.py
+│   │   ├── ast_chunker_service.py
+│   │   ├── embedding_service.py
+│   │   ├── rag_service.py
+│   │   ├── llm_service.py
+│   │   └── indexing_service.py
 │   │
+│   ├── vector_store
+│   │   └── chroma_service.py
+│   │
+│   ├── settings.py
 │   ├── main.py
 │   └── requirements.txt
 │
@@ -122,48 +145,66 @@ CodePilot-AI
 
 ## API Endpoints
 
+### Clone Repository
+
+```http
+POST /repository/clone
+```
+
+```json
+{ "repo_url": "https://github.com/owner/repo" }
+```
+
 ### Index Repository
 
 ```http
-POST /repository/index
+POST /indexer/index
 ```
 
-Indexes a local repository and prepares it for analysis.
+```json
+{ "repo_path": "repos/my-repo" }
+```
 
-Example Request:
+### Ask AI Questions
+
+```http
+POST /ai/ask
+```
 
 ```json
-{
-  "repo_path": "D:/projects/my-app"
-}
+{ "question": "Which files define the API routes?" }
+```
+
+### Generate Architecture Report
+
+```http
+POST /repository/architecture
+```
+
+### Generate Call Graph
+
+```http
+POST /repository/call-graph
+```
+
+### Generate Execution Flow
+
+```http
+POST /repository/flow
 ```
 
 ---
 
-### Generate Repository Flow
+## Backend LLM Configuration
 
-```http
-POST /flow
-```
+The backend uses an OpenAI-compatible client. Configure your LLM provider in `backend/.env`:
 
-Analyzes repository structure and generates workflow explanations.
-
----
-
-### Ask Repository Questions
-
-```http
-POST /chat/ask
-```
-
-Allows users to ask questions about the indexed repository.
-
-Example:
-
-```json
-{
-  "question": "Explain authentication flow"
-}
+```env
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_API_KEY=your-openrouter-api-key
+LLM_MODEL=openai/gpt-4o-mini
+LLM_APP_NAME=CodePilot AI
+LLM_SITE_URL=http://localhost:5173
 ```
 
 ---
@@ -173,194 +214,66 @@ Example:
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/codepilot-ai.git
-
+git clone https://github.com/abhishek-s12/codepilot-ai.git
 cd codepilot-ai
 ```
 
----
-
 ### 2. Backend Setup
 
-Create virtual environment:
-
 ```bash
+cd backend
 python -m venv venv
-```
 
-Activate environment:
-
-Windows:
-
-```bash
+# Windows
 venv\Scripts\activate
-```
 
-Linux/Mac:
-
-```bash
+# Linux/Mac
 source venv/bin/activate
-```
 
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
-```
-
-Run backend:
-
-```bash
 uvicorn main:app --reload
 ```
 
-Expected Output:
+Expected output:
 
-```bash
+```
 INFO:     Uvicorn running on http://127.0.0.1:8000
 ```
 
----
-
 ### 3. Frontend Setup
-
-Move to frontend:
 
 ```bash
 cd frontend
-```
-
-Install dependencies:
-
-```bash
 npm install
-```
-
-Run development server:
-
-```bash
 npm run dev
 ```
 
-Expected Output:
+Expected output:
 
-```bash
+```
 Local: http://localhost:5173
 ```
 
 ---
 
-## Environment Variables
-
-Create a `.env` file inside backend:
-
-```env
-GEMINI_API_KEY=your_api_key_here
-```
-
----
-
-## Example Workflow
-
-### Step 1
-
-Start backend server:
-
-```bash
-uvicorn main:app --reload
-```
-
-### Step 2
-
-Start frontend:
-
-```bash
-npm run dev
-```
-
-### Step 3
-
-Provide repository path:
-
-```text
-D:\Projects\SampleRepo
-```
-
-### Step 4
-
-Click:
-
-```text
-Index Repository
-```
-
-### Step 5
-
-Generate:
-
-```text
-Repository Flow
-```
-
-### Step 6
-
-Ask Questions:
-
-```text
-How does authentication work?
-```
-
-```text
-Explain project architecture.
-```
-
-```text
-Which files handle API requests?
-```
-
----
-
-## Challenges Solved
-
-- Understanding large repositories quickly
-- Reducing onboarding time for developers
-- Providing AI-generated project documentation
-- Improving code discoverability
-- Making repository navigation easier
-
----
-
-## Future Improvements
-
-- Vector database integration
-- Semantic code search
-- GitHub repository URL import
-- Repository architecture diagrams
-- Multi-LLM support
-- Ollama local model integration
-- Repository dependency graphs
-- Code quality analysis
-- Team knowledge assistant
-
----
-
 ## Development Status
-
-Current Phase:
 
 - Repository Scanning ✅
 - Repository Indexing ✅
-- AI Explanations ✅
-- Flow Generation 🚧
-- Architecture Visualization 🚧
-- Advanced RAG 🚧
+- ChromaDB Vector Store ✅
+- Local Semantic Embeddings ✅
+- AI Chat (RAG) ✅
+- Architecture Analysis ✅
+- Call Graph Generation ✅
+- Execution Flow Tracing ✅
+- Premium Frontend UI ✅
+- OpenRouter / OpenAI-compatible LLM ✅
 
 ---
 
 ## Author
 
 Abhishek Kumar
-
 
 ---
 

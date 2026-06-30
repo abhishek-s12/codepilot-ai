@@ -11,16 +11,18 @@ from api.review import router as review_router
 from api.graph import router as graph_router
 from api.call_graph import router as call_graph_router
 from api.flow import router as flow_router
+from settings import get_settings
+
+settings = get_settings()
 
 app = FastAPI(
-    title="CodePilot AI",
-    version="1.0.0"
+    title=settings.api_title,
+    version=settings.api_version
 )
 
-# ADD THIS BLOCK
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

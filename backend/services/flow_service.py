@@ -24,7 +24,5 @@ def generate_flow(repo_path: str):
 
     result = "\n\n".join(flows)
 
-    print("FINAL FLOW:")
-    print(result)
-
+    
     return result

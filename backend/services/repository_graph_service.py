@@ -41,7 +41,8 @@ def generate_repository_graph(repo_path: str):
                         if node.module:
                             imports.append(node.module)
 
-                graph[file] = imports
+                relative_path = os.path.relpath(file_path, repo_path).replace("\\", "/")
+                graph[relative_path] = imports
 
             except Exception as e:
 

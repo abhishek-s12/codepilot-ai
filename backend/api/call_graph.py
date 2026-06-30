@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from api.schemas import RepositoryPathRequest
 from services.repository_call_graph_service import (
     build_repository_call_graph
 )
@@ -7,9 +8,9 @@ from services.repository_call_graph_service import (
 router = APIRouter()
 
 
-@router.get("/call-graph")
-def call_graph(repo_path: str):
+@router.post("/call-graph")
+def call_graph(payload: RepositoryPathRequest):
 
     return build_repository_call_graph(
-        repo_path
+        payload.repo_path
     )

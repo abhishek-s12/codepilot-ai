@@ -11,11 +11,11 @@ def chunk_python_file(code: str):
 
         tree = ast.parse(code)
 
-        for node in ast.walk(tree):
+        for node in tree.body:
 
             if isinstance(
                 node,
-                (ast.FunctionDef, ast.ClassDef)
+                (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
             ):
 
                 chunk_code = "\n".join(

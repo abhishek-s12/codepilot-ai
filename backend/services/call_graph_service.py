@@ -1,6 +1,19 @@
 import ast
 
 
+def walk_exclude_nested_scopes(node):
+    """Walks the AST tree starting at `node`, but does not descend into inner functions or classes."""
+    todo = [node]
+    while todo:
+        curr = todo.pop(0)
+        yield curr
+        # Don't descend into child function/class definitions if we are not at the root node
+        if curr is not node and isinstance(curr, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        for child in ast.iter_child_nodes(curr):
+            todo.append(child)
+
+
 def extract_function_calls(code: str):
 
     graph = {}
@@ -9,15 +22,22 @@ def extract_function_calls(code: str):
 
         tree = ast.parse(code)
 
-        for node in ast.walk(tree):
+        class CallGraphVisitor(ast.NodeVisitor):
+            def __init__(self):
+                self.class_stack = []
 
-            if isinstance(node, ast.FunctionDef):
+            def visit_ClassDef(self, node):
+                self.class_stack.append(node.name)
+                self.generic_visit(node)
+                self.class_stack.pop()
 
-                function_name = node.name
+            def visit_FunctionDef(self, node):
+                prefix = ".".join(self.class_stack)
+                function_name = f"{prefix}.{node.name}" if prefix else node.name
 
                 graph[function_name] = []
 
-                for child in ast.walk(node):
+                for child in walk_exclude_nested_scopes(node):
 
                     if isinstance(child, ast.Call):
 
@@ -35,14 +55,20 @@ def extract_function_calls(code: str):
                             call_name = child.func.attr
 
                             if call_name not in {
-                                    "post",
-                                    "get",
-                                    "put",
-                                    "delete"
-                                }:
-                                    graph[function_name].append(
-                                        call_name
-                                    )
+                                     "post",
+                                     "get",
+                                     "put",
+                                     "delete"
+                                 }:
+                                     graph[function_name].append(
+                                         call_name
+                                     )
+                self.generic_visit(node)
+
+            def visit_AsyncFunctionDef(self, node):
+                self.visit_FunctionDef(node)
+
+        CallGraphVisitor().visit(tree)
 
     except Exception as e:
 

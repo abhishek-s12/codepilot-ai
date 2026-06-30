@@ -1,8 +1,8 @@
 from services.repository_graph_service import (
-    build_repository_graph
+    generate_repository_graph
 )
 
-graph = build_repository_graph(
+graph = generate_repository_graph(
     "repos/codepilot-ai"
 )
 

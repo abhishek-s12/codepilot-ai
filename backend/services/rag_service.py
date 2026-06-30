@@ -9,11 +9,10 @@ def ask_codepilot(question: str):
     context = ""
 
     for chunk in retrieved_chunks:
-
         context += f"""
-FILE: {chunk['file']}
+FILE: {chunk["file"]}
 
-{chunk['snippet']}
+{chunk["snippet"]}
 
 ----------------
 """
@@ -42,8 +41,4 @@ QUESTION:
 
     answer = generate_answer(prompt)
 
-    return {
-        "question": question,
-        "answer": answer,
-        "sources": retrieved_chunks
-    }
+    return {"question": question, "answer": answer, "sources": retrieved_chunks}

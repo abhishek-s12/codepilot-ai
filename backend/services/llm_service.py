@@ -7,7 +7,9 @@ settings = get_settings()
 
 def generate_answer(prompt: str):
     if not settings.llm_api_key:
-        raise ValueError("LLM_API_KEY is not set. Add your OpenRouter API key to backend/.env.")
+        raise ValueError(
+            "LLM_API_KEY is not set. Add your OpenRouter API key to backend/.env."
+        )
 
     response = requests.post(
         f"{settings.llm_base_url}/chat/completions",

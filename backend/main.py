@@ -15,10 +15,7 @@ from settings import get_settings
 
 settings = get_settings()
 
-app = FastAPI(
-    title=settings.api_title,
-    version=settings.api_version
-)
+app = FastAPI(title=settings.api_title, version=settings.api_version)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,68 +25,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    repo_router,
-    prefix="/repository",
-    tags=["Repository"]
-)
+app.include_router(repo_router, prefix="/repository", tags=["Repository"])
+
 
 @app.get("/")
 def root():
-    return {
-        "message": "CodePilot AI Running"
-    }
+    return {"message": "CodePilot AI Running"}
 
-app.include_router(
-    scanner_router,
-    prefix="/scanner",
-    tags=["Scanner"]
-)
 
-app.include_router(
-    indexer_router,
-    prefix="/indexer",
-    tags=["Indexer"]
-)
+app.include_router(scanner_router, prefix="/scanner", tags=["Scanner"])
 
-app.include_router(
-    search_router,
-    prefix="/search",
-    tags=["Search"]
-)
+app.include_router(indexer_router, prefix="/indexer", tags=["Indexer"])
 
-app.include_router(
-    ask_router,
-    prefix="/ai",
-    tags=["AI Assistant"]
-)
+app.include_router(search_router, prefix="/search", tags=["Search"])
 
-app.include_router(
-    architecture_router,
-    prefix="/repository",
-    tags=["Architecture"]
-)
+app.include_router(ask_router, prefix="/ai", tags=["AI Assistant"])
 
-app.include_router(
-    review_router,
-    prefix="/repository",
-    tags=["Review"]
-)
+app.include_router(architecture_router, prefix="/repository", tags=["Architecture"])
 
-app.include_router(
-    graph_router,
-    prefix="/repository",
-    tags=["Graph"]
-)
+app.include_router(review_router, prefix="/repository", tags=["Review"])
 
-app.include_router(
-    call_graph_router,
-    prefix="/repository",
-    tags=["Call Graph"]
-)
+app.include_router(graph_router, prefix="/repository", tags=["Graph"])
 
-app.include_router(
-    flow_router,
-    prefix="/repository",
-    tags=["Flow"]
-)
+app.include_router(call_graph_router, prefix="/repository", tags=["Call Graph"])
+
+app.include_router(flow_router, prefix="/repository", tags=["Flow"])

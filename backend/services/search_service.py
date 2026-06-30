@@ -11,19 +11,16 @@ def search_codebase(query: str):
     metas = results["metadatas"][0]
     distances = results["distances"][0]
 
-    for doc, meta, distance in zip(
-        docs,
-        metas,
-        distances
-    ):
-
-        formatted.append({
-        "file": meta["file_name"],
-        "path": meta["file_path"],
-        "symbol": meta.get("symbol"),
-        "type": meta.get("symbol_type"),
-        "score": round(distance, 4),
-        "snippet": doc
-    })
+    for doc, meta, distance in zip(docs, metas, distances):
+        formatted.append(
+            {
+                "file": meta["file_name"],
+                "path": meta["file_path"],
+                "symbol": meta.get("symbol"),
+                "type": meta.get("symbol_type"),
+                "score": round(distance, 4),
+                "snippet": doc,
+            }
+        )
 
     return formatted

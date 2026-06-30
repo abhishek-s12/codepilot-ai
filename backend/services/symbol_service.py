@@ -10,7 +10,6 @@ def get_repository_symbols(repo_path: str):
     scan_result = scan_repository(repo_path)
 
     for file in scan_result["files"]:
-
         if file["extension"] != ".py":
             continue
 
@@ -19,13 +18,12 @@ def get_repository_symbols(repo_path: str):
         chunks = chunk_python_file(content)
 
         for chunk in chunks:
-
             symbols.append(
                 {
                     "file": file["name"],
                     "name": chunk["name"],
                     "type": chunk["type"],
-                    "content": chunk["content"][:500]
+                    "content": chunk["content"][:500],
                 }
             )
 

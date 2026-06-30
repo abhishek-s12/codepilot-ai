@@ -16,8 +16,7 @@ class LocalEmbeddingFunction(chromadb.EmbeddingFunction):
 def get_collection():
     try:
         return client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            embedding_function=LocalEmbeddingFunction()
+            name=COLLECTION_NAME, embedding_function=LocalEmbeddingFunction()
         )
     except ValueError as e:
         if "embedding function" in str(e).lower() or "conflict" in str(e).lower():
@@ -26,8 +25,7 @@ def get_collection():
             except Exception:
                 pass
             return client.get_or_create_collection(
-                name=COLLECTION_NAME,
-                embedding_function=LocalEmbeddingFunction()
+                name=COLLECTION_NAME, embedding_function=LocalEmbeddingFunction()
             )
         raise e
 

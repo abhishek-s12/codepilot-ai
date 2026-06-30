@@ -1,9 +1,7 @@
 from fastapi import APIRouter
 
 from api.schemas import RepositoryPathRequest
-from services.architecture_ai_service import (
-    explain_architecture
-)
+from services.architecture_ai_service import explain_architecture
 
 router = APIRouter()
 

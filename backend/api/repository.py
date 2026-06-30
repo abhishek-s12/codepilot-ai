@@ -11,7 +11,4 @@ def clone_repo(payload: RepositoryCloneRequest):
 
     path = clone_repository(str(payload.repo_url))
 
-    return {
-        "status": "success",
-        "path": path
-    }
+    return {"status": "success", "path": path}

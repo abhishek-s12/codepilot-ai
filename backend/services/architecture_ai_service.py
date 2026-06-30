@@ -26,7 +26,4 @@ Repository Structure:
 
     explanation = generate_answer(prompt)
 
-    return {
-        "structure": structure,
-        "analysis": explanation
-    }
+    return {"structure": structure, "analysis": explanation}

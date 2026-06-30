@@ -18,6 +18,7 @@ def clone_repository(repo_url: str):
         if os.path.exists(os.path.join(repo_path, ".git")):
             return repo_path
         import shutil
+
         try:
             shutil.rmtree(repo_path)
         except Exception:

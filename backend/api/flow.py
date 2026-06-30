@@ -1,9 +1,7 @@
 from fastapi import APIRouter
 
 from api.schemas import RepositoryPathRequest
-from services.flow_explainer_service import (
-    explain_flow
-)
+from services.flow_explainer_service import explain_flow
 
 router = APIRouter()
 

@@ -12,13 +12,12 @@ def review_repository(repo_path: str):
     symbol_text = ""
 
     for symbol in symbols[:20]:
-
         symbol_text += f"""
-FILE: {symbol['file']}
-SYMBOL: {symbol['name']}
-TYPE: {symbol['type']}
+FILE: {symbol["file"]}
+SYMBOL: {symbol["name"]}
+TYPE: {symbol["type"]}
 
-{symbol['content']}
+{symbol["content"]}
 
 -----------------------------------
 """
@@ -52,6 +51,4 @@ Be specific and refer to actual functions when possible.
 
     review = generate_answer(prompt)
 
-    return {
-        "review": review
-    }
+    return {"review": review}

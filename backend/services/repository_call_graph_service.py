@@ -8,7 +8,7 @@ from services.repository_graph_service import generate_repository_graph
 def build_repository_call_graph(repo_path: str):
     # 1. Generate import graph to assist in cross-file resolution
     import_graph = generate_repository_graph(repo_path)
-    
+
     # 2. Extract call graph for each file with file-relative path keys
     raw_graph = {}  # maps (file_rel_path, func_name) -> [raw_calls...]
     defined_functions_by_file = {}  # maps file_rel_path -> set of func_names
@@ -31,7 +31,7 @@ def build_repository_call_graph(repo_path: str):
         for func_name, calls in file_graph.items():
             raw_graph[(file_rel_path, func_name)] = calls
             defined_functions_by_file[file_rel_path].add(func_name)
-            
+
             if func_name not in all_defined_functions:
                 all_defined_functions[func_name] = []
             all_defined_functions[func_name].append(file_rel_path)
@@ -51,7 +51,7 @@ def build_repository_call_graph(repo_path: str):
             # Case A: Call is defined in the same file
             if call in defined_functions_by_file[file_rel_path]:
                 resolved_call = f"{file_rel_path}::{call}"
-            
+
             # Case B: Call matches ClassName.method, and ClassName is defined in the same file
             elif "." in call:
                 parts = call.split(".")
@@ -64,8 +64,12 @@ def build_repository_call_graph(repo_path: str):
                 for imp in file_imports:
                     # Resolve other file matching module name
                     for other_file in defined_functions_by_file.keys():
-                        other_module_name = os.path.splitext(other_file)[0].replace("/", ".")
-                        if other_module_name.endswith(imp) or imp.endswith(other_module_name):
+                        other_module_name = os.path.splitext(other_file)[0].replace(
+                            "/", "."
+                        )
+                        if other_module_name.endswith(imp) or imp.endswith(
+                            other_module_name
+                        ):
                             if call in defined_functions_by_file[other_file]:
                                 resolved_call = f"{other_file}::{call}"
                                 break

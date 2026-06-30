@@ -96,47 +96,64 @@ CodePilot-AI
 │
 ├── frontend
 │   ├── src
-│   │   ├── App.jsx        # Main UI with all tabs and panels
-│   │   ├── index.css      # Design system (glassmorphism, fonts, animations)
+│   │   ├── App.jsx                     # Main UI with all tabs and panels
+│   │   ├── index.css                   # Design system (glassmorphism, fonts, animations)
 │   │   └── services
-│   │       └── api.js     # Axios API client
+│   │       └── api.js                  # Axios API client
 │   │
 │   └── package.json
 │
 ├── backend
 │   │
 │   ├── api
-│   │   ├── architecture.py
-│   │   ├── ask.py
-│   │   ├── call_graph.py
-│   │   ├── flow.py
-│   │   ├── graph.py
-│   │   ├── indexer.py
-│   │   ├── repository.py
-│   │   ├── review.py
-│   │   ├── scanner.py
-│   │   ├── search.py
-│   │   └── schemas.py
+│   │   ├── architecture.py             # Endpoints for architecture explanation
+│   │   ├── ask.py                      # Endpoint for querying AI assistant
+│   │   ├── call_graph.py               # Endpoints for call graph generation
+│   │   ├── flow.py                     # Endpoints for execution flow tracing
+│   │   ├── graph.py                    # Endpoints for import dependency graph
+│   │   ├── indexer.py                  # Endpoints for repository indexing
+│   │   ├── repository.py               # Endpoints for cloning and repository info
+│   │   ├── review.py                   # Endpoints for repository code review
+│   │   ├── scanner.py                  # Endpoints for scanning file paths
+│   │   ├── search.py                   # Endpoints for semantic searching
+│   │   └── schemas.py                  # Shared Pydantic request models
 │   │
 │   ├── services
-│   │   ├── scanner_service.py
-│   │   ├── repo_service.py
-│   │   ├── flow_explainer_service.py
-│   │   ├── repository_call_graph_service.py
-│   │   ├── repository_graph_service.py
-│   │   ├── call_graph_service.py
-│   │   ├── ast_chunker_service.py
-│   │   ├── embedding_service.py
-│   │   ├── rag_service.py
-│   │   ├── llm_service.py
-│   │   └── indexing_service.py
+│   │   ├── architecture_ai_service.py  # AI service to generate architecture reports
+│   │   ├── architecture_service.py     # Base service for architecture scanning
+│   │   ├── ast_chunker_service.py      # Extracts code structures (AST) for chunks
+│   │   ├── call_graph_service.py       # Extracts call metrics inside a file
+│   │   ├── chunker_service.py          # Base chunk splitting logic
+│   │   ├── embedding_service.py        # Connects with Local SentenceTransformers
+│   │   ├── flow_explainer_service.py   # AI flow explanation logic
+│   │   ├── flow_service.py             # Base flow analysis service
+│   │   ├── indexing_service.py         # Indexes repos into vector store
+│   │   ├── llm_service.py              # LLM wrapper client (OpenRouter)
+│   │   ├── rag_service.py              # Retrieval QA chat processor
+│   │   ├── reader_service.py           # Helper for reading files safely
+│   │   ├── repo_service.py             # Git clone wrapper logic
+│   │   ├── repository_call_graph_service.py # Core cross-file call resolver
+│   │   ├── repository_graph_service.py # Core import dependency builder
+│   │   ├── review_service.py           # AI code reviewer engine
+│   │   ├── scanner_service.py          # Scans files and filters extensions
+│   │   ├── search_service.py           # ChromaDB search service
+│   │   └── symbol_service.py           # Symbol/function registry helper
 │   │
 │   ├── vector_store
-│   │   └── chroma_service.py
+│   │   └── chroma_service.py           # ChromaDB collection wrapper
 │   │
-│   ├── settings.py
-│   ├── main.py
-│   └── requirements.txt
+│   ├── test_architecture.py            # Script to test architecture generator
+│   ├── test_ast.py                     # Script to test AST parsing
+│   ├── test_call_graph.py              # Script to test call graph resolution
+│   ├── test_chroma.py                  # Script to check ChromaDB document counts
+│   ├── test_flow.py                    # Script to test flow generation
+│   ├── test_flow_explainer.py          # Script to test AI flow explainer
+│   ├── test_repo_graph.py              # Script to test import dependency graph
+│   ├── test_repository_call_graph.py   # Script to test multi-file call graphs
+│   ├── test_symbols.py                 # Script to test symbol extraction
+│   ├── settings.py                     # Centralized settings and .env loader
+│   ├── main.py                         # FastAPI App Entrypoint
+│   └── requirements.txt                # Python package list
 │
 └── README.md
 ```
@@ -152,7 +169,9 @@ POST /repository/clone
 ```
 
 ```json
-{ "repo_url": "https://github.com/owner/repo" }
+{
+  "repo_url": "https://github.com/owner/repo"
+}
 ```
 
 ### Index Repository
@@ -162,7 +181,9 @@ POST /indexer/index
 ```
 
 ```json
-{ "repo_path": "repos/my-repo" }
+{
+  "repo_path": "repos/my-repo"
+}
 ```
 
 ### Ask AI Questions
@@ -172,7 +193,9 @@ POST /ai/ask
 ```
 
 ```json
-{ "question": "Which files define the API routes?" }
+{
+  "question": "Which files define the API routes?"
+}
 ```
 
 ### Generate Architecture Report
@@ -181,10 +204,22 @@ POST /ai/ask
 POST /repository/architecture
 ```
 
+```json
+{
+  "repo_path": "repos/my-repo"
+}
+```
+
 ### Generate Call Graph
 
 ```http
 POST /repository/call-graph
+```
+
+```json
+{
+  "repo_path": "repos/my-repo"
+}
 ```
 
 ### Generate Execution Flow
@@ -193,7 +228,37 @@ POST /repository/call-graph
 POST /repository/flow
 ```
 
----
+```json
+{
+  "repo_path": "repos/my-repo"
+}
+```
+
+### Get Dependency Graph
+
+```http
+GET /repository/graph?repo_path=repos/my-repo
+```
+
+### Review Repository
+
+```http
+POST /repository/review?repo_path=repos/my-repo
+```
+
+### Scan Repository Directory
+
+```http
+GET /scanner/scan?repo_path=repos/my-repo
+```
+
+### Semantic / Keyword Search
+
+```http
+GET /search/search?query=explain_flow
+```
+
+----
 
 ## Backend LLM Configuration
 
@@ -252,6 +317,32 @@ Expected output:
 
 ```
 Local: http://localhost:5173
+```
+
+---
+
+## Verification Scripts
+
+The backend includes several quick test scripts to verify individual components (AST parsing, database storage, call graph analysis, etc.) without launching the API server:
+
+```bash
+cd backend
+# Make sure virtual environment is active (venv\Scripts\activate or source venv/bin/activate)
+
+# Verify AST extraction and symbol parsing
+python test_ast.py
+python test_symbols.py
+
+# Verify ChromaDB connection and check total indexed documents
+python test_chroma.py
+
+# Verify import dependency and call graph resolution
+python test_repo_graph.py
+python test_repository_call_graph.py
+
+# Verify AI/analysis flow logic
+python test_flow_explainer.py
+python test_architecture.py
 ```
 
 ---

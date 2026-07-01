@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import requests
-import uuid
 
 from settings import get_settings
 from services.auth_service import encode_token, decode_token
@@ -74,7 +73,6 @@ def login_github():
             detail="GitHub OAuth client credentials are not configured in backend/.env. Please use the Sandbox Login fallback.",
         )
 
-    redirect_uri = f"{settings.llm_site_url.rstrip('/')}/auth-callback"
     auth_url = f"https://github.com/login/oauth/authorize?client_id={settings.github_client_id}&scope=user:email"
     return RedirectResponse(url=auth_url)
 
@@ -156,7 +154,6 @@ def login_google():
             detail="Google OAuth client credentials are not configured in backend/.env. Please use the Sandbox Login fallback.",
         )
 
-    redirect_uri = f"{settings.llm_site_url.rstrip('/')}/auth-callback"  # wait, we will use backend callback to handle user creation first
     backend_redirect_uri = "http://localhost:8000/auth/callback/google"  # standard redirect back to backend callback
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.google_client_id}&redirect_uri={backend_redirect_uri}&response_type=code&scope=openid%20email%20profile"
     return RedirectResponse(url=auth_url)

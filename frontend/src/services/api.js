@@ -58,6 +58,13 @@ export async function fetchFileContent(filePath) {
   return response.data;
 }
 
+export async function fetchRepositoryFiles(repoPath) {
+  const response = await api.get("/scanner/scan", {
+    params: { repo_path: repoPath },
+  });
+  return response.data;
+}
+
 // Existing Core Calls
 export async function cloneRepository(repoUrl) {
   const response = await api.post("/repository/clone", {

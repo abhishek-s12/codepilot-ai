@@ -20,6 +20,7 @@ import ToastContainer from "./components/common/ToastContainer";
 import LoginScreen from "./components/auth/LoginScreen";
 import Sidebar from "./components/sidebar/Sidebar";
 import WorkspaceInfo from "./components/workspace/WorkspaceInfo";
+import FileExplorer from "./components/explorer/FileExplorer";
 import AnalyzerPanel from "./components/workspace/AnalyzerPanel";
 import AssistantPanel from "./components/workspace/AssistantPanel";
 import FilePreviewModal from "./components/common/FilePreviewModal";
@@ -392,6 +393,11 @@ export default function App() {
             {/* LEFT ACTIONS COLLAPSIBLE DRAWER */}
             <div className="space-y-6 lg:sticky lg:top-6">
               <WorkspaceInfo repoPath={repoPath} metrics={metrics} />
+              <FileExplorer
+                repoPath={repoPath}
+                selectedPath={previewFile}
+                onOpenFile={openFilePreviewModal}
+              />
               <AnalyzerPanel
                 onGetArchitecture={handleGetArchitecture}
                 onGetCallGraph={handleGetCallGraph}

@@ -18,3 +18,4 @@ sentence-transformers
 
 # ── LLM HTTP calls (OpenRouter) ───────────────────────────────────────────────
 requests
+pyjwt

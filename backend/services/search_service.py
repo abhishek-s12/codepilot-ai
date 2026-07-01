@@ -1,9 +1,10 @@
-from vector_store.chroma_service import search_chunks
+from vector_store.chroma_service import search_chunks, get_collection_name_for_path
 
 
-def search_codebase(query: str):
+def search_codebase(query: str, repo_path: str = None):
 
-    results = search_chunks(query)
+    collection_name = get_collection_name_for_path(repo_path)
+    results = search_chunks(query, collection_name=collection_name)
 
     formatted = []
 

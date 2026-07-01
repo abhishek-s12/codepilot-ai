@@ -11,11 +11,17 @@ from api.review import router as review_router
 from api.graph import router as graph_router
 from api.call_graph import router as call_graph_router
 from api.flow import router as flow_router
+from api.auth import router as auth_router
+from api.repositories import router as repositories_router
 from settings import get_settings
+from services.db_service import init_db
 
 settings = get_settings()
 
 app = FastAPI(title=settings.api_title, version=settings.api_version)
+
+# Initialize the SQLite database on app load
+init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,6 +33,8 @@ app.add_middleware(
 )
 
 app.include_router(repo_router, prefix="/repository", tags=["Repository"])
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(repositories_router, prefix="/repositories", tags=["Repositories"])
 
 
 @app.get("/")

@@ -11,3 +11,5 @@ class RepositoryPathRequest(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
+    repo_path: str | None = None
+    stream: bool = False

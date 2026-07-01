@@ -1,0 +1,372 @@
+# Phase 5 Implementation Guide – CodePilot AI
+
+## Objective
+
+The goal of Phase 5 is to transform CodePilot AI from a working prototype into a polished AI developer tool. This phase focuses on improving user experience, interactivity, scalability, and portfolio value without changing the core architecture.
+
+---
+
+# Feature 1: Repository Indexing Progress
+
+## Goal
+
+Provide real-time progress updates while indexing repositories instead of showing a static loading screen.
+
+### Current Behavior
+
+```
+User clicks "Index Repository"
+
+↓
+
+Loading...
+
+↓
+
+Completed
+```
+
+### Desired Behavior
+
+```
+Indexing Repository...
+
+████░░░░░░░ 35%
+
+Current Step:
+✓ Scanning repository
+✓ Reading files
+⏳ Generating embeddings
+□ Saving index
+```
+
+## Backend Requirements
+
+* Implement a WebSocket endpoint for indexing progress updates.
+* Refactor the repository indexing pipeline into multiple stages.
+* Emit progress events after each stage completes.
+* Every event should contain:
+
+  * percentage
+  * current stage
+  * optional status message
+
+Example payload:
+
+```json
+{
+  "progress": 45,
+  "stage": "Generating embeddings",
+  "message": "Processing 142 files..."
+}
+```
+
+Suggested stages:
+
+1. Repository validation
+2. Scanning files
+3. Chunk generation
+4. Embedding generation
+5. Saving vector index
+6. Completed
+
+## Frontend Requirements
+
+* Open a WebSocket connection before indexing begins.
+* Display:
+
+  * progress bar
+  * percentage
+  * current stage
+  * completion message
+* Close the WebSocket when indexing finishes.
+
+---
+
+# Feature 2: Streaming AI Responses
+
+## Goal
+
+Display AI responses token-by-token instead of waiting for the entire response.
+
+### Current
+
+```
+User asks question
+
+(wait)
+
+Entire answer appears
+```
+
+### Desired
+
+```
+User asks question
+
+T
+Th
+The
+The repository
+The repository uses...
+```
+
+## Backend Requirements
+
+* Replace normal JSON responses with streaming responses.
+* Enable streaming support in the LLM provider.
+* Stream partial responses immediately.
+* Return completion status when finished.
+
+## Frontend Requirements
+
+* Consume streamed chunks.
+* Append tokens incrementally.
+* Show typing cursor while streaming.
+* Smooth scrolling during generation.
+* Stop cursor after completion.
+
+---
+
+# Feature 3: Interactive Repository Architecture Graph
+
+## Goal
+
+Replace plain text architecture explanations with an interactive dependency graph.
+
+## Recommended Library
+
+React Flow
+
+(Alternative: Cytoscape)
+
+## Backend Requirements
+
+Generate structured graph data instead of plain text.
+
+Example:
+
+```json
+{
+  "nodes": [
+    {
+      "id": "main.py",
+      "label": "main.py"
+    },
+    {
+      "id": "scanner.py",
+      "label": "scanner.py"
+    }
+  ],
+  "edges": [
+    {
+      "source": "main.py",
+      "target": "scanner.py"
+    }
+  ]
+}
+```
+
+## Frontend Requirements
+
+Display:
+
+* draggable nodes
+* zoom
+* pan
+* minimap
+* controls
+* file type icons
+* color coding
+
+Node click should:
+
+* show file details
+* allow opening explanations
+* highlight connected files
+
+---
+
+# Feature 4: Repository History
+
+## Goal
+
+Allow users to reopen previously indexed repositories without indexing them again.
+
+## Database Schema
+
+Repository
+
+```
+id
+user_id
+repository_name
+repository_path
+branch
+indexed_at
+status
+last_accessed
+```
+
+## Backend Requirements
+
+Create APIs:
+
+```
+GET /repositories
+
+GET /repositories/{id}
+
+DELETE /repositories/{id}
+```
+
+Store:
+
+* metadata
+* index location
+* timestamps
+* status
+
+Avoid re-indexing if an existing valid index is available.
+
+## Frontend Requirements
+
+Sidebar:
+
+```
+Repositories
+
+✓ codepilot-ai
+
+✓ ecommerce-app
+
+✓ spring-auth
+
++ Index New Repository
+```
+
+Selecting a repository should instantly load its data.
+
+---
+
+# Feature 5: Authentication
+
+## Goal
+
+Introduce user authentication to support personalized history and future premium features.
+
+## Authentication Providers
+
+* Google OAuth
+* GitHub OAuth
+
+## Backend Requirements
+
+* OAuth integration
+* JWT/session management
+* Protected routes
+* User model
+* Repository ownership
+
+## Frontend Requirements
+
+Login page with:
+
+* Continue with Google
+* Continue with GitHub
+
+After login:
+
+* display user avatar
+* logout button
+* protected dashboard
+
+---
+
+# Bonus Feature: Semantic Code Search
+
+## Goal
+
+Allow users to search code using natural language.
+
+Example questions:
+
+```
+Where is JWT implemented?
+
+Where are API endpoints?
+
+Show authentication logic.
+
+Where is database initialized?
+```
+
+## Backend Requirements
+
+* Reuse existing embeddings.
+* Perform vector similarity search.
+* Return the most relevant files and code chunks.
+* Use retrieved context for AI responses.
+
+## Frontend Requirements
+
+Dedicated search bar.
+
+Search results should display:
+
+* file name
+* matching snippet
+* similarity score
+* quick open button
+
+---
+
+# UI Improvements
+
+Implement throughout the application:
+
+* Skeleton loaders
+* Better loading animations
+* Toast notifications
+* Empty states
+* Error states
+* Smooth page transitions
+* Responsive layouts
+* Dark mode polish
+* Keyboard shortcuts where appropriate
+
+---
+
+# Technical Requirements
+
+Maintain:
+
+* Existing project structure
+* FastAPI backend
+* React frontend
+* ChromaDB vector storage
+* OpenRouter integration
+
+Code quality expectations:
+
+* Modular architecture
+* Reusable components
+* Strong typing where applicable
+* Proper error handling
+* Loading and retry states
+* Logging for long-running operations
+* No breaking changes to existing functionality
+
+---
+
+# Expected Outcome
+
+By the end of Phase 5, CodePilot AI should provide:
+
+* Real-time repository indexing progress
+* Streaming AI-generated responses
+* Interactive architecture visualization
+* Repository history with instant reload
+* User authentication with Google and GitHub
+* Semantic code search powered by vector embeddings
+* A significantly more polished and production-ready user experience suitable for portfolios, technical interviews, and future feature expansion.

@@ -13,6 +13,7 @@ from api.call_graph import router as call_graph_router
 from api.flow import router as flow_router
 from api.auth import router as auth_router
 from api.repositories import router as repositories_router
+from api.symbols import router as symbols_router
 from settings import get_settings
 from services.db_service import init_db
 
@@ -68,3 +69,4 @@ app.include_router(graph_router, prefix="/repository", tags=["Graph"])
 app.include_router(call_graph_router, prefix="/repository", tags=["Call Graph"])
 
 app.include_router(flow_router, prefix="/repository", tags=["Flow"])
+app.include_router(symbols_router, prefix="/symbols", tags=["Symbols"])

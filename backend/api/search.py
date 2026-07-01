@@ -6,8 +6,8 @@ router = APIRouter()
 
 
 @router.get("/search")
-def search(query: str):
+def search(query: str, repo_path: str = None):
 
-    results = search_codebase(query)
+    results = search_codebase(query, repo_path)
 
     return results

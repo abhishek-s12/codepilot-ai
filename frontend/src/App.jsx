@@ -73,6 +73,7 @@ export default function App() {
 
   // File Preview Modal
   const [previewFile, setPreviewFile] = useState(null);
+  const [previewInitialLine, setPreviewInitialLine] = useState(null);
 
   // Copy/Toast States
   const [copiedIndex, setCopiedIndex] = useState(null);
@@ -260,8 +261,9 @@ export default function App() {
   };
 
   // Quick preview file content
-  const openFilePreviewModal = async (filePath) => {
+  const openFilePreviewModal = async (filePath, initialLine = null) => {
     setPreviewFile(filePath);
+    setPreviewInitialLine(initialLine);
     try {
       setIsPreviewLoading(true);
       const res = await fetchFileContent(filePath);
@@ -527,7 +529,17 @@ export default function App() {
         previewFile={previewFile}
         previewContent={previewContent}
         isPreviewLoading={isPreviewLoading}
-        onClose={() => setPreviewFile(null)}
+        onClose={() => {
+          setPreviewFile(null);
+          setPreviewInitialLine(null);
+        }}
+        initialLine={previewInitialLine}
+        repoPath={repoPath}
+        onOpenFile={openFilePreviewModal}
+        onExplainSymbolGlobal={(word) => {
+          handleAskQuestion(`Explain function or class: ${word}`);
+          setActiveTab("chat");
+        }}
       />
 
     </div>

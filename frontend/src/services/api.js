@@ -117,5 +117,19 @@ export async function fetchRepositoryGraph(repoPath) {
   return response.data;
 }
 
+export async function fetchFileSymbols(filePath) {
+  const response = await api.get("/symbols", {
+    params: { path: filePath },
+  });
+  return response.data;
+}
+
+export async function searchCodebase(query, repoPath = null) {
+  const response = await api.get("/search/search", {
+    params: { query, repo_path: repoPath },
+  });
+  return response.data;
+}
+
 export { API_BASE_URL };
 export default api;

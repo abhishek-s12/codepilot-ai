@@ -311,9 +311,11 @@ export default function FilePreviewModal({
               content={previewContent}
               loading={isPreviewLoading}
               editorRef={editorRef}
+              repoPath={repoPath}
               onExplainSymbol={handleExplainSymbolLocal}
               onGoToDefinition={handleGoToDefinition}
               onFindReferences={handleFindReferences}
+              onRunSelectionAction={(actionId, label) => handleRunAIAction(actionId, label)}
             />
           </div>
 

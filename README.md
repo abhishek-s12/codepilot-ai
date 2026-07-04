@@ -1,4 +1,4 @@
-# 🚀 CodePilot AI
+# 🚀 @Codexa
 
 <p align="center">
   <b>An AI-powered codebase intelligence platform that helps developers understand unfamiliar GitHub repositories using Retrieval-Augmented Generation (RAG), semantic search, and Large Language Models.</b>

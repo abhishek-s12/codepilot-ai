@@ -2,7 +2,7 @@
 from services.db_service import init_db
 
 init_db()
-from vector_store.qdrant_service import search_chunks, add_chunk
+from vector_store.qdrant_service import search_chunks, add_chunk  # noqa: E402
 
 print("Testing Qdrant connectivity...")
 add_chunk(

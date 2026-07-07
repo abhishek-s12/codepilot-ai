@@ -17,7 +17,6 @@ def generate_embedding(text: str) -> list[float]:
         return []
 
     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-    db_path = "codepilot.db"
 
     # Try retrieving from SQLite cache
     try:

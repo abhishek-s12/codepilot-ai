@@ -103,7 +103,6 @@ def calculate_general_file_lines(file_path: str):
 
 def get_repository_analytics(repo_path: str):
     """Calculates all repository dashboard analytics, with SQLite caching."""
-    db_path = "codepilot.db"
 
     # Read from cache
     try:

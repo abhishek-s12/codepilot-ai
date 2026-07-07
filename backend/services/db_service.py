@@ -16,7 +16,7 @@ def get_pool():
             db_pool = psycopg2.pool.ThreadedConnectionPool(
                 1, 20, dsn=settings.postgres_url
             )
-        except Exception as e:
+        except Exception:
             print(
                 f"[DB Warning] Failed to connect to PostgreSQL at {settings.postgres_url}. "
                 "Falling back to local SQLite database ('codepilot.db')."

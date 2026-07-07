@@ -1,3 +1,4 @@
+import json
 import redis
 from settings import get_settings
 
@@ -43,3 +44,75 @@ def set_cached_response(prompt_hash: str, response: str, expire_seconds: int = 8
         client.setex(f"llm_cache:{prompt_hash}", expire_seconds, response)
     except Exception as e:
         print(f"[Redis Cache] Write error: {e}")
+
+
+
+
+INDEXING_QUEUE_KEY = "indexing_queue"
+INDEXING_PROGRESS_PREFIX = "indexing_progress:"
+
+
+def enqueue_indexing_task(repo_path: str, repo_id: str, user_id: str) -> bool:
+    client = get_redis()
+    if client is None:
+        return False
+    try:
+        task_data = {
+            "repo_path": repo_path,
+            "repo_id": repo_id,
+            "user_id": user_id,
+        }
+        client.rpush(INDEXING_QUEUE_KEY, json.dumps(task_data))
+        return True
+    except Exception as e:
+        print(f"[Redis Queue] Enqueue error: {e}")
+        return False
+
+
+def dequeue_indexing_task(timeout: int = 0) -> dict:
+    client = get_redis()
+    if client is None:
+        import time
+
+        time.sleep(1)
+        return None
+    try:
+        res = client.blpop(INDEXING_QUEUE_KEY, timeout=timeout)
+        if res:
+            return json.loads(res[1])
+        return None
+    except Exception as e:
+        print(f"[Redis Queue] Dequeue error: {e}")
+        import time
+
+        time.sleep(1)
+        return None
+
+
+def update_indexing_progress(repo_path: str, progress_data: dict) -> bool:
+    client = get_redis()
+    if client is None:
+        return False
+    try:
+        key = f"{INDEXING_PROGRESS_PREFIX}{repo_path}"
+        client.set(key, json.dumps(progress_data))
+        client.expire(key, 604800)  # Keep progress state for 7 days
+        return True
+    except Exception as e:
+        print(f"[Redis Queue] Progress update error: {e}")
+        return False
+
+
+def get_indexing_progress(repo_path: str) -> dict:
+    client = get_redis()
+    if client is None:
+        return None
+    try:
+        key = f"{INDEXING_PROGRESS_PREFIX}{repo_path}"
+        val = client.get(key)
+        if val:
+            return json.loads(val)
+        return None
+    except Exception as e:
+        print(f"[Redis Queue] Get progress error: {e}")
+        return None

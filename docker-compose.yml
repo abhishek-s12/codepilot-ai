@@ -33,6 +33,26 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: codepilot-worker
+    command: ["python", "worker.py"]
+    environment:
+      DATABASE_URL: postgresql://codepilot:codepilot_pass_123@postgres:5432/codepilot
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      LLM_API_KEY: ${LLM_API_KEY}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   qdrant_data:

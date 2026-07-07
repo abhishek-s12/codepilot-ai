@@ -108,9 +108,13 @@ def get_repository_analytics(repo_path: str):
     # Read from cache
     try:
         from services.db_service import get_db
+
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT analytics_data FROM analytics_cache WHERE repo_path = %s", (repo_path,))
+        cursor.execute(
+            "SELECT analytics_data FROM analytics_cache WHERE repo_path = %s",
+            (repo_path,),
+        )
         row = cursor.fetchone()
         if row:
             conn.close()
@@ -276,6 +280,7 @@ def get_repository_analytics(repo_path: str):
     # Write to cache
     try:
         from services.db_service import get_db
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(

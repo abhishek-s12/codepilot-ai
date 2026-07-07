@@ -51,9 +51,7 @@ def get_telemetry_metrics():
         metrics["active_users"] = max(1, cursor.fetchone()[0])
 
         # 2. Indexed Repositories
-        cursor.execute(
-            "SELECT COUNT(*) FROM repositories WHERE status = 'completed'"
-        )
+        cursor.execute("SELECT COUNT(*) FROM repositories WHERE status = 'completed'")
         metrics["indexed_repositories"] = cursor.fetchone()[0]
 
         # 3. Total AI Requests
@@ -67,9 +65,7 @@ def get_telemetry_metrics():
             "SELECT AVG(latency) FROM telemetry_logs WHERE event_type LIKE 'ai_%%' AND success = 1"
         )
         avg_lat = cursor.fetchone()[0]
-        metrics["average_latency"] = (
-            round(avg_lat, 2) if avg_lat is not None else 0.0
-        )
+        metrics["average_latency"] = round(avg_lat, 2) if avg_lat is not None else 0.0
 
         # 5. Error Rate
         cursor.execute(

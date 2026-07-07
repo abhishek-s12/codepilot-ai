@@ -31,6 +31,7 @@ from api.observability import router as observability_router
 from settings import get_settings
 from services.db_service import init_db
 
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, limit_seconds: int = 60, max_requests: int = 200):
         super().__init__(app)
@@ -43,18 +44,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         client_ip = request.client.host if request.client else "unknown"
         current_time = time.time()
-        
+
         self.request_history[client_ip] = [
-            t for t in self.request_history[client_ip]
+            t
+            for t in self.request_history[client_ip]
             if current_time - t < self.limit_seconds
         ]
-        
+
         if len(self.request_history[client_ip]) >= self.max_requests:
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Too many requests. Please try again later."}
+                content={"detail": "Too many requests. Please try again later."},
             )
-            
+
         self.request_history[client_ip].append(current_time)
         return await call_next(request)
 
@@ -141,4 +143,8 @@ app.include_router(
     collaboration_router, prefix="/collaboration", tags=["Team Collaboration"]
 )
 app.include_router(devops_router, prefix="/devops", tags=["AI DevOps & Documentation"])
-app.include_router(observability_router, prefix="/observability", tags=["Observability Telemetry & Metrics"])
+app.include_router(
+    observability_router,
+    prefix="/observability",
+    tags=["Observability Telemetry & Metrics"],
+)

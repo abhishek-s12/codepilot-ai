@@ -54,6 +54,7 @@ def index_repository_generator(repo_path: str):
     # Invalidate analytics cache for this repository path
     try:
         from services.db_service import get_db
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM analytics_cache WHERE repo_path = %s", (repo_path,))

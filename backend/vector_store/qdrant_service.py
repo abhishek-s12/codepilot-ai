@@ -16,7 +16,7 @@ def get_client():
             client = QdrantClient(
                 host=settings.qdrant_host,
                 port=settings.qdrant_port,
-                check_compatibility=False
+                check_compatibility=False,
             )
         except Exception as e:
             print(
@@ -61,10 +61,10 @@ def add_chunk(chunk_id, text, metadata, collection_name: str = COLLECTION_NAME):
         return
     init_collection(collection_name)
     vector = generate_embedding(text)
-    
+
     # Generate valid UUID from chunk_id hash
     point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk_id))
-    
+
     try:
         cli.upsert(
             collection_name=collection_name,
@@ -72,9 +72,9 @@ def add_chunk(chunk_id, text, metadata, collection_name: str = COLLECTION_NAME):
                 PointStruct(
                     id=point_id,
                     vector=vector,
-                    payload={"text": text, "metadata": metadata, "chunk_id": chunk_id}
+                    payload={"text": text, "metadata": metadata, "chunk_id": chunk_id},
                 )
-            ]
+            ],
         )
     except Exception as e:
         print(f"[Qdrant Add Chunk Error] collection={collection_name}, error={e}")
@@ -88,14 +88,12 @@ def search_chunks(
         return {"ids": [[]], "documents": [[]], "metadatas": [[]], "distances": [[]]}
     init_collection(collection_name)
     vector = generate_embedding(query)
-    
+
     try:
         search_result = cli.query_points(
-            collection_name=collection_name,
-            query=vector,
-            limit=n_results
+            collection_name=collection_name, query=vector, limit=n_results
         )
-        
+
         ids = []
         documents = []
         metadatas = []
@@ -105,12 +103,12 @@ def search_chunks(
             documents.append(hit.payload.get("text", ""))
             metadatas.append(hit.payload.get("metadata", {}))
             distances.append(hit.score)
-            
+
         return {
             "ids": [ids],
             "documents": [documents],
             "metadatas": [metadatas],
-            "distances": [distances]
+            "distances": [distances],
         }
     except Exception as e:
         print(f"[Qdrant Search Error] collection={collection_name}, error={e}")

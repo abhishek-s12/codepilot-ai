@@ -35,9 +35,7 @@ def get_cached_response(prompt_hash: str) -> str:
         return None
 
 
-def set_cached_response(
-    prompt_hash: str, response: str, expire_seconds: int = 86400
-):
+def set_cached_response(prompt_hash: str, response: str, expire_seconds: int = 86400):
     client = get_redis()
     if client is None:
         return

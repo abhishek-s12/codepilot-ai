@@ -1,6 +1,7 @@
 import os
 from fastapi import HTTPException
 
+
 def validate_safe_path(path: str) -> str:
     """
     Validates that a file path is safe and stays within permitted directories:
@@ -45,7 +46,7 @@ def validate_safe_path(path: str) -> str:
     if not (in_repos or in_workspace or in_parent):
         raise HTTPException(
             status_code=403,
-            detail="Access denied: Path lies outside authorized directory boundaries."
+            detail="Access denied: Path lies outside authorized directory boundaries.",
         )
 
     return abs_path

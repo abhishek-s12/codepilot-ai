@@ -48,6 +48,7 @@ def test_knowledge_graph_builder():
 
     # Seed records to satisfy foreign key constraints in PostgreSQL
     from services.db_service import create_user, create_repository
+
     try:
         create_user("test-user-v5", "test-user@v5.com", "Test User V5", "")
     except Exception:

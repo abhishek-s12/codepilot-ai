@@ -22,11 +22,14 @@ def generate_answer(prompt: str):
 
     # Read from Cache
     from services.redis_service import get_cached_response, set_cached_response
+
     cached = get_cached_response(prompt_hash)
     if cached:
         log_event("cache_hit")
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=True, token_count=len(cached.split()))
+        log_event(
+            "ai_answer", latency=latency, success=True, token_count=len(cached.split())
+        )
         return cached
 
     # Call API
@@ -54,11 +57,15 @@ def generate_answer(prompt: str):
         set_cached_response(prompt_hash, answer)
 
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=True, token_count=len(answer.split()))
+        log_event(
+            "ai_answer", latency=latency, success=True, token_count=len(answer.split())
+        )
         return answer
     except Exception as api_err:
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=False, error_message=str(api_err))
+        log_event(
+            "ai_answer", latency=latency, success=False, error_message=str(api_err)
+        )
         raise api_err
 
 
@@ -73,6 +80,7 @@ def generate_answer_stream(prompt: str):
 
     # Read from Cache
     from services.redis_service import get_cached_response, set_cached_response
+
     cached_response = get_cached_response(prompt_hash)
 
     if cached_response:
@@ -82,9 +90,14 @@ def generate_answer_stream(prompt: str):
         for i, word in enumerate(words):
             yield (word + " " if i < len(words) - 1 else word)
             time.sleep(0.01)  # small pause for smooth stream
-        
+
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=True, token_count=len(cached_response.split()))
+        log_event(
+            "ai_answer",
+            latency=latency,
+            success=True,
+            token_count=len(cached_response.split()),
+        )
         return
 
     # Call API & Stream
@@ -131,8 +144,15 @@ def generate_answer_stream(prompt: str):
             set_cached_response(prompt_hash, accumulated)
 
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=True, token_count=len(accumulated.split()))
+        log_event(
+            "ai_answer",
+            latency=latency,
+            success=True,
+            token_count=len(accumulated.split()),
+        )
     except Exception as api_err:
         latency = time.time() - start_time
-        log_event("ai_answer", latency=latency, success=False, error_message=str(api_err))
+        log_event(
+            "ai_answer", latency=latency, success=False, error_message=str(api_err)
+        )
         raise api_err

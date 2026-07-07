@@ -22,9 +22,12 @@ def generate_embedding(text: str) -> list[float]:
     # Try retrieving from SQLite cache
     try:
         from services.db_service import get_db
+
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT embedding FROM embedding_cache WHERE text_hash = %s", (text_hash,))
+        cursor.execute(
+            "SELECT embedding FROM embedding_cache WHERE text_hash = %s", (text_hash,)
+        )
         row = cursor.fetchone()
         if row:
             conn.close()
@@ -43,6 +46,7 @@ def generate_embedding(text: str) -> list[float]:
     # Save back to SQLite cache
     try:
         from services.db_service import get_db
+
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(

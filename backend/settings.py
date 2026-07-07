@@ -21,7 +21,7 @@ def parse_cors_origins(v: Any) -> list[str]:
 class Settings(BaseSettings):
     api_title: str = "CodePilot AI"
     api_version: str = "1.0.0"
-    
+
     postgres_url: str = Field(
         default="postgresql://codepilot:codepilot_pass_123@127.0.0.1:5435/codepilot",
         validation_alias=AliasChoices("DATABASE_URL", "POSTGRES_URL"),

@@ -44,7 +44,7 @@ def run_indexing(repo_path: str, repo_id: str, user_id: str):
             "stage": "Queued",
             "message": "Waiting in queue...",
             "completed": False,
-            "failed": False
+            "failed": False,
         }
 
         for step in index_repository_generator(repo_path):
@@ -57,7 +57,7 @@ def run_indexing(repo_path: str, repo_id: str, user_id: str):
                 "stage": stage,
                 "message": msg,
                 "completed": stage == "Completed",
-                "failed": stage == "Failed"
+                "failed": stage == "Failed",
             }
 
             if stage == "Completed":
@@ -74,6 +74,7 @@ def run_indexing(repo_path: str, repo_id: str, user_id: str):
                     from services.knowledge_graph.graph_builder import (
                         build_knowledge_graph,
                     )
+
                     build_knowledge_graph(repo_path, repo_id)
                 except Exception as graph_err:
                     print(f"Failed to build knowledge graph: {graph_err}")
@@ -90,7 +91,7 @@ def run_indexing(repo_path: str, repo_id: str, user_id: str):
             "stage": "Failed",
             "message": f"Error: {str(e)}",
             "completed": False,
-            "failed": True
+            "failed": True,
         }
         update_repository_status(repo_id=repo_id, status="failed")
 
@@ -171,7 +172,8 @@ async def websocket_indexer(websocket: WebSocket):
 
         # Check if task is already running in background
         is_active = repo_path in indexing_progress and not (
-            indexing_progress[repo_path]["completed"] or indexing_progress[repo_path]["failed"]
+            indexing_progress[repo_path]["completed"]
+            or indexing_progress[repo_path]["failed"]
         )
 
         if not is_active:
@@ -181,7 +183,7 @@ async def websocket_indexer(websocket: WebSocket):
                 "stage": "Queued",
                 "message": "Adding task to queue...",
                 "completed": False,
-                "failed": False
+                "failed": False,
             }
             task_queue.put((repo_path, repo_id, user_id))
 

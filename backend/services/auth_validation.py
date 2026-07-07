@@ -171,14 +171,20 @@ def get_authorized_repositories_for_user(user_id: str) -> list:
 
 
 def get_repo_for_file_path(file_path: str) -> str | None:
-    """Finds the repository ID containing the given file path by matching paths."""
+    """Finds the repository ID containing the given file path by matching paths, checking the most specific first."""
     abs_file = os.path.abspath(file_path)
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT id, repository_path FROM repositories")
         repos = cursor.fetchall()
-        for r in repos:
+        # Sort repos by path length descending so most specific matching path is checked first
+        sorted_repos = sorted(
+            repos,
+            key=lambda x: len(os.path.abspath(x["repository_path"])),
+            reverse=True,
+        )
+        for r in sorted_repos:
             repo_abs = os.path.abspath(r["repository_path"]) + os.sep
             if abs_file.startswith(repo_abs) or abs_file == os.path.abspath(
                 r["repository_path"]

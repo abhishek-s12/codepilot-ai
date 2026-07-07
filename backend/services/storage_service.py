@@ -99,8 +99,29 @@ def upload_file(
         client.upload_file(local_path, bucket, s3_key, ExtraArgs=extra_args)
         return True
     except Exception as e:
-        print(f"[Storage Service] Failed to upload {local_path} to {s3_key}: {e}")
-        return False
+        error_msg = str(e)
+        if (
+            "ServerSideEncryption" in error_msg
+            or "NotImplemented" in error_msg
+            or "encryption" in error_msg.lower()
+        ):
+            print(
+                f"[Storage Service] ServerSideEncryption not supported/implemented. Retrying without encryption for {s3_key}..."
+            )
+            try:
+                fallback_args = {}
+                if metadata:
+                    fallback_args["Metadata"] = metadata
+                client.upload_file(local_path, bucket, s3_key, ExtraArgs=fallback_args)
+                return True
+            except Exception as retry_err:
+                print(
+                    f"[Storage Service] Failed to upload {local_path} to {s3_key} (without encryption): {retry_err}"
+                )
+                return False
+        else:
+            print(f"[Storage Service] Failed to upload {local_path} to {s3_key}: {e}")
+            return False
 
 
 def download_file(s3_key: str, local_path: str, bucket_name: str = None) -> bool:

@@ -29,11 +29,8 @@ jobs:
         image: qdrant/qdrant:latest
         ports:
           - 6333:6333
-        options: >-
-          --health-cmd "curl -f http://localhost:6333/healthz"
-          --health-interval 15s
-          --health-timeout 5s
-          --health-retries 5
+        # No --health-cmd: qdrant image does not ship curl/wget.
+        # Readiness is checked in the 'Wait for services' step below.
 
     defaults:
       run:
@@ -63,6 +60,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for Redis..."
+          timeout 30 bash -c 'until redis-cli -h 127.0.0.1 ping 2>/dev/null | grep -q PONG; do sleep 1; done'
+          echo "Redis ready."
+          echo "Waiting for Qdrant..."
+          timeout 60 bash -c 'until curl -sf http://localhost:6333/healthz > /dev/null; do sleep 2; done'
+          echo "Qdrant ready."
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v5

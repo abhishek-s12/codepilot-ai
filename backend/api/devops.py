@@ -1,7 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from services.devops.devops_service import generate_devops_asset
 from services.documentation.doc_generator import generate_doc_asset
+from api.auth import get_current_user_id
+from services.auth_validation import verify_repo_write_access
 
 router = APIRouter()
 
@@ -12,8 +14,11 @@ class DevOpsGeneratePayload(BaseModel):
 
 
 @router.post("/generate")
-def generate_devops_or_doc_asset(payload: DevOpsGeneratePayload):
+def generate_devops_or_doc_asset(payload: DevOpsGeneratePayload, user_id: str = Depends(get_current_user_id)):
     """Router to generate documentation pages or DevOps pipeline infrastructure assets."""
+    # Write permission required for generating changes/documentation for repository
+    verify_repo_write_access(payload.repo_path, user_id)
+
     a_type = payload.asset_type.lower()
 
     try:

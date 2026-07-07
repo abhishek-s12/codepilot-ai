@@ -1,4 +1,4 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 import asyncio
 import os
 import uuid
@@ -15,24 +15,36 @@ from services.redis_service import (
     get_indexing_progress,
     update_indexing_progress,
 )
+from api.auth import get_current_user_id
+from services.auth_validation import verify_repo_access, get_repository_by_path_or_id
+from settings import get_settings
 
 router = APIRouter()
+settings = get_settings()
 
 
 @router.post("/index")
-def index_repo(payload: RepositoryPathRequest):
-    # Enqueue indexing dynamically via REST (for compatibility)
-    repo_name = os.path.basename(payload.repo_path.replace("\\", "/").rstrip("/"))
-    repo_id = str(uuid.uuid4())
-    create_repository(
-        repo_id=repo_id,
-        user_id="mock-dev",
-        name=repo_name,
-        path=payload.repo_path,
-        branch="main",
-        status="indexing",
-    )
-    enqueue_indexing_task(payload.repo_path, repo_id, "mock-dev")
+def index_repo(payload: RepositoryPathRequest, user_id: str = Depends(get_current_user_id)):
+    # 1. If repo already exists in DB, check permission
+    repo = get_repository_by_path_or_id(payload.repo_path)
+    if repo:
+        verify_repo_access(payload.repo_path, user_id)
+        repo_id = repo["id"]
+        update_repository_status(repo_id, "indexing")
+    else:
+        # Create a new repository record under the authenticated user
+        repo_name = os.path.basename(payload.repo_path.replace("\\", "/").rstrip("/"))
+        repo_id = str(uuid.uuid4())
+        create_repository(
+            repo_id=repo_id,
+            user_id=user_id,
+            name=repo_name,
+            path=payload.repo_path,
+            branch="main",
+            status="indexing",
+        )
+
+    enqueue_indexing_task(payload.repo_path, repo_id, user_id)
     return {"status": "queued", "repo_id": repo_id}
 
 
@@ -61,7 +73,32 @@ async def websocket_indexer(websocket: WebSocket):
         if token:
             user_id = get_user_id_from_token(token)
         if not user_id:
-            user_id = "mock-dev"
+            user_id = "mock-dev" if settings.allow_sandbox_login else None
+
+        if not user_id:
+            await websocket.send_json(
+                {
+                    "progress": 100,
+                    "stage": "Failed",
+                    "message": "Unauthorized connection.",
+                }
+            )
+            await websocket.close()
+            return
+
+        # Verify access to the repository
+        try:
+            verify_repo_access(repo_path, user_id)
+        except Exception as auth_err:
+            await websocket.send_json(
+                {
+                    "progress": 100,
+                    "stage": "Failed",
+                    "message": f"Unauthorized access to repository: {auth_err}",
+                }
+            )
+            await websocket.close()
+            return
 
         repo_name = os.path.basename(repo_path.replace("\\", "/").rstrip("/"))
         if not repo_name:

@@ -1,18 +1,19 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import PlainTextResponse
 from services.websocket_manager import manager
+from api.auth import get_current_user_id
 
 router = APIRouter()
 
 
 @router.get("/system/websocket/metrics")
-def get_websocket_metrics():
+def get_websocket_metrics(user_id: str = Depends(get_current_user_id)):
     """Returns WebSocket operational metrics for dashboard tracking."""
     return manager.get_metrics()
 
 
 @router.get("/system/storage/health")
-def get_storage_health():
+def get_storage_health(user_id: str = Depends(get_current_user_id)):
     """Checks the health and reachability of the S3 object storage provider."""
     from services.storage_service import get_s3_client
     from settings import get_settings
@@ -45,6 +46,7 @@ def get_storage_health():
         }
 
 
+# Keep Prometheus public for scraper, restricted at reverse proxy level (Nginx)
 @router.get("/system/prometheus/metrics", response_class=PlainTextResponse)
 def prometheus_metrics():
     """Returns system operational metrics in Prometheus exposition format."""

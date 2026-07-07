@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import requests
+import jwt
 
 from settings import get_settings
 from services.auth_service import encode_token, decode_token
@@ -24,17 +25,31 @@ def get_current_user_id(authorization: str = Header(None)) -> str:
             detail="Unauthorized: Missing or invalid Authorization header.",
         )
     token = authorization.split(" ")[1]
-    payload = decode_token(token)
-    if not payload or "user_id" not in payload:
+    try:
+        payload = decode_token(token)
+        if not payload or "user_id" not in payload:
+            raise HTTPException(
+                status_code=401, detail="Unauthorized: Invalid session token."
+            )
+        return payload["user_id"]
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401, detail="Unauthorized: Session token has expired."
+        )
+    except (jwt.InvalidTokenError, Exception):
         raise HTTPException(
             status_code=401, detail="Unauthorized: Invalid session token."
         )
-    return payload["user_id"]
 
 
 @router.post("/developer-login")
 def developer_login(payload: DeveloperLoginPayload):
     """Sandbox sandbox login that generates mock credentials instantly."""
+    if not settings.allow_sandbox_login:
+        raise HTTPException(
+            status_code=403,
+            detail="Developer sandbox login is disabled in this environment.",
+        )
     user_id = "mock-dev"
     avatar_url = f"https://api.dicebear.com/7.x/bottts/svg?seed={payload.email}"
     create_user(
@@ -53,6 +68,7 @@ def developer_login(payload: DeveloperLoginPayload):
             "avatar_url": avatar_url,
         },
     }
+
 
 
 @router.get("/me")

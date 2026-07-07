@@ -1,9 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 import os
 from services.patch_service import handle_patch_generation_stream
+from api.auth import get_current_user_id
+from services.auth_validation import verify_repo_write_access, verify_file_access
 
 router = APIRouter()
 
@@ -25,8 +27,13 @@ class PatchApplyPayload(BaseModel):
 
 
 @router.post("/patch")
-def generate_patch(payload: PatchRequestPayload):
+def generate_patch(payload: PatchRequestPayload, user_id: str = Depends(get_current_user_id)):
     """Streams the generated patch summary and unified diff for review."""
+    # Verify write access to file and repository
+    verify_file_access(payload.file_path, user_id, write=True)
+    if payload.repo:
+        verify_repo_write_access(payload.repo, user_id)
+
     if not payload.instruction or not payload.instruction.strip():
         raise HTTPException(status_code=400, detail="Instruction cannot be empty")
     if not payload.file_path:
@@ -47,15 +54,18 @@ def generate_patch(payload: PatchRequestPayload):
 
 
 @router.post("/apply")
-def apply_patch(payload: PatchApplyPayload):
+def apply_patch(payload: PatchApplyPayload, user_id: str = Depends(get_current_user_id)):
     """Applies the approved patch by overwriting the file on disk (security-checked)."""
     if not payload.file_path:
         raise HTTPException(status_code=400, detail="File path is required")
 
+    # Verify write access to target file
+    verify_file_access(payload.file_path, user_id, write=True)
+
     abs_path = os.path.abspath(payload.file_path)
     abs_repos = os.path.abspath("repos")
 
-    # Security: only allow writing inside the repos directory
+    # Security: only allow writing inside the repos directory (defense in depth)
     if not abs_path.startswith(abs_repos):
         raise HTTPException(
             status_code=403,

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from services.knowledge_graph.graph_storage import get_graph
 from services.knowledge_graph.graph_query import (
     find_dependers,
@@ -6,6 +6,8 @@ from services.knowledge_graph.graph_query import (
     get_critical_nodes,
     find_path,
 )
+from api.auth import get_current_user_id
+from services.auth_validation import verify_repo_access
 
 router = APIRouter()
 
@@ -13,8 +15,10 @@ router = APIRouter()
 @router.get("/graph")
 def get_react_flow_graph(
     repo_id: str = Query(..., description="Repository database identifier"),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Retrieves knowledge graph nodes and edges pre-formatted for React Flow visualization."""
+    verify_repo_access(repo_id, user_id)
     res = get_graph(repo_id)
     nodes = res["nodes"]
     edges = res["edges"]
@@ -72,8 +76,10 @@ def run_semantic_graph_query(
     target_node: str = Query(
         None, description="End node identifier or name for path queries"
     ),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Answers semantic code dependency questions using graph traversal searches."""
+    verify_repo_access(repo_id, user_id)
     if query_type == "dependers":
         return find_dependers(repo_id, node)
     elif query_type == "path":
@@ -89,8 +95,12 @@ def run_semantic_graph_query(
 
 
 @router.get("/critical")
-def get_critical_graph_metrics(repo_id: str = Query(...)):
+def get_critical_graph_metrics(
+    repo_id: str = Query(...),
+    user_id: str = Depends(get_current_user_id),
+):
     """Calculates code coupling heatmaps and circular dependencies cycles."""
+    verify_repo_access(repo_id, user_id)
     cycles_res = find_cycles(repo_id)
     critical_res = get_critical_nodes(repo_id)
     return {"cycles": cycles_res, "critical": critical_res}

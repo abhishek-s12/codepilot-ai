@@ -1,0 +1,201 @@
+from fastapi import HTTPException
+from services.db_service import get_db
+from settings import get_settings
+import os
+
+settings = get_settings()
+
+
+def get_repository_by_path_or_id(repo_id_or_path: str) -> dict | None:
+    """Helper to retrieve a repository record from DB by ID or path."""
+    if not repo_id_or_path:
+        return None
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # 1. Try by ID
+        cursor.execute("SELECT * FROM repositories WHERE id = %s", (repo_id_or_path,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+
+        # 2. Try by exact path
+        cursor.execute("SELECT * FROM repositories WHERE repository_path = %s", (repo_id_or_path,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+
+        # 3. Try by normalized paths (e.g. resolve absolute path or strip slashes)
+        normalized_path = os.path.abspath(repo_id_or_path)
+        cursor.execute("SELECT * FROM repositories")
+        rows = cursor.fetchall()
+        for r in rows:
+            if os.path.abspath(r["repository_path"]) == normalized_path:
+                return dict(r)
+
+        return None
+    except Exception as e:
+        print(f"[Auth Validation] DB query error: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def verify_repo_access(repo_id_or_path: str, user_id: str) -> dict:
+    """
+    Validates if the user has access to the given repository.
+    Returns the repository record.
+    Raises HTTPException (403 Forbidden or 404 Not Found) if access is denied.
+    """
+    if not settings.enforce_strict_auth:
+        # If strict auth is globally disabled, try to return repo if exists, or return dummy
+        repo = get_repository_by_path_or_id(repo_id_or_path)
+        return repo or {"id": "sandbox", "user_id": user_id, "repository_path": repo_id_or_path}
+
+    repo = get_repository_by_path_or_id(repo_id_or_path)
+    if not repo:
+        raise HTTPException(
+            status_code=404,
+            detail="Repository not found in database. Please clone or index it first."
+        )
+
+    # 1. Owner access
+    if repo["user_id"] == user_id:
+        return repo
+
+    # 2. Project membership access
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Check all projects linked to this repository
+        cursor.execute("SELECT id FROM projects WHERE repository_id = %s", (repo["id"],))
+        projects = cursor.fetchall()
+        
+        for p in projects:
+            project_id = p["id"]
+            # Check if user is a member of this project
+            cursor.execute(
+                "SELECT role FROM project_members WHERE project_id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            member = cursor.fetchone()
+            if member:
+                return repo  # Access granted through project membership
+                
+        # Neither owner nor project member
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied: You do not have permission to access this repository."
+        )
+    finally:
+        conn.close()
+
+
+def verify_repo_write_access(repo_id_or_path: str, user_id: str) -> dict:
+    """
+    Validates if the user has write access to the given repository.
+    Owners always have write access. Project members must have a role other than 'viewer'.
+    """
+    repo = verify_repo_access(repo_id_or_path, user_id)
+    if repo["user_id"] == user_id:
+        return repo
+
+    # If the user accessed via project membership, verify role is write-capable
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM projects WHERE repository_id = %s", (repo["id"],))
+        projects = cursor.fetchall()
+        for p in projects:
+            project_id = p["id"]
+            cursor.execute(
+                "SELECT role FROM project_members WHERE project_id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            member = cursor.fetchone()
+            if member:
+                role = member["role"]
+                if role in ["owner", "admin", "member"]:
+                    return repo
+        raise HTTPException(
+            status_code=403,
+            detail="Access Denied: You have read-only (viewer) access to this project."
+        )
+    finally:
+        conn.close()
+
+
+def get_authorized_repositories_for_user(user_id: str) -> list:
+    """Returns all repositories owned by the user OR linked to a project they belong to."""
+    if not settings.enforce_strict_auth:
+        conn = get_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT * FROM repositories ORDER BY last_accessed DESC")
+            return [dict(row) for row in cursor.fetchall()]
+        finally:
+            conn.close()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT DISTINCT r.* FROM repositories r
+            LEFT JOIN projects p ON r.id = p.repository_id
+            LEFT JOIN project_members pm ON p.id = pm.project_id
+            WHERE r.user_id = %s OR pm.user_id = %s
+            ORDER BY r.last_accessed DESC
+            """,
+            (user_id, user_id),
+        )
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        print(f"[Auth Validation] get_authorized_repositories error: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_repo_for_file_path(file_path: str) -> str | None:
+    """Finds the repository ID containing the given file path by matching paths."""
+    abs_file = os.path.abspath(file_path)
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, repository_path FROM repositories")
+        repos = cursor.fetchall()
+        for r in repos:
+            repo_abs = os.path.abspath(r["repository_path"]) + os.sep
+            if abs_file.startswith(repo_abs) or abs_file == os.path.abspath(r["repository_path"]):
+                return r["id"]
+        return None
+    except Exception as e:
+        print(f"[Auth Validation] file path resolve error: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def verify_file_access(file_path: str, user_id: str, write: bool = False) -> str | None:
+    """
+    Verifies that the user has read/write permission to the repository containing the file.
+    If no repository is associated, permits access if it lies in the workspace and user is authenticated.
+    """
+    # 1. First find if there's an associated repository
+    repo_id = get_repo_for_file_path(file_path)
+    if repo_id:
+        if write:
+            verify_repo_write_access(repo_id, user_id)
+        else:
+            verify_repo_access(repo_id, user_id)
+        return repo_id
+
+    # 2. Otherwise, check directory bounds
+    from utils.security import validate_safe_path
+    abs_path = validate_safe_path(file_path)
+    return None
+
+

@@ -1,6 +1,6 @@
 import json
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -8,6 +8,8 @@ from api.schemas import QuestionRequest
 from services.rag_service import ask_codepilot, ask_codepilot_stream
 from services.llm_service import generate_answer, generate_answer_stream
 from utils.security import validate_safe_path
+from api.auth import get_current_user_id
+from services.auth_validation import verify_repo_access
 
 router = APIRouter()
 
@@ -42,7 +44,10 @@ def run_action_stream_generator(prompt: str):
 
 
 @router.post("/ask")
-def ask(payload: QuestionRequest):
+def ask(payload: QuestionRequest, user_id: str = Depends(get_current_user_id)):
+    if payload.repo_path:
+        verify_repo_access(payload.repo_path, user_id)
+
     if payload.stream:
         return StreamingResponse(
             ask_codepilot_stream(payload.question, payload.repo_path),
@@ -53,7 +58,8 @@ def ask(payload: QuestionRequest):
 
 
 @router.post("/action")
-def run_ai_action(payload: AIActionPayload):
+def run_ai_action(payload: AIActionPayload, user_id: str = Depends(get_current_user_id)):
+    verify_repo_access(payload.repo, user_id)
     abs_path = validate_safe_path(payload.file)
     if not os.path.exists(abs_path):
         raise HTTPException(status_code=404, detail="File not found")

@@ -1,7 +1,7 @@
 import os
 import ast
 import re
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from utils.security import validate_safe_path
 
 router = APIRouter()
@@ -99,8 +99,14 @@ def parse_generic_symbols(code: str, ext: str):
     return symbols
 
 
+from api.auth import get_current_user_id
+from services.auth_validation import verify_file_access
+
 @router.get("")
-def get_file_symbols(path: str):
+def get_file_symbols(path: str, user_id: str = Depends(get_current_user_id)):
+    # Verify read access to target file and repository
+    verify_file_access(path, user_id, write=False)
+
     abs_path = validate_safe_path(path)
     if not os.path.exists(abs_path):
         raise HTTPException(status_code=404, detail="File not found")
@@ -115,3 +121,4 @@ def get_file_symbols(path: str):
         symbols = parse_generic_symbols(code, ext)
 
     return symbols
+

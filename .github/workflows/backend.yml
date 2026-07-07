@@ -136,7 +136,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./backend/Dockerfile.worker
+          file: ./backend/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/codepilot-worker:latest

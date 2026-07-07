@@ -1,4 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Query,
+    Depends,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from pydantic import BaseModel
 from typing import Optional
 import uuid
@@ -120,6 +127,23 @@ def add_comment(
             ),
         )
         conn.commit()
+
+        # Publish to event bus
+        try:
+            from services.event_bus import publish_comment_added
+
+            comment_data = {
+                "id": comment_id,
+                "project_id": payload.project_id,
+                "file": payload.file,
+                "line": payload.line,
+                "comment_text": payload.comment_text,
+                "author": author_name,
+            }
+            publish_comment_added(payload.project_id, comment_data)
+        except Exception as err:
+            print(f"[API Collaboration] Event bus publish fail: {err}")
+
         return {"status": "success", "id": comment_id, "author": author_name}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -152,9 +176,30 @@ def get_comments(project_id: str = Query(...), file: Optional[str] = Query(None)
 def delete_comment(comment_id: str):
     conn = get_db()
     cursor = conn.cursor()
+
+    # Get project_id to broadcast deletion
+    project_id = None
+    try:
+        cursor.execute("SELECT project_id FROM comments WHERE id = %s", (comment_id,))
+        row = cursor.fetchone()
+        if row:
+            project_id = row["project_id"]
+    except Exception:
+        pass
+
     try:
         cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
         conn.commit()
+
+        # Publish to event bus
+        if project_id:
+            try:
+                from services.event_bus import publish_comment_deleted
+
+                publish_comment_deleted(project_id, comment_id)
+            except Exception as err:
+                print(f"[API Collaboration] Event bus publish fail: {err}")
+
         return {"status": "success", "message": "Comment deleted."}
     finally:
         conn.close()
@@ -179,3 +224,61 @@ def get_activity_feed(project_id: str = Query(...)):
         return [dict(r) for r in rows]
     finally:
         conn.close()
+
+
+# 5. Real-time Event Streaming
+@router.websocket("/events")
+async def websocket_collaboration(
+    websocket: WebSocket,
+    project_id: str = Query(...),
+    token: Optional[str] = Query(None),
+):
+    from services.websocket_auth import (
+        authenticate_ws_user,
+        verify_project_membership,
+    )
+
+    user_id = authenticate_ws_user(token)
+
+    if not user_id or not verify_project_membership(user_id, project_id):
+        await websocket.accept()
+        await websocket.send_json({"error": "Unauthorized connection."})
+        await websocket.close(code=4003)
+        return
+
+    from services.websocket_manager import manager
+
+    await manager.connect(websocket, project_id)
+
+    try:
+        while True:
+            # Receive and monitor messages from client
+            data = await websocket.receive_json()
+
+            if data.get("type") == "pong":
+                manager.record_pong(websocket)
+
+            # Accept future presence/typing commands
+            elif data.get("type") == "typing_started":
+                await manager.broadcast_to_project(
+                    {
+                        "type": "typing_started",
+                        "project_id": project_id,
+                        "payload": {"user": user_id},
+                    },
+                    project_id,
+                )
+            elif data.get("type") == "typing_stopped":
+                await manager.broadcast_to_project(
+                    {
+                        "type": "typing_stopped",
+                        "project_id": project_id,
+                        "payload": {"user": user_id},
+                    },
+                    project_id,
+                )
+
+    except WebSocketDisconnect:
+        print(f"[WS Collaboration] Client disconnected from project {project_id}")
+    finally:
+        await manager.disconnect(websocket, project_id)

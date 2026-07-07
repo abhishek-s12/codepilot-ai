@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, BellOff, CheckCircle2 } from "lucide-react";
+import { collaborationStore } from "../../stores/collaborationStore";
 
 export default function NotificationCenter() {
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "AI indexing database compiled successfully.", time: "2m ago", read: false },
-    { id: 2, text: "Security report ready for download.", time: "1h ago", read: true }
-  ]);
+  const [notifications, setNotifications] = useState(() =>
+    collaborationStore.getState().notifications
+  );
+
+  useEffect(() => {
+    const unsubscribe = collaborationStore.subscribe((state) => {
+      setNotifications(state.notifications);
+    });
+    return unsubscribe;
+  }, []);
 
   const clearAll = () => {
-    setNotifications([]);
+    collaborationStore.clearNotifications();
   };
 
   return (
@@ -20,7 +27,7 @@ export default function NotificationCenter() {
         {notifications.length > 0 && (
           <button
             onClick={clearAll}
-            className="text-[9px] text-gray-500 hover:text-gray-300 font-mono"
+            className="text-[9px] text-gray-500 hover:text-gray-300 font-mono cursor-pointer"
           >
             Clear All
           </button>
@@ -38,13 +45,21 @@ export default function NotificationCenter() {
             <div
               key={notif.id}
               className={`p-3 bg-[#141822] border rounded-xl flex gap-2.5 items-start transition-all ${
-                notif.read ? "border-[#1c2230] text-gray-500" : "border-indigo-500/20 text-gray-300"
+                notif.read
+                  ? "border-[#1c2230] text-gray-500"
+                  : "border-indigo-500/20 text-gray-300"
               }`}
             >
-              <CheckCircle2 className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${notif.read ? 'text-gray-600' : 'text-indigo-400'}`} />
+              <CheckCircle2
+                className={`w-3.5 h-3.5 mt-0.5 shrink-0 ${
+                  notif.read ? "text-gray-600" : "text-indigo-400"
+                }`}
+              />
               <div className="space-y-0.5 text-[9.5px] font-mono leading-relaxed">
                 <p>{notif.text}</p>
-                <span className="text-[8px] text-gray-600 block">{notif.time}</span>
+                <span className="text-[8px] text-gray-600 block">
+                  {notif.time}
+                </span>
               </div>
             </div>
           ))

@@ -1,0 +1,241 @@
+Implementation Improvements (Recommended Before Development)
+
+These changes improve scalability, maintainability, and prepare the collaboration system for future features such as presence, live cursors, AI streaming, and collaborative editing.
+
+1. Standardize WebSocket Event Schema
+
+Instead of publishing different JSON structures for each event, all collaboration events should follow a common envelope.
+
+Standard Event Format
+
+{
+  "type": "comment_added",
+  "project_id": "<project_id>",
+  "timestamp": "2026-07-07T20:45:00Z",
+  "payload": {
+    ...
+  }
+}
+
+Examples:
+
+Comment Added
+
+{
+  "type": "comment_added",
+  "project_id": "repo123",
+  "timestamp": "...",
+  "payload": {
+    "comment": { ... }
+  }
+}
+
+Comment Deleted
+
+{
+  "type": "comment_deleted",
+  "project_id": "repo123",
+  "timestamp": "...",
+  "payload": {
+    "comment_id": 42
+  }
+}
+
+This standardized schema simplifies frontend event handling and allows future event types without changing client logic.
+
+2. Create a Dedicated Event Publishing Service
+[NEW] backend/services/event_bus.py
+
+Do not publish Redis events directly inside API routes.
+
+Instead, create a centralized event publishing service exposing helper methods such as:
+
+publish_comment_added(project_id, comment)
+publish_comment_deleted(project_id, comment_id)
+publish_review_created(...)
+publish_ai_finished(...)
+
+All collaboration-related events should be published through this service to ensure consistent payload formatting and reduce duplicated Redis logic.
+
+3. Prevent Multiple Redis Listeners
+
+The WebSocket manager should maintain only one Redis Pub/Sub listener per project.
+
+Maintain an internal registry similar to:
+
+listeners = {
+    project_id: asyncio.Task
+}
+
+Before creating a listener:
+
+If a listener already exists for the project, reuse it.
+Otherwise create a new listener.
+
+This prevents duplicate subscriptions and unnecessary Redis traffic.
+
+4. Cleanup Idle Projects
+
+When the final WebSocket client disconnects from a project:
+
+Cancel the Redis subscription task.
+Unsubscribe from the Redis channel.
+Remove the project from the active listener registry.
+Release all associated resources.
+
+This prevents memory leaks in long-running backend servers.
+
+5. Add WebSocket Heartbeat Support
+
+Implement a heartbeat mechanism to detect dead connections.
+
+Backend:
+
+Send a ping event every 30 seconds.
+
+Frontend:
+
+Respond immediately with a pong message.
+
+If no response is received within the timeout window, disconnect and remove the client.
+
+This prevents stale WebSocket connections from accumulating.
+
+6. Validate WebSocket Authentication
+
+During the WebSocket handshake:
+
+Validate the supplied JWT token.
+Authenticate the requesting user.
+Verify that the user has permission to access the requested project.
+Reject unauthorized connections before accepting the WebSocket.
+
+Only authenticated project members should receive collaboration events.
+
+7. Automatic Frontend Reconnection
+
+Implement automatic reconnection using exponential backoff.
+
+Suggested retry delays:
+
+1 second
+2 seconds
+4 seconds
+8 seconds
+16 seconds
+Maximum 30 seconds
+
+Reconnect automatically after temporary network interruptions without requiring a page refresh.
+
+8. Extract WebSocket Logic into a Reusable React Hook
+[NEW] frontend/src/hooks/useCollaborationSocket.js
+
+Move all WebSocket functionality into a reusable hook responsible for:
+
+Opening the WebSocket connection
+Authentication
+Automatic reconnection
+Heartbeats
+Message parsing
+Cleanup on unmount
+
+CommentSystem.jsx and NotificationCenter.jsx should consume this hook instead of implementing duplicate WebSocket logic.
+
+9. Reserve Future Collaboration Event Types
+
+Design the event system to support additional event types without architectural changes.
+
+Reserved event names:
+
+comment_added
+comment_updated
+comment_deleted
+user_joined
+user_left
+presence_updated
+typing_started
+typing_stopped
+file_opened
+file_closed
+file_updated
+review_requested
+review_completed
+notification_created
+
+Only the comment events need to be implemented during this phase.
+
+10. Improve Broadcast Error Handling
+
+When broadcasting events:
+
+Wrap every send_json() operation inside exception handling.
+Automatically disconnect failed WebSocket clients.
+Continue broadcasting to remaining connected clients.
+
+One broken client must never interrupt event delivery to others.
+
+11. Introduce a Shared Collaboration Store
+
+Instead of each component maintaining separate WebSocket state, introduce a centralized collaboration store.
+
+Suggested location:
+
+frontend/src/stores/collaborationStore.js
+
+The store should manage:
+
+Live comments
+Notifications
+Connected users
+Future presence information
+Shared collaboration state
+
+This eliminates duplicated state management across components.
+
+12. Optimize Redis Serialization
+
+Use orjson for serializing Redis Pub/Sub messages instead of Python's built-in json module where appropriate.
+
+Benefits include:
+
+Lower latency
+Reduced CPU usage
+Faster serialization under heavy event loads
+13. Recommended Project Structure
+backend/
+│
+├── api/
+│   └── collaboration.py
+│
+├── services/
+│   ├── websocket_manager.py
+│   ├── event_bus.py
+│   ├── redis_service.py
+│   ├── websocket_auth.py
+│   └── heartbeat.py
+│
+frontend/
+│
+├── hooks/
+│   └── useCollaborationSocket.js
+│
+├── stores/
+│   └── collaborationStore.js
+│
+├── services/
+│   └── websocket.js
+│
+├── components/
+│   ├── CommentSystem.jsx
+│   └── NotificationCenter.jsx
+Expected Outcome
+
+After incorporating these improvements, the collaboration infrastructure will support:
+
+Horizontally scalable WebSocket broadcasting
+Secure authenticated connections
+Automatic reconnection
+Reliable connection cleanup
+Consistent event formatting
+Shared frontend state management
+Future collaboration capabilities such as user presence, typing indicators, live cursors, AI streaming, repository progress updates, and collaborative editing without requiring major architectural changes.

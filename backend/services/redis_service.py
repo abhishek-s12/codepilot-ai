@@ -46,8 +46,6 @@ def set_cached_response(prompt_hash: str, response: str, expire_seconds: int = 8
         print(f"[Redis Cache] Write error: {e}")
 
 
-
-
 INDEXING_QUEUE_KEY = "indexing_queue"
 INDEXING_PROGRESS_PREFIX = "indexing_progress:"
 

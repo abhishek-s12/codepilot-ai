@@ -82,6 +82,14 @@ app = FastAPI(title=settings.api_title, version=settings.api_version)
 # Initialize the SQLite database on app load
 init_db()
 
+# Ensure S3 storage bucket exists on app load
+try:
+    from services.storage_service import ensure_bucket_exists
+
+    ensure_bucket_exists()
+except Exception as s3_err:
+    print(f"[App Startup] Warning: Could not initialize S3 bucket: {s3_err}")
+
 # Apply rate limiting and security headers
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)

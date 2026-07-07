@@ -1,0 +1,149 @@
+1. Add Event IDs (High Priority)
+
+Currently, events contain type, timestamp, and payload. Add a unique event ID.
+
+Example:
+
+{
+  "id": "evt_9c4e8b12",
+  "type": "comment_added",
+  "project_id": "...",
+  "timestamp": "...",
+  "payload": { ... }
+}
+
+Benefits:
+
+Prevent duplicate processing
+Easier debugging
+Future event replay
+Better distributed tracing
+2. Add Event Versioning
+
+Include a schema version in every event.
+
+{
+  "version": 1,
+  "type": "...",
+  ...
+}
+
+When the protocol evolves, older clients can still function.
+
+3. Add Connection Metrics
+
+Expose internal statistics from websocket_manager.
+
+Example metrics:
+
+Active connections
+Active projects
+Redis listeners
+Messages broadcast
+Failed sends
+Reconnect count
+
+These will be valuable for future monitoring dashboards.
+
+4. Structured Logging
+
+Avoid plain print() statements.
+
+Use structured logging with fields such as:
+
+event=websocket_connected
+project_id=...
+user_id=...
+connection_id=...
+
+This makes production debugging much easier.
+
+5. Limit Maximum Connections Per Project
+
+Prevent one project from consuming unlimited resources.
+
+Example:
+
+MAX_CONNECTIONS_PER_PROJECT = 100
+
+Reject new connections once the limit is reached.
+
+6. Add Rate Limiting
+
+Protect against spam.
+
+Examples:
+
+Maximum comments per second
+Maximum WebSocket messages per second
+Maximum reconnect attempts
+
+This helps prevent accidental or malicious overload.
+
+7. Add Presence Events
+
+Now that WebSockets are established, emit:
+
+user_joined
+user_left
+
+The frontend can display:
+
+3 developers viewing this repository
+
+This is a low-effort enhancement with a big UX impact.
+
+8. Make Heartbeat Interval Configurable
+
+Instead of hardcoding:
+
+30
+
+Use configuration:
+
+WS_HEARTBEAT_INTERVAL=30
+WS_TIMEOUT=45
+
+This allows tuning without code changes.
+
+9. Add Graceful Shutdown
+
+During FastAPI shutdown:
+
+Close Redis subscriptions
+Cancel listener tasks
+Close WebSockets
+Flush pending events
+
+This avoids resource leaks during deployments.
+
+10. Future Event Support
+
+The infrastructure is now capable of supporting additional event types with minimal effort, including:
+
+Repository indexing progress
+AI explanation streaming
+AI agent status updates
+Live code review updates
+Architecture graph updates
+Repository analytics refresh
+Git activity notifications
+
+No transport-layer redesign should be required.
+
+Minor Documentation Fix
+
+Your walkthrough contains a small inconsistency:
+
+Current:
+
+Target Branch:
+feat/feat/phase3-websockets
+
+Earlier you wrote:
+
+feat/phase3-websockets
+
+The target branch should consistently be:
+
+feat/phase3-websockets

@@ -86,6 +86,22 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("GOOGLE_CLIENT_SECRET"),
     )
+    s3_endpoint_url: str = Field(
+        default="http://127.0.0.1:9000",
+        validation_alias=AliasChoices("S3_ENDPOINT_URL"),
+    )
+    s3_access_key: str = Field(
+        default="minio_user",
+        validation_alias=AliasChoices("S3_ACCESS_KEY"),
+    )
+    s3_secret_key: str = Field(
+        default="minio_password_123",
+        validation_alias=AliasChoices("S3_SECRET_KEY"),
+    )
+    s3_bucket_name: str = Field(
+        default="codepilot-storage",
+        validation_alias=AliasChoices("S3_BUCKET_NAME"),
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

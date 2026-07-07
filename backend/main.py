@@ -28,6 +28,7 @@ from api.planner import router as planner_router
 from api.collaboration import router as collaboration_router
 from api.devops import router as devops_router
 from api.observability import router as observability_router
+from api.system import router as system_router
 from settings import get_settings
 from services.db_service import init_db
 
@@ -166,3 +167,4 @@ app.include_router(
     prefix="/observability",
     tags=["Observability Telemetry & Metrics"],
 )
+app.include_router(system_router, prefix="/api/v1", tags=["System Diagnostics"])

@@ -110,6 +110,14 @@ class Settings(BaseSettings):
         default=45,
         validation_alias=AliasChoices("WS_TIMEOUT"),
     )
+    ws_idle_timeout: int = Field(
+        default=600,
+        validation_alias=AliasChoices("WS_IDLE_TIMEOUT"),
+    )
+    max_ws_message_size: int = Field(
+        default=1048576,
+        validation_alias=AliasChoices("MAX_WS_MESSAGE_SIZE"),
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

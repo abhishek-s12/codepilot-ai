@@ -1,0 +1,173 @@
+Phase 3 (WebSockets)
+1. Add Connection IDs
+
+Although events have unique IDs, individual WebSocket connections should also have unique IDs.
+
+Example:
+
+connection_id=conn_7f3a91c2
+
+Benefits:
+
+Easier debugging
+Better log correlation
+Ability to disconnect a specific client
+Improved metrics
+2. Expose Metrics Endpoint
+
+Expose WebSocket metrics through an internal endpoint, for example:
+
+GET /api/v1/system/websocket/metrics
+
+Example response:
+
+{
+  "active_connections": 24,
+  "active_projects": 6,
+  "redis_listeners": 6,
+  "messages_sent": 12493,
+  "failed_sends": 3
+}
+
+This will later integrate nicely with Prometheus/Grafana.
+
+3. Message Size Protection
+
+Reject oversized WebSocket payloads.
+
+Example configuration:
+
+MAX_WS_MESSAGE_SIZE=1048576
+
+(1 MB)
+
+This prevents memory abuse and accidental large payloads.
+
+4. Idle Connection Timeout
+
+Besides heartbeat, disconnect clients that remain idle for a configurable duration.
+
+Example:
+
+WS_IDLE_TIMEOUT=600
+
+(10 minutes)
+
+Phase 4 (S3)
+5. Add Object Metadata
+
+When uploading repository archives, include metadata such as:
+
+Repository URL
+Branch
+Commit SHA
+Upload timestamp
+Archive version
+
+This makes stored objects self-describing and simplifies future recovery and auditing.
+
+6. Content Hash Verification
+
+Generate a SHA-256 hash for each archive before upload.
+
+Store it alongside the object metadata and verify it after download to detect corruption.
+
+7. Bucket Initialization
+
+On backend startup:
+
+Check whether the bucket exists.
+Create it automatically if it does not.
+
+This makes first-time deployments smoother.
+
+8. Archive Versioning
+
+Instead of overwriting the same object:
+
+Current:
+
+repositories/project.zip
+
+Prefer versioned names such as:
+
+repositories/project/2026-07-07T21-30-15Z.zip
+
+or
+
+repositories/project/commit_ab12cd34.zip
+
+This enables rollback and historical snapshots.
+
+9. Background Uploads
+
+Avoid making users wait for archive uploads.
+
+Recommended flow:
+
+Clone Repository
+        │
+        ▼
+Index Repository
+        │
+        ▼
+Return Success Response
+        │
+        ▼
+Background Worker
+        │
+        ▼
+Compress Repository
+        │
+        ▼
+Upload to S3
+
+This keeps the UI responsive.
+
+10. Archive Cleanup Policy
+
+Define retention rules for old backups.
+
+Examples:
+
+Keep the latest 10 versions
+Delete archives older than 90 days
+Support manual cleanup for repositories that are removed
+
+This prevents unbounded storage growth.
+
+11. Compression Metrics
+
+Track archive statistics such as:
+
+Original size
+Compressed size
+Compression ratio
+Upload duration
+Download duration
+Restore duration
+
+These metrics will help optimize performance as repositories grow.
+
+12. Encryption Support
+
+Prepare for production deployments by supporting:
+
+Server-side encryption (SSE)
+Customer-managed keys (future)
+Secure object transport (HTTPS)
+
+Even if MinIO is currently local, this makes migration to AWS S3 or another provider straightforward.
+
+Minor Documentation Note
+
+Your walkthrough says:
+
+"All changes are merged and pushed to origin on feat/phase4-s3-storage."
+
+If the work is on a feature branch awaiting review, "merged" can be misleading. Prefer one of:
+
+"All changes have been committed and pushed to feat/phase4-s3-storage."
+"All changes have been pushed to the remote feature branch feat/phase4-s3-storage."
+
+Use "merged" only if the feature branch has actually been merged into another branch (such as main or develop).

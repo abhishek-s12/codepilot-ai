@@ -31,6 +31,10 @@ class ConnectionManager:
         # Maps websocket -> heartbeat loop Task
         self.heartbeat_tasks: dict[WebSocket, asyncio.Task] = {}
 
+        # New Connection ID and Idle tracking
+        self.connection_ids: dict[WebSocket, str] = {}
+        self.last_user_activity: dict[WebSocket, float] = {}
+
         # Metrics registry
         self.metrics = {
             "messages_broadcast": 0,
@@ -48,7 +52,7 @@ class ConnectionManager:
             "redis_listeners": len(
                 [t for t in self.listeners.values() if not t.done()]
             ),
-            "messages_broadcast": self.metrics["messages_broadcast"],
+            "messages_sent": self.metrics["messages_broadcast"],
             "failed_sends": self.metrics["failed_sends"],
             "reconnect_count": self.metrics["reconnect_count"],
         }
@@ -70,13 +74,18 @@ class ConnectionManager:
         await websocket.accept()
         self.metrics["reconnect_count"] += 1
 
+        # Track connection ID and activity
+        conn_id = f"conn_{uuid.uuid4().hex[:8]}"
+        self.connection_ids[websocket] = conn_id
+        self.last_user_activity[websocket] = time.time()
+
         if project_id not in self.active_connections:
             self.active_connections[project_id] = []
         self.active_connections[project_id].append(websocket)
         self.last_seen[websocket] = time.time()
 
         logger.info(
-            f"event=websocket_connected project_id={project_id} connection_count={len(self.active_connections[project_id])}"
+            f"event=websocket_connected connection_id={conn_id} project_id={project_id} connection_count={len(self.active_connections[project_id])}"
         )
 
         # Start heartbeat loop for this connection
@@ -101,6 +110,8 @@ class ConnectionManager:
             logger.error(f"event=presence_broadcast_failed action=joined error={e}")
 
     async def disconnect(self, websocket: WebSocket, project_id: str):
+        conn_id = self.connection_ids.get(websocket, "unknown")
+        
         # Remove from active connections
         if project_id in self.active_connections:
             if websocket in self.active_connections[project_id]:
@@ -120,6 +131,10 @@ class ConnectionManager:
 
         if websocket in self.last_seen:
             del self.last_seen[websocket]
+        if websocket in self.connection_ids:
+            del self.connection_ids[websocket]
+        if websocket in self.last_user_activity:
+            del self.last_user_activity[websocket]
 
         try:
             await websocket.close()
@@ -127,7 +142,7 @@ class ConnectionManager:
             pass
 
         logger.info(
-            f"event=websocket_disconnected project_id={project_id} connection_count={len(self.active_connections.get(project_id, []))}"
+            f"event=websocket_disconnected connection_id={conn_id} project_id={project_id} connection_count={len(self.active_connections.get(project_id, []))}"
         )
 
         # Emit presence user_left event to Redis Pub/Sub
@@ -172,10 +187,27 @@ class ConnectionManager:
                     )
                     await self.disconnect(websocket, project_id)
                     break
+
+                # Check if client is idle (no user actions)
+                last_user_active = self.last_user_activity.get(websocket, 0)
+                if time.time() - last_user_active > settings.ws_idle_timeout:
+                    logger.warning(
+                        f"event=websocket_idle_timeout project_id={project_id} connection_id={self.connection_ids.get(websocket, 'unknown')} elapsed={time.time() - last_user_active}"
+                    )
+                    try:
+                        await websocket.send_json({"error": "Idle connection timeout."})
+                    except Exception:
+                        pass
+                    await self.disconnect(websocket, project_id)
+                    break
         except asyncio.CancelledError:
             pass
 
     def record_pong(self, websocket: WebSocket):
+        self.last_seen[websocket] = time.time()
+
+    def record_user_activity(self, websocket: WebSocket):
+        self.last_user_activity[websocket] = time.time()
         self.last_seen[websocket] = time.time()
 
     async def broadcast_to_project(self, message: dict, project_id: str):

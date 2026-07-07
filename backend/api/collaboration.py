@@ -251,15 +251,41 @@ async def websocket_collaboration(
     await manager.connect(websocket, project_id)
 
     try:
+        import json
+        from settings import get_settings
+        max_size = get_settings().max_ws_message_size
+
         while True:
             # Receive and monitor messages from client
-            data = await websocket.receive_json()
+            event = await websocket.receive()
+            if event.get("type") == "websocket.disconnect":
+                break
+
+            # Message Size Protection check
+            text = event.get("text", "")
+            bytes_data = event.get("bytes", b"")
+            msg_len = len(text) if text else len(bytes_data)
+
+            if msg_len > max_size:
+                print(f"[WS Collaboration] Oversized payload rejected: {msg_len} bytes")
+                await websocket.send_json({"error": "Payload size limit exceeded."})
+                await websocket.close(code=4009)
+                break
+
+            data = {}
+            if text:
+                try:
+                    data = json.loads(text)
+                except Exception:
+                    pass
 
             if data.get("type") == "pong":
                 manager.record_pong(websocket)
+            else:
+                manager.record_user_activity(websocket)
 
             # Accept future presence/typing commands
-            elif data.get("type") == "typing_started":
+            if data.get("type") == "typing_started":
                 await manager.broadcast_to_project(
                     {
                         "type": "typing_started",

@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 import os
 
 from api.schemas import RepositoryCloneRequest
-from services.repo_service import clone_repository
+from services.repo_service import clone_repository, archive_and_upload_repo
 from services.reader_service import read_file
 
 from utils.security import validate_safe_path
@@ -17,9 +17,13 @@ class SaveFileRequest(BaseModel):
 
 
 @router.post("/clone")
-def clone_repo(payload: RepositoryCloneRequest):
+def clone_repo(payload: RepositoryCloneRequest, background_tasks: BackgroundTasks):
+    path, repo_name, needs_backup = clone_repository(str(payload.repo_url))
 
-    path = clone_repository(str(payload.repo_url))
+    if needs_backup:
+        background_tasks.add_task(
+            archive_and_upload_repo, path, repo_name, str(payload.repo_url)
+        )
 
     return {"status": "success", "path": path}
 

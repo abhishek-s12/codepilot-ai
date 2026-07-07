@@ -1,7 +1,8 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Request, Depends
 from services.db_service import get_db
 from settings import get_settings
 import os
+from api.auth import get_current_user_id
 
 settings = get_settings()
 
@@ -208,12 +209,9 @@ def verify_file_access(file_path: str, user_id: str, write: bool = False) -> str
     # 2. Otherwise, check directory bounds
     from utils.security import validate_safe_path
 
-    abs_path = validate_safe_path(file_path)
+    validate_safe_path(file_path)
     return None
 
-
-from fastapi import Request, Depends
-from api.auth import get_current_user_id
 
 
 async def require_repo_read(

@@ -1,7 +1,6 @@
 import pytest
 import jwt
 import datetime
-import time
 from fastapi import HTTPException
 from settings import get_settings
 from services.auth_service import (

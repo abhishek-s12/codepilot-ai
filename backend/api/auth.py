@@ -7,7 +7,7 @@ import secrets
 import hashlib
 import uuid
 import datetime
-from typing import Optional, List
+from typing import Optional
 
 from settings import get_settings
 from services.auth_service import encode_token, encode_refresh_token, decode_token
@@ -110,7 +110,7 @@ def get_current_user_id(authorization: str = Header(None)) -> str:
         raise HTTPException(
             status_code=401, detail="Unauthorized: Session token has expired."
         )
-    except (jwt.InvalidTokenError, Exception) as err:
+    except (jwt.InvalidTokenError, Exception):
         raise HTTPException(
             status_code=401, detail="Unauthorized: Invalid session token."
         )

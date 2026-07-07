@@ -3,6 +3,8 @@ import ast
 import re
 from fastapi import APIRouter, HTTPException, Depends
 from utils.security import validate_safe_path
+from api.auth import get_current_user_id
+from services.auth_validation import verify_file_access
 
 router = APIRouter()
 
@@ -98,9 +100,6 @@ def parse_generic_symbols(code: str, ext: str):
                 )
     return symbols
 
-
-from api.auth import get_current_user_id
-from services.auth_validation import verify_file_access
 
 
 @router.get("")

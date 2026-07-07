@@ -7,9 +7,9 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional
 import uuid
-from services.db_service import get_db, get_user
+from services.db_service import get_db
 from api.auth import get_current_user_id
 from services.auth_validation import verify_repo_write_access
 from services.audit_service import log_audit_event
@@ -150,13 +150,12 @@ def add_comment(
 
     # Resolve user name or fallback to email
     author_name = "Developer"
-    user_email = ""
     try:
         cursor.execute("SELECT name, email FROM users WHERE id = %s", (user_id,))
         user_row = cursor.fetchone()
         if user_row:
             author_name = user_row["name"] or user_row["email"] or "Developer"
-            user_email = user_row["email"] or ""
+            user_row["email"] or ""
     except Exception:
         pass
 

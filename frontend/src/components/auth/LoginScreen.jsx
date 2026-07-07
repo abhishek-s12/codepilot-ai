@@ -60,7 +60,7 @@ export default function LoginScreen({
               onClick={() => onToggleSandboxForm(true)}
               className="w-full py-3 px-4 rounded-xl border border-dashed border-indigo-500/20 hover:border-indigo-500/50 bg-indigo-950/20 text-indigo-300 font-semibold text-xs transition-all flex items-center justify-center gap-2"
             >
-              Launch Developer Sandbox Session (No Credentials Needed)
+              Skip
             </button>
           </div>
         ) : (

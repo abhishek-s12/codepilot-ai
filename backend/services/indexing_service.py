@@ -1,12 +1,11 @@
 import uuid
 import os
-import sqlite3
 
 from services.scanner_service import scan_repository
 from services.reader_service import read_file
 from services.ast_chunker_service import chunk_python_file
 
-from vector_store.chroma_service import (
+from vector_store.qdrant_service import (
     add_chunk,
     reset_collection,
     get_collection_name_for_path,
@@ -54,9 +53,10 @@ def index_repository_generator(repo_path: str):
 
     # Invalidate analytics cache for this repository path
     try:
-        conn = sqlite3.connect("codepilot.db", timeout=15)
+        from services.db_service import get_db
+        conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM analytics_cache WHERE repo_path = ?", (repo_path,))
+        cursor.execute("DELETE FROM analytics_cache WHERE repo_path = %s", (repo_path,))
         conn.commit()
     except Exception as e:
         print(f"[Analytics Cache] Invalidation error: {e}")

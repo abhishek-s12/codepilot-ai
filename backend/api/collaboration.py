@@ -33,7 +33,8 @@ def create_organization(payload: OrgCreatePayload):
     org_id = str(uuid.uuid4())
     try:
         cursor.execute(
-            "INSERT INTO organizations (id, name) VALUES (?, ?)", (org_id, payload.name)
+            "INSERT INTO organizations (id, name) VALUES (%s, %s)",
+            (org_id, payload.name),
         )
         conn.commit()
         return {"status": "success", "id": org_id, "name": payload.name}
@@ -61,7 +62,7 @@ def create_project(payload: ProjectCreatePayload):
     project_id = str(uuid.uuid4())
     try:
         cursor.execute(
-            "INSERT INTO projects (id, org_id, repository_id, name) VALUES (?, ?, ?, ?)",
+            "INSERT INTO projects (id, org_id, repository_id, name) VALUES (%s, %s, %s, %s)",
             (project_id, payload.org_id, payload.repository_id, payload.name),
         )
         conn.commit()
@@ -77,7 +78,7 @@ def list_projects(org_id: str = Query(...)):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM projects WHERE org_id = ?", (org_id,))
+        cursor.execute("SELECT * FROM projects WHERE org_id = %s", (org_id,))
         rows = cursor.fetchall()
         return [dict(r) for r in rows]
     finally:
@@ -96,7 +97,7 @@ def add_comment(
     # Resolve user name or fallback to email
     author_name = "Developer"
     try:
-        cursor.execute("SELECT name, email FROM users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT name, email FROM users WHERE id = %s", (user_id,))
         user_row = cursor.fetchone()
         if user_row:
             author_name = user_row["name"] or user_row["email"] or "Developer"
@@ -107,7 +108,7 @@ def add_comment(
         cursor.execute(
             """
             INSERT INTO comments (id, project_id, file, line, comment_text, author)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """,
             (
                 comment_id,
@@ -133,12 +134,12 @@ def get_comments(project_id: str = Query(...), file: Optional[str] = Query(None)
     try:
         if file:
             cursor.execute(
-                "SELECT * FROM comments WHERE project_id = ? AND file = ? ORDER BY timestamp ASC",
+                "SELECT * FROM comments WHERE project_id = %s AND file = %s ORDER BY timestamp ASC",
                 (project_id, file),
             )
         else:
             cursor.execute(
-                "SELECT * FROM comments WHERE project_id = ? ORDER BY timestamp ASC",
+                "SELECT * FROM comments WHERE project_id = %s ORDER BY timestamp ASC",
                 (project_id,),
             )
         rows = cursor.fetchall()
@@ -152,7 +153,7 @@ def delete_comment(comment_id: str):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM comments WHERE id = ?", (comment_id,))
+        cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
         conn.commit()
         return {"status": "success", "message": "Comment deleted."}
     finally:
@@ -169,7 +170,7 @@ def get_activity_feed(project_id: str = Query(...)):
         cursor.execute(
             """
             SELECT 'comment' as type, author, file as path, timestamp, comment_text as message
-            FROM comments WHERE project_id = ?
+            FROM comments WHERE project_id = %s
             ORDER BY timestamp DESC LIMIT 20
             """,
             (project_id,),

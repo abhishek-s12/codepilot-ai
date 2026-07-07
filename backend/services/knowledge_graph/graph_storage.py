@@ -7,8 +7,8 @@ def clear_graph(repo_id: str):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM graph_edges WHERE repo_id = ?", (repo_id,))
-        cursor.execute("DELETE FROM graph_nodes WHERE repo_id = ?", (repo_id,))
+        cursor.execute("DELETE FROM graph_edges WHERE repo_id = %s", (repo_id,))
+        cursor.execute("DELETE FROM graph_nodes WHERE repo_id = %s", (repo_id,))
         conn.commit()
     finally:
         conn.close()
@@ -39,8 +39,14 @@ def insert_nodes(repo_id: str, nodes: list[dict]):
             )
         cursor.executemany(
             """
-            INSERT OR REPLACE INTO graph_nodes (id, repo_id, name, type, path, meta)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO graph_nodes (id, repo_id, name, type, path, meta)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET
+                repo_id = EXCLUDED.repo_id,
+                name = EXCLUDED.name,
+                type = EXCLUDED.type,
+                path = EXCLUDED.path,
+                meta = EXCLUDED.meta
             """,
             data,
         )
@@ -72,8 +78,13 @@ def insert_edges(repo_id: str, edges: list[dict]):
             )
         cursor.executemany(
             """
-            INSERT OR REPLACE INTO graph_edges (id, repo_id, source_node_id, target_node_id, relation_type)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO graph_edges (id, repo_id, source_node_id, target_node_id, relation_type)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET
+                repo_id = EXCLUDED.repo_id,
+                source_node_id = EXCLUDED.source_node_id,
+                target_node_id = EXCLUDED.target_node_id,
+                relation_type = EXCLUDED.relation_type
             """,
             data,
         )
@@ -89,7 +100,7 @@ def get_graph(repo_id: str):
     try:
         # Fetch nodes
         cursor.execute(
-            "SELECT id, name, type, path, meta FROM graph_nodes WHERE repo_id = ?",
+            "SELECT id, name, type, path, meta FROM graph_nodes WHERE repo_id = %s",
             (repo_id,),
         )
         node_rows = cursor.fetchall()
@@ -111,7 +122,7 @@ def get_graph(repo_id: str):
 
         # Fetch edges
         cursor.execute(
-            "SELECT id, source_node_id, target_node_id, relation_type FROM graph_edges WHERE repo_id = ?",
+            "SELECT id, source_node_id, target_node_id, relation_type FROM graph_edges WHERE repo_id = %s",
             (repo_id,),
         )
         edge_rows = cursor.fetchall()

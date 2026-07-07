@@ -5,7 +5,7 @@ import useSelection from "../../hooks/useSelection";
 import useConversation from "../../hooks/useConversation";
 
 // Components & Sidebars
-import FileExplorer from "../explorer/FileExplorer";
+import AdvancedExplorer from "../explorer/AdvancedExplorer";
 import WorkspaceHeader from "./WorkspaceHeader";
 import SearchTab from "../../tabs/SearchTab";
 
@@ -20,17 +20,19 @@ import StatusBar from "./StatusBar";
 import SplitLayout from "../common/SplitLayout";
 import CommandPalette from "../common/CommandPalette";
 import InteractiveTour from "./InteractiveTour";
+import WelcomeDashboard from "./WelcomeDashboard";
+import ProjectHealthDashboard from "./ProjectHealthDashboard";
+import RepositoryAnalytics from "./RepositoryAnalytics";
+import ActivityTimeline from "./ActivityTimeline";
+import BottomPanel from "./BottomPanel";
+import RepositoryGraph from "./RepositoryGraph";
 
 // Lazy-loaded components
 const MonacoFileViewer = lazy(() => import("../editor/MonacoFileViewer"));
 const DiffViewer = lazy(() => import("../patch/DiffViewer"));
-const OverviewTab = lazy(() => import("../../tabs/OverviewTab"));
-const ArchitectureTab = lazy(() => import("../../tabs/ArchitectureTab"));
 const CallGraphTab = lazy(() => import("../../tabs/CallGraphTab"));
 const RepositoryReviewTab = lazy(() => import("../../tabs/RepositoryReviewTab"));
-const ObservabilityTab = lazy(() => import("../../tabs/ObservabilityTab"));
 const AISidebar = lazy(() => import("./AISidebar"));
-const GitPanel = lazy(() => import("../git/GitPanel"));
 
 const INITIAL_PATCH = {
   status: "idle", // "idle" | "generating" | "ready" | "applied" | "rejected"
@@ -51,7 +53,6 @@ export default function AIWorkspace({
   isArchitectureLoading,
   isGraphLoadingReactFlow,
   onNodeClick,
-  onExplainFile,
   onGetArchitecture,
   getFileColor,
   callGraph,
@@ -70,7 +71,7 @@ export default function AIWorkspace({
 
   // States
   const [activeActivity, setActiveActivity] = useState("repository"); // repository | search | git | settings
-  const [mode, setMode] = useState("home"); // home | editor | understand | trace | review | improve
+  const [mode, setMode] = useState("editor"); // home | editor | understand | trace | review | improve
   const [rightTab, setRightTab] = useState("chat");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -92,7 +93,6 @@ export default function AIWorkspace({
   const [bottomPanel, setBottomPanel] = useState(null); // null | problems | git | performance
   const [bottomHeight, setBottomHeight] = useState(250);
   const [isDraggingBottom, setIsDraggingBottom] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
 
   // Sidebar resize widths
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(240);
@@ -166,18 +166,7 @@ export default function AIWorkspace({
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [workspace]);
 
-  // Handler for starting starting-point query from OverviewTab
-  const handleStartStartingPoint = (query) => {
-    setRightTab("chat");
-    setSidebarCollapsed(false);
-    conversation.sendMessage({
-      repo: repoPath,
-      file: workspace.activeFile,
-      symbol: "",
-      selection: "",
-      message: query,
-    });
-  };
+
 
   const handleExplorerFileOpen = useCallback(
     (filePath) => {
@@ -406,7 +395,7 @@ export default function AIWorkspace({
 
   const handleRejectPatch = () => {
     setPatch(INITIAL_PATCH);
-    setMode(workspace.activeFile ? "editor" : "home");
+    setMode("editor");
   };
 
   const handleUndoPatch = async () => {
@@ -431,7 +420,7 @@ export default function AIWorkspace({
         <span className="text-[10px] font-bold text-gray-300 font-mono uppercase tracking-wider">{title}</span>
       </div>
       <button
-        onClick={() => setMode(workspace.activeFile ? "editor" : "home")}
+        onClick={() => setMode("editor")}
         className="px-2 py-0.5 rounded border border-[#1c2230] hover:bg-white/5 text-[9px] text-gray-400 hover:text-white transition-colors font-mono"
       >
         ✕ Exit Goal
@@ -439,15 +428,90 @@ export default function AIWorkspace({
     </div>
   );
 
+  const handleApplyProfile = (profileId) => {
+    if (profileId === "backend-api") {
+      setMode("trace");
+      setBottomPanel("terminal");
+    } else if (profileId === "frontend-react") {
+      setMode("editor");
+      setActiveActivity("repository");
+    } else if (profileId === "code-review") {
+      setMode("review");
+    } else if (profileId === "full-stack") {
+      setMode("editor");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-[#090b10] text-[#d1d5db]">
       {/* ── Header ── */}
-      <WorkspaceHeader repoPath={repoPath} activeFile={workspace.activeFile} />
+      <WorkspaceHeader
+        repoPath={repoPath}
+        activeFile={workspace.activeFile}
+        onOpenSearch={() => setIsPaletteOpen(true)}
+        isIndexing={loadingFiles}
+        indexingProgress={85}
+      />
 
       {/* ── Main Frame ── */}
-      <div className="flex flex-1 overflow-hidden min-h-0 relative">
+      <div className="flex flex-grow overflow-hidden min-h-0 relative">
         {/* Leftmost Activity Bar */}
-        <ActivityBar activeActivity={activeActivity} onSelectActivity={setActiveActivity} />
+        <ActivityBar
+          activeActivity={activeActivity}
+          onSelectActivity={setActiveActivity}
+          activeMode={mode}
+          onSelectMode={setMode}
+          rightTab={rightTab}
+          onSelectRightTab={setRightTab}
+          onToggleRightSidebar={setSidebarCollapsed}
+          onExecuteQuickAction={(actionId) => {
+            if (actionId === "explain") {
+              if (workspace.activeFile) {
+                conversation.sendMessage({
+                  repo: repoPath,
+                  file: workspace.activeFile,
+                  symbol: "",
+                  selection: "",
+                  message: `Explain this code`,
+                });
+              } else {
+                conversation.sendMessage({
+                  repo: repoPath,
+                  file: "",
+                  symbol: "",
+                  selection: "",
+                  message: `Explain this repository`,
+                });
+              }
+            } else if (actionId === "generate_tests") {
+              conversation.sendMessage({
+                repo: repoPath,
+                file: workspace.activeFile || "",
+                symbol: "",
+                selection: "",
+                message: `Generate unit tests`,
+              });
+            } else if (actionId === "find_bugs") {
+              conversation.sendMessage({
+                repo: repoPath,
+                file: workspace.activeFile || "",
+                symbol: "",
+                selection: "",
+                message: `Find potential bugs`,
+              });
+            } else if (actionId === "refactor") {
+              conversation.sendMessage({
+                repo: repoPath,
+                file: workspace.activeFile || "",
+                symbol: "",
+                selection: "",
+                message: `Refactor this code for better quality`,
+              });
+            }
+            setRightTab("chat");
+            setSidebarCollapsed(false);
+          }}
+        />
 
         {/* Left Sidebar */}
         <div
@@ -456,17 +520,28 @@ export default function AIWorkspace({
         >
           {activeActivity === "repository" && (
             <div className="flex flex-col h-full overflow-hidden">
-              <div className="p-3 border-b border-[#1c2230] bg-[#0c0f16] flex items-center justify-between shrink-0 select-none">
-                <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 font-mono">Explorer</span>
-              </div>
-              <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
-                <FileExplorer
-                  repoPath={repoPath}
-                  selectedPath={workspace.activeFile}
-                  onOpenFile={handleExplorerFileOpen}
-                  compact
-                />
-              </div>
+              <AdvancedExplorer
+                repoPath={repoPath}
+                selectedPath={workspace.activeFile}
+                onOpenFile={handleExplorerFileOpen}
+                gitStatus={gitStatus}
+                onTriggerContextAction={(actionId, path) => {
+                  if (actionId === "explain") {
+                    conversation.sendMessage({
+                      repo: repoPath,
+                      file: path,
+                      symbol: "",
+                      selection: "",
+                      message: `Explain this file`,
+                    });
+                    setRightTab("chat");
+                    setSidebarCollapsed(false);
+                  } else if (actionId === "review") {
+                    setMode("review");
+                    workspace.openFile(path);
+                  }
+                }}
+              />
             </div>
           )}
 
@@ -539,10 +614,20 @@ export default function AIWorkspace({
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-[9px] text-gray-600 uppercase font-bold block">Model Configuration</span>
-                  <p className="text-indigo-400">Gemini 1.5 Flash</p>
+                  <p className="text-indigo-400">Gemini 1.5 Pro</p>
                 </div>
               </div>
             </div>
+          )}
+
+          {activeActivity === "history" && (
+            <ActivityTimeline
+              repoPath={repoPath}
+              recentFiles={workspace.openFiles}
+              recentChats={conversation.sessions}
+              onOpenFile={handleExplorerFileOpen}
+              onLoadChat={conversation.loadSession}
+            />
           )}
         </div>
 
@@ -556,20 +641,19 @@ export default function AIWorkspace({
 
         {/* Center Main Workspace */}
         <div className="flex-grow flex flex-col min-w-0 overflow-hidden relative">
-          {mode === "home" && (
-            <Suspense fallback={<div>Loading overview...</div>}>
-              <OverviewTab
-                repoPath={repoPath}
-                metrics={{
-                  filesIndexed: filesList.length,
-                  chunksIndexed: filesList.length * 7 || 0,
-                }}
-                onStartStartingPoint={handleStartStartingPoint}
-                onOpenFile={handleExplorerFileOpen}
-                sessions={conversation.sessions}
-                onLoadSession={conversation.loadSession}
-              />
-            </Suspense>
+
+          {mode === "health" && (
+            <ProjectHealthDashboard
+              repoPath={repoPath}
+              onBack={() => setMode("editor")}
+            />
+          )}
+
+          {mode === "analytics" && (
+            <RepositoryAnalytics
+              repoPath={repoPath}
+              onBack={() => setMode("editor")}
+            />
           )}
 
           {mode === "editor" && (
@@ -628,7 +712,7 @@ export default function AIWorkspace({
                       if (bottomPanel) {
                         setBottomPanel(null);
                       } else {
-                        setBottomPanel("problems");
+                        setBottomPanel("terminal");
                       }
                     }}
                     className={`px-2 py-0.5 rounded border text-[9px] font-mono font-bold transition-all ${
@@ -643,7 +727,7 @@ export default function AIWorkspace({
               </div>
 
               {/* Monaco Viewer */}
-              <div className="flex-1 min-h-0 relative">
+              <div className="flex-grow flex-1 min-h-0 relative flex flex-col">
                 {workspace.activeFile ? (
                   <Suspense fallback={<div>Loading editor...</div>}>
                     <MonacoFileViewer
@@ -667,9 +751,62 @@ export default function AIWorkspace({
                     />
                   </Suspense>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-600 text-xs font-mono">
-                    Open a file to start editing.
-                  </div>
+                  <WelcomeDashboard
+                    repoPath={repoPath}
+                    filesCount={filesList.length}
+                    symbolsCount={filesList.length * 8 || 0}
+                    onExecuteAction={(actionId) => {
+                      if (actionId === "explain_repo") {
+                        conversation.sendMessage({
+                          repo: repoPath,
+                          file: "",
+                          symbol: "",
+                          selection: "",
+                          message: `Explain this repository`,
+                        });
+                        setRightTab("chat");
+                        setSidebarCollapsed(false);
+                      } else if (actionId === "architecture") {
+                        setMode("understand");
+                      } else if (actionId === "search_repo") {
+                        setActiveActivity("search");
+                        setMode("editor");
+                      } else if (actionId === "find_bugs") {
+                        conversation.sendMessage({
+                          repo: repoPath,
+                          file: workspace.activeFile || "",
+                          symbol: "",
+                          selection: "",
+                          message: `Find potential bugs`,
+                        });
+                        setRightTab("chat");
+                        setSidebarCollapsed(false);
+                      } else if (actionId === "generate_tests") {
+                        conversation.sendMessage({
+                          repo: repoPath,
+                          file: workspace.activeFile || "",
+                          symbol: "",
+                          selection: "",
+                          message: `Generate unit tests`,
+                        });
+                        setRightTab("chat");
+                        setSidebarCollapsed(false);
+                      } else if (actionId === "review") {
+                        setMode("review");
+                      } else if (actionId === "ask_ai") {
+                        setRightTab("chat");
+                        setSidebarCollapsed(false);
+                      } else if (actionId === "health") {
+                        setMode("health");
+                      } else if (actionId === "analytics") {
+                        setMode("analytics");
+                      }
+                    }}
+                    recentFiles={workspace.openFiles}
+                    onOpenFile={handleExplorerFileOpen}
+                    recentChats={conversation.sessions}
+                    onLoadChat={conversation.loadSession}
+                  />
                 )}
               </div>
 
@@ -682,57 +819,12 @@ export default function AIWorkspace({
                     }`}
                     onMouseDown={handleBottomDrag}
                   />
-                  <div className="shrink-0 overflow-hidden" style={{ height: isMaximized ? "70vh" : `${bottomHeight}px` }}>
-                    <div className="flex flex-col h-full bg-[#0f1219]">
-                      <div className="flex items-center justify-between border-b border-[#1c2230] px-3 py-1 bg-[#0c0f16] select-none h-8">
-                        <div className="flex gap-1.5">
-                          {["problems", "git", "performance"].map((tab) => (
-                            <button
-                              key={tab}
-                              onClick={() => setBottomPanel(tab)}
-                              className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
-                                bottomPanel === tab ? "bg-indigo-500/10 text-indigo-400" : "text-gray-500 hover:text-gray-300"
-                              }`}
-                            >
-                              {tab}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setIsMaximized(!isMaximized)}
-                            className="text-[10px] text-gray-500 hover:text-gray-300"
-                          >
-                            {isMaximized ? "Minimize" : "Maximize"}
-                          </button>
-                          <button
-                            onClick={() => setBottomPanel(null)}
-                            className="text-[10px] text-gray-500 hover:text-rose-400 ml-1.5"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                      <div className="flex-1 overflow-y-auto p-3 scrollbar-thin select-text">
-                        {bottomPanel === "problems" && (
-                          <div className="text-[11px] font-mono text-gray-500 italic flex items-center gap-1.5">
-                            <span className="text-emerald-500">✓</span>
-                            <span>No syntax errors or warnings detected in the active workspace.</span>
-                          </div>
-                        )}
-                        {bottomPanel === "git" && (
-                          <Suspense fallback={<div>Loading Git status...</div>}>
-                            <GitPanel repoPath={repoPath} />
-                          </Suspense>
-                        )}
-                        {bottomPanel === "performance" && (
-                          <Suspense fallback={<div>Loading telemetry...</div>}>
-                            <ObservabilityTab />
-                          </Suspense>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <BottomPanel
+                    repoPath={repoPath}
+                    filesList={filesList}
+                    activeTab={bottomPanel}
+                    onClose={() => setBottomPanel(null)}
+                  />
                 </>
               )}
             </div>
@@ -740,57 +832,32 @@ export default function AIWorkspace({
 
           {mode === "understand" && (
             <div className="flex flex-col h-full bg-[#0f1219]">
-              {renderGoalHeader("Goal: Understand Repository")}
-              <SplitLayout
-                storageKey="understand"
-                defaultSplit={60}
-                left={
-                  <div className="h-full p-4 bg-[#090b10]">
-                    <Suspense fallback={<div>Loading graph...</div>}>
-                      <ArchitectureTab
-                        architecture={architecture}
-                        graphNodes={graphNodes}
-                        graphEdges={graphEdges}
-                        selectedNode={selectedNode}
-                        isArchitectureLoading={isArchitectureLoading}
-                        isGraphLoadingReactFlow={isGraphLoadingReactFlow}
-                        onNodeClick={onNodeClick}
-                        onExplainFile={onExplainFile}
-                        onOpenFile={handleExplorerFileOpen}
-                        onGetArchitecture={onGetArchitecture}
-                        getFileColor={getFileColor}
-                      />
-                    </Suspense>
-                  </div>
-                }
-                right={
-                  <div className="h-full p-4 bg-[#0f1219] overflow-y-auto space-y-4 select-text">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest font-mono">Module Details</h3>
-                    {selectedNode ? (
-                      <div className="bg-[#141822] border border-[#1c2230] rounded-xl p-4 space-y-3">
-                        <p className="text-xs font-bold text-white font-mono">{selectedNode.label}</p>
-                        <p className="text-[11px] text-gray-400 leading-relaxed">
-                          This module represents package/file node connections. Click 'Open In Editor' to edit the file content.
-                        </p>
-                        <button
-                          onClick={() => {
-                            if (selectedNode.id) {
-                              handleExplorerFileOpen(selectedNode.id);
-                            }
-                          }}
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white font-bold text-[10px] transition-all"
-                        >
-                          Open In Editor
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="p-8 text-center text-xs text-gray-500 font-mono italic">
-                        Select a node in the dependency graph to read details.
-                      </div>
-                    )}
-                  </div>
-                }
-              />
+              {renderGoalHeader("Goal: Understand Repository Graph")}
+              <div className="flex-grow flex-1 overflow-y-auto p-4 select-text">
+                <RepositoryGraph
+                  architecture={architecture}
+                  graphNodes={graphNodes}
+                  graphEdges={graphEdges}
+                  selectedNode={selectedNode}
+                  isArchitectureLoading={isArchitectureLoading}
+                  isGraphLoadingReactFlow={isGraphLoadingReactFlow}
+                  onNodeClick={onNodeClick}
+                  onExplainFile={(nodeId) => {
+                    conversation.sendMessage({
+                      repo: repoPath,
+                      file: nodeId,
+                      symbol: "",
+                      selection: "",
+                      message: `Explain this module node`,
+                    });
+                    setRightTab("chat");
+                    setSidebarCollapsed(false);
+                  }}
+                  onOpenFile={handleExplorerFileOpen}
+                  onGetArchitecture={onGetArchitecture}
+                  getFileColor={getFileColor}
+                />
+              </div>
             </div>
           )}
 
@@ -1026,18 +1093,25 @@ export default function AIWorkspace({
             handleRequestPatch={handleRequestPatch}
             handleSelectHistory={handleSelectHistory}
             isPatchStreaming={isPatchStreaming}
+            onOpenFile={handleExplorerFileOpen}
+            onApplyProfile={handleApplyProfile}
           />
         </Suspense>
       </div>
 
       {/* Persistent Status Bar */}
       <StatusBar
+        gitStatus={gitStatus}
         branch={gitStatus?.active_branch || "main"}
         filesCount={filesList.length}
         symbolsCount={filesList.length * 8 || 0}
-        activeModel="Gemini 1.5 Flash"
+        activeModel="Gemini 1.5 Pro"
         isTaskActive={loadingFiles}
         isOffline={!navigator.onLine}
+        encoding="UTF-8"
+        language={workspace.activeFile ? (workspace.activeFile.split(".").pop() || "Plain Text").toUpperCase() : "Plain Text"}
+        cursorLine={selectionRange?.startLine || 1}
+        cursorCol={selectionRange?.startColumn || 1}
       />
 
       {/* Command Palette Overlay */}

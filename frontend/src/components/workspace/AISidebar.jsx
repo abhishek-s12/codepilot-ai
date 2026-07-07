@@ -6,7 +6,10 @@ const PatchHistory = lazy(() => import("../patch/PatchHistory"));
 const AgentChat = lazy(() => import("../agents/AgentChat"));
 const PatchViewer = lazy(() => import("../patch/PatchViewer"));
 const PlannerWorkspace = lazy(() => import("../planner/PlannerWorkspace"));
-const ContextPanel = lazy(() => import("./ContextPanel"));
+const WorkspaceMemory = lazy(() => import("./WorkspaceMemory"));
+const IntelligenceDashboard = lazy(() => import("./IntelligenceDashboard"));
+const CollaborationPanel = lazy(() => import("./CollaborationPanel"));
+const WorkspacePreferences = lazy(() => import("./WorkspacePreferences"));
 
 const TABS = [
   { key: "chat", label: "Chat", icon: "💬" },
@@ -15,6 +18,9 @@ const TABS = [
   { key: "planner", label: "Planner", icon: "📋" },
   { key: "history", label: "History", icon: "⏳" },
   { key: "workspace", label: "Workspace", icon: "💼" },
+  { key: "intelligence", label: "Intel", icon: "⚡" },
+  { key: "collaboration", label: "Collab", icon: "👥" },
+  { key: "preferences", label: "Prefs", icon: "⚙️" },
 ];
 
 export default function AISidebar({
@@ -42,6 +48,8 @@ export default function AISidebar({
   handleRequestPatch,
   handleSelectHistory,
   isPatchStreaming,
+  onOpenFile,
+  onApplyProfile,
 }) {
   const handleTabClick = (key) => {
     setActiveTab(key);
@@ -179,7 +187,10 @@ export default function AISidebar({
           )}
 
           {activeTab === "workspace" && (
-            <ContextPanel
+            <WorkspaceMemory
+              onOpenFile={onOpenFile}
+              onSendMessage={onSendMessage}
+              onClose={() => onToggleCollapse(true)}
               repoPath={repoPath}
               activeFile={activeFile}
               activeSymbol={activeSymbol}
@@ -187,6 +198,29 @@ export default function AISidebar({
               language={language}
               conversationId={conversationId}
               isStreaming={isStreaming}
+              onSelectTab={setActiveTab}
+            />
+          )}
+
+          {activeTab === "intelligence" && (
+            <IntelligenceDashboard
+              activeFile={activeFile}
+              onSendMessage={onSendMessage}
+              onClose={() => onToggleCollapse(true)}
+            />
+          )}
+
+          {activeTab === "collaboration" && (
+            <CollaborationPanel
+              activeFile={activeFile}
+              onClose={() => onToggleCollapse(true)}
+            />
+          )}
+
+          {activeTab === "preferences" && (
+            <WorkspacePreferences
+              onApplyProfile={onApplyProfile}
+              onClose={() => onToggleCollapse(true)}
             />
           )}
         </Suspense>

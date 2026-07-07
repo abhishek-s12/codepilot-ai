@@ -1,6 +1,5 @@
 import hashlib
 import json
-import sqlite3
 from functools import lru_cache
 
 from sentence_transformers import SentenceTransformer
@@ -22,20 +21,15 @@ def generate_embedding(text: str) -> list[float]:
 
     # Try retrieving from SQLite cache
     try:
-        conn = sqlite3.connect(db_path, timeout=15)
+        from services.db_service import get_db
+        conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT embedding FROM embedding_cache WHERE text_hash = ?", (text_hash,))
+        cursor.execute("SELECT embedding FROM embedding_cache WHERE text_hash = %s", (text_hash,))
         row = cursor.fetchone()
         if row:
             conn.close()
             return json.loads(row[0])
     except Exception as e:
-        # Fallback to creating table dynamically if not exists
-        try:
-            cursor.execute("CREATE TABLE IF NOT EXISTS embedding_cache (text_hash TEXT PRIMARY KEY, embedding TEXT)")
-            conn.commit()
-        except Exception:
-            pass
         print(f"[Embedding Cache] Read error: {e}")
     finally:
         try:
@@ -48,9 +42,17 @@ def generate_embedding(text: str) -> list[float]:
 
     # Save back to SQLite cache
     try:
-        conn = sqlite3.connect(db_path, timeout=15)
+        from services.db_service import get_db
+        conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO embedding_cache (text_hash, embedding) VALUES (?, ?)", (text_hash, json.dumps(vector)))
+        cursor.execute(
+            """
+            INSERT INTO embedding_cache (text_hash, embedding)
+            VALUES (%s, %s)
+            ON CONFLICT (text_hash) DO UPDATE SET embedding = EXCLUDED.embedding
+            """,
+            (text_hash, json.dumps(vector)),
+        )
         conn.commit()
     except Exception as e:
         print(f"[Embedding Cache] Write error: {e}")

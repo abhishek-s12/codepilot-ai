@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import ChatHistory from "./ChatHistory";
 import PromptBox from "./PromptBox";
+import ActionCenter from "./ActionCenter";
+import StreamingResponse from "./StreamingResponse";
 import { fetchFileSymbols, askQuestion } from "../../services/api";
 
 export default function ConversationPanel({
@@ -188,7 +190,35 @@ export default function ConversationPanel({
       )}
 
       {/* Chat Messages history */}
-      <ChatHistory messages={messages} />
+      {messages.length === 0 ? (
+        <div className="flex-grow overflow-y-auto scrollbar-thin p-4 space-y-5 select-none">
+          {/* Greeting */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">👋</span>
+              <h3 className="text-xs font-bold text-white font-sans">Hi Abhishek!</h3>
+            </div>
+            <p className="text-[10px] text-gray-400 font-sans leading-relaxed">
+              I'm your AI coding partner. What would you like to do today?
+            </p>
+          </div>
+
+          <ActionCenter
+            activeFile={activeFile}
+            onTriggerAction={(prompt) => triggerSuggestedAction(prompt)}
+            workflowState={isStreaming ? { step: 2, status: 'running' } : null}
+          />
+        </div>
+      ) : (
+        <div className="flex-grow flex flex-col min-h-0 overflow-hidden">
+          <ChatHistory messages={messages} />
+          {isStreaming && (
+            <div className="px-4 pb-3 border-t border-[#1c2230]/40 pt-2 bg-[#0c0f16]/30">
+              <StreamingResponse isStreaming={isStreaming} activeFile={activeFile} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Suggested Action tags strip (always visible above the input area) */}
       <div className="px-3 pt-2 shrink-0 flex flex-wrap gap-1.5 bg-[#0f1219] select-none">
@@ -211,6 +241,14 @@ export default function ConversationPanel({
           ⚡ Refactor Code
         </button>
       </div>
+
+      {/* Streaming status logs */}
+      {isStreaming && (
+        <div className="px-3 py-1.5 bg-[#141822] border-t border-[#1c2230] flex items-center gap-2 select-none shrink-0 font-mono text-[9px] text-indigo-400">
+          <span className="w-2.5 h-2.5 border border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin shrink-0"></span>
+          <span className="animate-pulse">Thinking: Reading repository... analyzing imports... understanding dependencies...</span>
+        </div>
+      )}
 
       {/* Text Area PromptBox */}
       <PromptBox

@@ -1,0 +1,66 @@
+                                   Internet
+                                       │
+                          Cloudflare CDN + WAF
+                                       │
+                             Global Load Balancer
+                                       │
+                    ┌──────────────────┴──────────────────┐
+                    │                                     │
+              API Gateway                         WebSocket Gateway
+                    │                                     │
+        ┌───────────┴────────────┐              ┌─────────┴─────────┐
+        │                        │              │                   │
+ Authentication Service     REST API Cluster   Live Events Cluster
+        │                        │              │
+        └───────────────┬────────┴──────────────┘
+                        │
+                  Internal Service Mesh
+                        │
+ ─────────────────────────────────────────────────────────────────────
+
+    Repository Service
+    Search Service
+    AI Chat Service
+    Graph Service
+    Indexing Service
+    Analytics Service
+    User Service
+    Project Service
+    Notification Service
+
+ ─────────────────────────────────────────────────────────────────────
+
+              Event Bus (Kafka / NATS / RabbitMQ)
+
+ ─────────────────────────────────────────────────────────────────────
+
+ Worker Cluster
+
+    Parser Workers
+    Symbol Workers
+    Embedding Workers
+    Graph Workers
+    Git Workers
+    AI Workers
+    Analytics Workers
+
+ ─────────────────────────────────────────────────────────────────────
+
+Storage Layer
+
+ PostgreSQL
+ Redis
+ Qdrant
+ S3 Object Storage
+ ClickHouse
+ Neo4j
+
+ ─────────────────────────────────────────────────────────────────────
+
+ External AI Providers
+
+ Gemini
+ Claude
+ OpenAI
+ OpenRouter
+ Local Models

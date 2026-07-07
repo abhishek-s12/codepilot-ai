@@ -1,0 +1,680 @@
+# CodePilot AI v6.0
+# Phase 1–5 Implementation Roadmap
+# AI-First Workspace Redesign
+
+The objective of this redesign is to transform CodePilot AI from a traditional repository viewer into an AI-first engineering workspace that immediately communicates its value to developers.
+
+Instead of presenting an empty IDE, the application should guide users toward understanding, exploring, and interacting with their repository through AI.
+
+---
+
+# PHASE 1 — Purpose-Driven Welcome Experience
+
+## Goal
+
+Currently, after indexing a repository, users are presented with an empty editor and blank panels.
+
+This creates uncertainty because users don't know what the product does or what they should do next.
+
+Instead, the center editor area should become a smart Welcome Dashboard whenever no file is open.
+
+---
+
+## User Experience
+
+Current Flow
+
+Open Repository
+
+↓
+
+Blank Editor
+
+↓
+
+"No files open"
+
+↓
+
+User gets confused.
+
+---
+
+New Flow
+
+Open Repository
+
+↓
+
+Repository Overview
+
+↓
+
+AI Suggested Actions
+
+↓
+
+Recent Activity
+
+↓
+
+Open a File
+
+---
+
+## Features
+
+### Repository Summary Card
+
+Display:
+
+• Repository Name
+• Number of Files
+• Number of Symbols
+• Languages
+• Repository Size
+• Last Indexed Time
+• Index Status
+
+Example
+
+Repository
+codepilot-ai
+
+✓ Indexed Successfully
+
+44 Files
+
+352 Symbols
+
+Python • React
+
+Last Updated 2 minutes ago
+
+---
+
+### AI Quick Actions
+
+Large action cards
+
+Explain Repository
+
+Generate Architecture
+
+Search Repository
+
+Ask AI
+
+Find Bugs
+
+Generate Tests
+
+Review Code
+
+These should be the primary call-to-actions visible immediately after indexing.
+
+---
+
+### Continue Working
+
+Display
+
+Recent Files
+
+Recent Chats
+
+Recent Searches
+
+Recent AI Actions
+
+This gives users continuity instead of starting from scratch.
+
+---
+
+### Empty Editor Replacement
+
+When no file is selected
+
+Replace Monaco editor with the Welcome Dashboard.
+
+Once a file is opened
+
+Dashboard disappears
+
+Editor becomes active
+
+---
+
+### Required Components
+
+WelcomeDashboard.jsx
+
+RepositoryOverviewCard.jsx
+
+QuickActionGrid.jsx
+
+RecentActivity.jsx
+
+RecentFiles.jsx
+
+RecentChats.jsx
+
+---
+
+# PHASE 2 — Navigation & Sidebar Redesign
+
+## Goal
+
+The current sidebar relies mostly on icons.
+
+New users have no idea what each icon represents.
+
+Navigation should feel like Cursor or VS Code while remaining simple.
+
+---
+
+## Sidebar Structure
+
+Explorer
+
+Search
+
+Graph
+
+AI Agents
+
+History
+
+Settings
+
+---
+
+## Sidebar Features
+
+Expandable Sidebar
+
+Collapsed Mode
+
+Tooltips
+
+Notification Badges
+
+Keyboard Shortcuts
+
+Smooth Animations
+
+Pinned Favorites
+
+---
+
+## Explorer Improvements
+
+Display
+
+Folders
+
+Files
+
+Git Status
+
+Modified Files
+
+New Files
+
+Deleted Files
+
+Language Icons
+
+Context Menu
+
+Expand / Collapse
+
+---
+
+## Project Widgets
+
+Below Explorer
+
+Project Health
+
+Repository Insights
+
+Quick Actions
+
+These widgets provide useful information without requiring navigation.
+
+---
+
+### Components
+
+Sidebar.jsx
+
+SidebarItem.jsx
+
+ExplorerPanel.jsx
+
+ProjectHealthCard.jsx
+
+RepositoryInsightCard.jsx
+
+QuickActionsPanel.jsx
+
+---
+
+# PHASE 3 — Universal Search Experience
+
+## Goal
+
+Searching should become the fastest way to interact with a repository.
+
+Users should be able to search files, functions, classes, symbols, AI knowledge, and commands from one location.
+
+---
+
+## Global Search Bar
+
+Place at the top center of the workspace.
+
+Placeholder
+
+Search files, symbols, functions, commands...
+
+Shortcut
+
+Ctrl + K
+
+---
+
+## Search Categories
+
+Files
+
+Folders
+
+Functions
+
+Classes
+
+Variables
+
+Symbols
+
+Imports
+
+AI Knowledge
+
+Repository Commands
+
+---
+
+## Search Features
+
+Fuzzy Search
+
+Live Suggestions
+
+Recent Searches
+
+Search History
+
+Keyboard Navigation
+
+Pinned Results
+
+Filters
+
+Language Filters
+
+Path Filters
+
+---
+
+## Search Results
+
+Display grouped results
+
+Files
+
+Symbols
+
+Functions
+
+AI Answers
+
+Clicking a result should
+
+Open File
+
+Highlight Symbol
+
+Focus Editor
+
+---
+
+### Components
+
+UniversalSearch.jsx
+
+SearchBar.jsx
+
+SearchResults.jsx
+
+SearchFilters.jsx
+
+SearchHistory.jsx
+
+---
+
+# PHASE 4 — Contextual Workspace Header
+
+## Goal
+
+The top navigation should provide repository context instead of simply displaying the repository name.
+
+It should reassure users that the system is active and continuously monitoring the workspace.
+
+---
+
+## Header Sections
+
+Repository
+
+Branch
+
+Index Status
+
+AI Model
+
+Index Progress
+
+Repository Health
+
+User Profile
+
+Notifications
+
+---
+
+## Repository Information
+
+Repository Name
+
+Current Branch
+
+Language
+
+Last Indexed
+
+Files
+
+Symbols
+
+Repository Size
+
+---
+
+## AI Information
+
+Current AI Model
+
+AI Status
+
+Tokens Used
+
+Response Time
+
+Current Session
+
+---
+
+## Index Progress
+
+Example
+
+Indexing Repository
+
+█████████░
+
+85%
+
+Processing Symbols
+
+This should remain visible while indexing.
+
+---
+
+## Quick Actions
+
+Refresh Repository
+
+Re-index
+
+Sync Git
+
+Open Search
+
+Repository Settings
+
+---
+
+### Components
+
+WorkspaceHeader.jsx
+
+RepositoryStatus.jsx
+
+IndexProgress.jsx
+
+AIStatusCard.jsx
+
+WorkspaceActions.jsx
+
+---
+
+# PHASE 5 — AI Assistant Workspace
+
+## Goal
+
+The AI Assistant should become the heart of CodePilot AI instead of just another side panel.
+
+Users should always know what AI can help them accomplish.
+
+---
+
+## Assistant Layout
+
+Greeting
+
+Suggested Actions
+
+Conversation
+
+Recent Chats
+
+Prompt Input
+
+Context Information
+
+---
+
+## Welcome State
+
+Hi, Abhishek 👋
+
+I'm your AI coding assistant.
+
+What would you like to do today?
+
+---
+
+## Suggested Actions
+
+Explain this File
+
+Explain Repository
+
+Generate Tests
+
+Review Code
+
+Find Bugs
+
+Refactor Code
+
+Generate Documentation
+
+Security Review
+
+Performance Analysis
+
+These should appear as large clickable action cards.
+
+---
+
+## Conversation Area
+
+Display
+
+Streaming Responses
+
+Markdown
+
+Syntax Highlighting
+
+Referenced Files
+
+Referenced Symbols
+
+Code Blocks
+
+---
+
+## Prompt Box
+
+Support
+
+Multi-line Input
+
+Slash Commands
+
+Mentions
+
+Autocomplete
+
+Repository Context
+
+Examples
+
+---
+
+## Recent Chats
+
+Display
+
+Chat Title
+
+Timestamp
+
+Referenced File
+
+AI Model Used
+
+Pinned Conversations
+
+---
+
+## AI Context Panel
+
+Always display
+
+Selected File
+
+Selected Function
+
+Repository
+
+Branch
+
+Current Language
+
+Referenced Symbols
+
+This allows users to understand exactly what the AI is analyzing.
+
+---
+
+## Quick Prompt Suggestions
+
+Examples
+
+Explain authentication flow
+
+Generate unit tests
+
+Review security
+
+Find dead code
+
+Optimize performance
+
+Explain this API
+
+Summarize this file
+
+---
+
+## Streaming States
+
+Instead of waiting silently
+
+Show
+
+Reading repository...
+
+Analyzing imports...
+
+Understanding dependencies...
+
+Generating explanation...
+
+Preparing response...
+
+This creates transparency and improves perceived performance.
+
+---
+
+## Components
+
+AssistantPanel.jsx
+
+ConversationView.jsx
+
+ChatInput.jsx
+
+SuggestedActions.jsx
+
+RecentChats.jsx
+
+ContextPanel.jsx
+
+StreamingIndicator.jsx
+
+MessageBubble.jsx
+
+---
+
+# Deliverables After Phase 5
+
+After completing Phases 1–5, CodePilot AI should provide:
+
+✓ A purpose-driven welcome experience instead of an empty editor.
+
+✓ A modern, discoverable navigation system with labeled sections.
+
+✓ A universal search experience for files, symbols, and AI.
+
+✓ A contextual workspace header that communicates repository status, AI activity, and indexing progress.
+
+✓ A fully redesigned AI assistant that serves as the central interaction point with actionable suggestions, streaming responses, and repository-aware context.
+
+At the end of these phases, users should understand the product's value within the first 30 seconds of opening a repository, making the application feel less like a generic IDE and more like an intelligent AI engineering workspace.

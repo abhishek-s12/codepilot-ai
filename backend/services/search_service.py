@@ -1,4 +1,4 @@
-from vector_store.chroma_service import search_chunks, get_collection_name_for_path
+from vector_store.qdrant_service import search_chunks, get_collection_name_for_path
 
 
 def search_codebase(query: str, repo_path: str = None):

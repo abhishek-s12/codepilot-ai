@@ -1,4 +1,16 @@
-export default function ContextPanel({ repoPath, activeFile, activeSymbol, selectionRange, language, conversationId, isStreaming }) {
+import SmartRecommendations from "./SmartRecommendations";
+
+export default function ContextPanel({
+  repoPath,
+  activeFile,
+  activeSymbol,
+  selectionRange,
+  language,
+  conversationId,
+  isStreaming,
+  onSendMessage,
+  onSelectTab,
+}) {
   const repoName = repoPath ? repoPath.split(/[\\/]/).pop() : "—";
   const fileName = activeFile ? activeFile.split(/[\\/]/).pop() : "—";
 
@@ -48,6 +60,28 @@ export default function ContextPanel({ repoPath, activeFile, activeSymbol, selec
             </span>
           </div>
         ))}
+
+        {activeFile && (
+          <div className="pt-3 border-t border-white/5">
+            <SmartRecommendations
+              activeFile={activeFile}
+              onTriggerAction={(prompt) => {
+                if (onSendMessage) {
+                  onSendMessage({
+                    repo: repoPath,
+                    file: activeFile,
+                    symbol: activeSymbol || "",
+                    selection: "",
+                    message: prompt,
+                  });
+                }
+                if (onSelectTab) {
+                  onSelectTab("chat");
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Model badge */}

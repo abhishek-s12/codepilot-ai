@@ -2,7 +2,7 @@ import os
 import ast
 import re
 import json
-import sqlite3
+
 from services.scanner_service import scan_repository
 
 
@@ -107,9 +107,10 @@ def get_repository_analytics(repo_path: str):
 
     # Read from cache
     try:
-        conn = sqlite3.connect(db_path, timeout=15)
+        from services.db_service import get_db
+        conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT analytics_data FROM analytics_cache WHERE repo_path = ?", (repo_path,))
+        cursor.execute("SELECT analytics_data FROM analytics_cache WHERE repo_path = %s", (repo_path,))
         row = cursor.fetchone()
         if row:
             conn.close()
@@ -274,9 +275,17 @@ def get_repository_analytics(repo_path: str):
 
     # Write to cache
     try:
-        conn = sqlite3.connect(db_path, timeout=15)
+        from services.db_service import get_db
+        conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("INSERT OR REPLACE INTO analytics_cache (repo_path, analytics_data) VALUES (?, ?)", (repo_path, json.dumps(result)))
+        cursor.execute(
+            """
+            INSERT INTO analytics_cache (repo_path, analytics_data)
+            VALUES (%s, %s)
+            ON CONFLICT (repo_path) DO UPDATE SET analytics_data = EXCLUDED.analytics_data
+            """,
+            (repo_path, json.dumps(result)),
+        )
         conn.commit()
     except Exception as e:
         print(f"[Analytics Cache] Write error: {e}")

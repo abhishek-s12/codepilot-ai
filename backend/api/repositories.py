@@ -8,7 +8,7 @@ from services.db_service import (
     get_repository,
     delete_repository,
 )
-from vector_store.chroma_service import delete_collection, get_collection_name_for_path
+from vector_store.qdrant_service import delete_collection, get_collection_name_for_path
 
 router = APIRouter()
 

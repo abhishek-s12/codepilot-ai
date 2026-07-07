@@ -46,6 +46,24 @@ def test_knowledge_graph_builder():
     # Initialize DB
     init_db()
 
+    # Seed records to satisfy foreign key constraints in PostgreSQL
+    from services.db_service import create_user, create_repository
+    try:
+        create_user("test-user-v5", "test-user@v5.com", "Test User V5", "")
+    except Exception:
+        pass
+    try:
+        create_repository(
+            "test-repo-v5",
+            "test-user-v5",
+            "test-repo",
+            os.path.abspath(os.path.dirname(__file__)),
+            "main",
+            "active",
+        )
+    except Exception:
+        pass
+
     # Resolve repo_path absolutely to the test file's directory
     repo_path = os.path.abspath(os.path.dirname(__file__))
     repo_id = "test-repo-v5"

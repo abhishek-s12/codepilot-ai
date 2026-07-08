@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
+        manualChunks(id: string) {
           if (id.includes('@xyflow/react')) {
             return 'flow';
           }

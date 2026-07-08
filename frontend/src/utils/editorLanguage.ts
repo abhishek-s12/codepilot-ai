@@ -1,10 +1,13 @@
-export function getEditorLanguage(filePath) {
+export function getEditorLanguage(filePath: string | null | undefined): string {
   if (!filePath) return "plaintext";
   const parts = filePath.split(".");
   if (parts.length <= 1) return "plaintext";
-  const ext = `.${parts.pop().toLowerCase()}`;
+  
+  const popped = parts.pop();
+  if (!popped) return "plaintext";
+  const ext = `.${popped.toLowerCase()}`;
 
-  const mapping = {
+  const mapping: Record<string, string> = {
     ".py": "python",
     ".js": "javascript",
     ".jsx": "javascript",

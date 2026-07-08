@@ -3,11 +3,45 @@ import { fetchRepositoryReview } from "../services/api";
 import FormatText from "../components/common/FormatText";
 import { IconCpu, IconSparkles } from "../components/icons/Icons";
 
-export default function RepositoryReviewTab({ repoPath }) {
-  const [review, setReview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({
+export interface ReviewData {
+  score: number;
+  architecture: string;
+  maintainability: string;
+  security: string;
+  performance: string;
+  code_smells: string;
+  duplicate_code: string;
+  best_practices: string;
+  recommendations: string[];
+}
+
+interface RepositoryReviewTabProps {
+  repoPath: string;
+}
+
+interface ExpandedSections {
+  architecture: boolean;
+  maintainability: boolean;
+  security: boolean;
+  performance: boolean;
+  code_smells: boolean;
+  duplicate_code: boolean;
+  best_practices: boolean;
+  [key: string]: boolean;
+}
+
+interface ReviewSection {
+  key: string;
+  label: string;
+  color: string;
+  dotColor: string;
+}
+
+export default function RepositoryReviewTab({ repoPath }: RepositoryReviewTabProps) {
+  const [review, setReview] = useState<ReviewData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     architecture: true,
     maintainability: false,
     security: false,
@@ -17,7 +51,7 @@ export default function RepositoryReviewTab({ repoPath }) {
     best_practices: false,
   });
 
-  const toggleSection = (section) => {
+  const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -31,7 +65,7 @@ export default function RepositoryReviewTab({ repoPath }) {
     try {
       const data = await fetchRepositoryReview(repoPath);
       setReview(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setError(err?.response?.data?.detail || err?.message || "Failed to load review.");
     } finally {
@@ -92,10 +126,10 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
 
   if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in w-full py-12">
+      <div className="space-y-8 animate-fade-in w-full py-16">
         <div className="text-center space-y-4">
-          <span className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin inline-block"></span>
-          <p className="text-gray-400 font-medium text-sm animate-pulse">Running engineering review, scanning symbols & structure...</p>
+          <span className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin inline-block"></span>
+          <p className="text-text font-medium text-sm animate-pulse font-body">Running engineering review, scanning symbols & structure...</p>
         </div>
       </div>
     );
@@ -104,12 +138,12 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
   if (error) {
     return (
       <div className="space-y-6 animate-fade-in w-full py-12 text-center">
-        <div className="p-6 max-w-md mx-auto rounded-2xl bg-rose-500/5 border border-rose-500/10 space-y-4">
-          <h3 className="text-sm font-semibold text-rose-400">Review Execution Failed</h3>
-          <p className="text-xs text-gray-400 font-mono leading-relaxed">{error}</p>
+        <div className="p-6 max-w-md mx-auto rounded-2xl bg-danger-bg border border-danger/20 space-y-4 shadow-lg">
+          <h3 className="text-sm font-semibold text-danger font-display">Review Execution Failed</h3>
+          <p className="text-xs text-text font-mono leading-relaxed">{error}</p>
           <button
             onClick={loadReview}
-            className="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-all"
+            className="px-4 py-2 text-xs font-semibold bg-danger hover:bg-danger-bg text-bg border border-danger/30 rounded-lg transition-all font-mono"
           >
             Retry Review
           </button>
@@ -120,12 +154,12 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
 
   if (!review) {
     return (
-      <div className="py-24 text-center text-gray-500 space-y-4 w-full">
-        <IconCpu className="w-12 h-12 mx-auto text-gray-600 opacity-60" />
-        <p className="text-sm">Repository review has not been executed yet.</p>
+      <div className="py-24 text-center text-muted space-y-4 w-full">
+        <IconCpu className="w-12 h-12 mx-auto text-muted opacity-40 animate-pulse" />
+        <p className="text-sm font-body">Repository review has not been executed yet.</p>
         <button
           onClick={loadReview}
-          className="px-5 py-2.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
+          className="px-5 py-2.5 text-xs font-semibold bg-accent text-bg hover:bg-accent-strong rounded-xl transition-all cursor-pointer font-mono shadow-md"
         >
           Run Codebase Review
         </button>
@@ -138,38 +172,38 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (review.score / 10) * circumference;
 
-  const sections = [
-    { key: "architecture", label: "Architecture", color: "indigo" },
-    { key: "maintainability", label: "Maintainability", color: "violet" },
-    { key: "security", label: "Security", color: "emerald" },
-    { key: "performance", label: "Performance", color: "cyan" },
-    { key: "code_smells", label: "Code Smells", color: "amber" },
-    { key: "duplicate_code", label: "Duplicate Code", color: "rose" },
-    { key: "best_practices", label: "Best Practices", color: "teal" },
+  const sections: ReviewSection[] = [
+    { key: "architecture", label: "Architecture", color: "accent", dotColor: "bg-accent" },
+    { key: "maintainability", label: "Maintainability", color: "violet", dotColor: "bg-violet" },
+    { key: "security", label: "Security", color: "success", dotColor: "bg-success" },
+    { key: "performance", label: "Performance", color: "secondary", dotColor: "bg-secondary" },
+    { key: "code_smells", label: "Code Smells", color: "accent", dotColor: "bg-accent" },
+    { key: "duplicate_code", label: "Duplicate Code", color: "danger", dotColor: "bg-danger" },
+    { key: "best_practices", label: "Best Practices", color: "secondary", dotColor: "bg-secondary" },
   ];
 
   return (
     <div className="space-y-8 animate-fade-in w-full text-left">
       {/* Header */}
-      <div className="border-b border-white/5 pb-4 shrink-0 flex flex-wrap items-center justify-between gap-4">
+      <div className="border-b border-border pb-4 shrink-0 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <IconCpu className="w-5 h-5 text-indigo-400" /> AI Repository Review
+          <h2 className="text-xl font-bold tracking-tight text-text-strong flex items-center gap-2 font-display">
+            <IconCpu className="w-5 h-5 text-accent" /> AI Repository Review
           </h2>
-          <p className="mt-1 text-xs text-soft leading-relaxed">
+          <p className="mt-1 text-xs text-soft leading-relaxed font-body">
             Full static analysis review and recommendations generated by deep LLM parsing.
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={loadReview}
-            className="px-3.5 py-2 text-xs font-semibold bg-white/5 border border-white/10 hover:bg-white/10 text-gray-300 rounded-lg transition-all"
+            className="px-3.5 py-2 text-xs font-semibold bg-panel border border-border hover:border-accent/40 text-soft hover:text-text-strong rounded-lg transition-all glass-hover font-mono"
           >
             Re-run Review
           </button>
           <button
             onClick={handleExportMarkdown}
-            className="px-3.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all"
+            className="px-3.5 py-2 text-xs font-semibold bg-accent text-bg hover:bg-accent-strong rounded-lg transition-all font-mono cursor-pointer shadow-md"
           >
             Export Markdown
           </button>
@@ -180,8 +214,8 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
       <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 items-start">
         
         {/* Left Score Card & Summary Widget */}
-        <div className="p-6 rounded-2xl bg-black/35 border border-white/5 flex flex-col items-center text-center space-y-4">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 font-mono">Overall Rating</span>
+        <div className="p-6 rounded-2xl bg-panel border border-border flex flex-col items-center text-center space-y-4 shadow-lg">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-muted font-mono">Overall Rating</span>
           
           <div className="relative w-32 h-32 flex items-center justify-center">
             {/* Background SVG Circle */}
@@ -190,7 +224,7 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
                 cx="64"
                 cy="64"
                 r={radius}
-                className="stroke-gray-800/40"
+                className="stroke-border/40"
                 strokeWidth="8"
                 fill="transparent"
               />
@@ -198,7 +232,7 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
                 cx="64"
                 cy="64"
                 r={radius}
-                className="stroke-indigo-500 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+                className="stroke-accent drop-shadow-[0_0_8px_rgba(255,157,77,0.5)]"
                 strokeWidth="8"
                 fill="transparent"
                 strokeDasharray={circumference}
@@ -207,13 +241,13 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
               />
             </svg>
             <div className="absolute text-center">
-              <span className="text-2xl font-black text-white font-mono">{review.score}</span>
-              <span className="text-gray-500 text-xs font-semibold font-mono block">/ 10</span>
+              <span className="text-2xl font-black text-text-strong font-mono">{review.score}</span>
+              <span className="text-muted text-xs font-semibold font-mono block">/ 10</span>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-white/5 w-full text-center">
-            <span className="text-[10px] text-gray-400 font-mono leading-relaxed block">
+          <div className="pt-2 border-t border-border w-full text-center">
+            <span className="text-[10px] text-soft font-mono leading-relaxed block">
               {review.score >= 8.5
                 ? "Excellent quality codebase with sound modular patterns."
                 : review.score >= 7.0
@@ -230,22 +264,22 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
           <div className="space-y-3.5">
             {sections.map((sec) => {
               const isOpen = expandedSections[sec.key];
-              const content = review[sec.key] || "No data provided.";
+              const content = review[sec.key as keyof ReviewData] as string || "No data provided.";
               return (
-                <div key={sec.key} className="rounded-2xl border border-white/5 bg-black/15 overflow-hidden transition-all duration-200">
+                <div key={sec.key} className="rounded-2xl border border-border bg-panel overflow-hidden transition-all duration-200 shadow-md">
                   <button
                     onClick={() => toggleSection(sec.key)}
-                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/2.5 transition-all"
+                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-panel-alt transition-all"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className={`w-2 h-2 rounded-full bg-${sec.color}-500 shadow-[0_0_6px_var(--tw-shadow-color)] shadow-${sec.color}-500/50`}></span>
-                      <span className="text-xs font-bold font-mono text-gray-200 uppercase tracking-wide">{sec.label}</span>
+                      <span className={`w-2 h-2 rounded-full ${sec.dotColor} glowing-dot`}></span>
+                      <span className="text-xs font-bold font-mono text-text-strong uppercase tracking-wide">{sec.label}</span>
                     </div>
-                    <span className="text-gray-500 font-mono text-xs">{isOpen ? "▲" : "▼"}</span>
+                    <span className="text-muted font-mono text-xs">{isOpen ? "▲" : "▼"}</span>
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs text-gray-300 leading-relaxed border-t border-white/2.5 font-sans space-y-2">
+                    <div className="px-5 pb-5 pt-1 text-xs text-text leading-relaxed border-t border-border/40 font-sans space-y-2">
                       <FormatText text={content} />
                     </div>
                   )}
@@ -256,17 +290,17 @@ ${review.recommendations.map((rec) => `- ${rec}`).join("\n")}
 
           {/* Key Recommendations Check list */}
           {review.recommendations && review.recommendations.length > 0 && (
-            <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5 font-mono">
+            <div className="p-6 rounded-2xl bg-secondary-dim/5 border border-secondary/15 space-y-4 shadow-lg">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-1.5 font-mono">
                 <IconSparkles className="w-3.5 h-3.5" /> Actionable Recommendations
               </h3>
-              <ul className="space-y-3 text-xs text-gray-300 font-sans">
+              <ul className="space-y-3 text-xs text-text font-sans">
                 {review.recommendations.map((rec, index) => (
                   <li key={index} className="flex gap-2.5 items-start">
-                    <span className="w-4 h-4 rounded-full bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 font-mono">
+                    <span className="w-4 h-4 rounded-full bg-secondary/20 text-secondary border border-secondary-dim text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 font-mono">
                       {index + 1}
                     </span>
-                    <span className="leading-relaxed">{rec}</span>
+                    <span className="leading-relaxed font-body">{rec}</span>
                   </li>
                 ))}
               </ul>

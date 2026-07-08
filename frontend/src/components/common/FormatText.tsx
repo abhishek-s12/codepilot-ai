@@ -1,7 +1,11 @@
-// Lightweight markdown-like text renderer
+import React from 'react';
 
-function parseInlineCode(str) {
-  const parts = [];
+interface FormatTextProps {
+  text: string | null | undefined;
+}
+
+function parseInlineCode(str: string): React.ReactNode[] | string {
+  const parts: React.ReactNode[] = [];
   const regex = /`([^`]+)`/g;
   let match;
   let lastIndex = 0;
@@ -11,7 +15,10 @@ function parseInlineCode(str) {
       parts.push(str.substring(lastIndex, match.index));
     }
     parts.push(
-      <code key={match.index} className="bg-black/40 px-1.5 py-0.5 rounded text-indigo-300 font-mono text-[13px] border border-white/5">
+      <code
+        key={match.index}
+        className="bg-panel-alt px-1.5 py-0.5 rounded text-secondary font-mono text-[13px] border border-border"
+      >
         {match[1]}
       </code>
     );
@@ -25,7 +32,7 @@ function parseInlineCode(str) {
   return parts.length > 0 ? parts : str;
 }
 
-export default function FormatText({ text }) {
+export default function FormatText({ text }: FormatTextProps) {
   if (!text) return null;
 
   const lines = text.split("\n");
@@ -39,7 +46,7 @@ export default function FormatText({ text }) {
         if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
           const content = line.trim().substring(2);
           return (
-            <ul key={idx} className="list-disc pl-5 text-gray-300">
+            <ul key={idx} className="list-disc pl-5 text-text font-body">
               <li>{parseInlineCode(content)}</li>
             </ul>
           );
@@ -47,7 +54,7 @@ export default function FormatText({ text }) {
 
         if (line.trim().startsWith("### ")) {
           return (
-            <h3 key={idx} className="text-md font-semibold text-indigo-400 mt-4">
+            <h3 key={idx} className="text-md font-semibold text-secondary mt-4 font-display">
               {line.trim().substring(4)}
             </h3>
           );
@@ -55,7 +62,7 @@ export default function FormatText({ text }) {
 
         if (line.trim().startsWith("## ")) {
           return (
-            <h2 key={idx} className="text-lg font-bold text-violet-300 mt-5 border-b border-white/5 pb-1">
+            <h2 key={idx} className="text-lg font-bold text-violet-400 mt-5 border-b border-border pb-1 font-display">
               {line.trim().substring(3)}
             </h2>
           );
@@ -64,15 +71,15 @@ export default function FormatText({ text }) {
         const numMatch = line.trim().match(/^(\d+)\.\s(.*)/);
         if (numMatch) {
           return (
-            <div key={idx} className="flex items-start gap-2 text-gray-300 pl-2">
-              <span className="text-indigo-400 font-semibold">{numMatch[1]}.</span>
+            <div key={idx} className="flex items-start gap-2 text-text pl-2 font-body">
+              <span className="text-secondary font-semibold">{numMatch[1]}.</span>
               <div>{parseInlineCode(numMatch[2])}</div>
             </div>
           );
         }
 
         return (
-          <p key={idx} className="text-gray-300 leading-relaxed text-[14px]">
+          <p key={idx} className="text-text leading-relaxed text-[14px] font-body">
             {parseInlineCode(line)}
           </p>
         );

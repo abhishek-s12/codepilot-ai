@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   fetchUser,
   fetchRepositories,
@@ -22,7 +22,7 @@ import useExecutionFlow from "./hooks/useExecutionFlow";
 import { statusTones } from "./utils/constants";
 import { getFileColor } from "./utils/colors";
 
-const getInitialToken = () => {
+const getInitialToken = (): string => {
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get("token");
   if (urlToken) {
@@ -34,17 +34,18 @@ const getInitialToken = () => {
 
 export default function App() {
   // Authentication & History States
-  const [token, setToken] = useState(getInitialToken);
-  const [user, setUser] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [showSandboxForm, setShowSandboxForm] = useState(false);
-  const [sandboxName, setSandboxName] = useState("Sandbox Developer");
-  const [sandboxEmail, setSandboxEmail] = useState("sandbox@codepilot.ai");
+  const [token, setToken] = useState<string>(getInitialToken);
+  const [user, setUser] = useState<any>(null);
+  const [history, setHistory] = useState<any[]>([]);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
+  const [showSandboxForm, setShowSandboxForm] = useState<boolean>(false);
+  const [sandboxName, setSandboxName] = useState<string>("Sandbox Developer");
+  const [sandboxEmail, setSandboxEmail] = useState<string>("sandbox@codepilot.ai");
+  
   // Hooks Integration
-  const { toasts, showToast } = useToast();
+  const { toasts, showToast } = useToast() as any;
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
   // Online / Offline Detection
   useEffect(() => {
@@ -76,7 +77,7 @@ export default function App() {
     selectRepositoryFromHistory,
     handleDeleteRepository,
     handleIndexRepository,
-  } = useRepository(token, showToast, history, setHistory);
+  } = useRepository(token, showToast, history, setHistory) as any;
 
   const {
     architecture,
@@ -89,7 +90,7 @@ export default function App() {
     isGraphLoadingReactFlow,
     handleGetArchitecture,
     handleNodeClick,
-  } = useArchitecture(repoPath, setStatus, getFileColor);
+  } = useArchitecture(repoPath, setStatus, getFileColor) as any;
 
   const {
     callGraph,
@@ -100,12 +101,11 @@ export default function App() {
     selectedFunc,
     setSelectedFunc,
     handleGetCallGraph,
-  } = useCallGraph(repoPath, setStatus);
+  } = useCallGraph(repoPath, setStatus) as any;
 
   const {
     setFlowData,
-  } = useExecutionFlow(repoPath, setStatus);
-
+  } = useExecutionFlow(repoPath, setStatus) as any;
 
   // 1. Authenticate user on load and check URL query params
   useEffect(() => {
@@ -127,7 +127,7 @@ export default function App() {
 
           // If there's a recent completed repository, select it
           if (historyList.length > 0) {
-            const latest = historyList.find((r) => r.status === "completed") || historyList[0];
+            const latest = historyList.find((r: any) => r.status === "completed") || historyList[0];
             if (latest.status === "completed") {
               selectRepositoryFromHistory(latest);
             }
@@ -145,13 +145,12 @@ export default function App() {
     loadUserAndHistory();
   }, [token, selectRepositoryFromHistory, showToast]);
 
-  const activeRepo = history.find((r) => r.repository_path === repoPath);
+  const activeRepo = history.find((r: any) => r.repository_path === repoPath);
   const activeRepoId = activeRepo ? activeRepo.id : null;
   const repositoryReady = Boolean(repoPath);
 
-
   // Sandbox login helper
-  const handleSandboxLogin = async (e) => {
+  const handleSandboxLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       setIsAuthLoading(true);
@@ -183,7 +182,7 @@ export default function App() {
   };
 
   // Handle repository selection override
-  const handleSelectRepository = (repo) => {
+  const handleSelectRepository = (repo: any) => {
     selectRepositoryFromHistory(repo);
     setArchitecture("");
     setCallGraph(null);
@@ -204,15 +203,14 @@ export default function App() {
 
   const functionCallers = useMemo(() => {
     if (!callGraph || !selectedFunc) return [];
-    const callers = [];
+    const callers: string[] = [];
     Object.entries(callGraph).forEach(([funcName, callees]) => {
-      if (callees.includes(selectedFunc) && funcName !== selectedFunc) {
+      if ((callees as string[]).includes(selectedFunc) && funcName !== selectedFunc) {
         callers.push(funcName);
       }
     });
     return callers;
   }, [callGraph, selectedFunc]);
-
 
   // If initial auth is running
   if (isAuthLoading) {
@@ -267,7 +265,7 @@ export default function App() {
           />
           <div className="flex-grow p-4 md:p-6 lg:p-8">
             {/* Status Bar */}
-            <div className={`mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border ${statusTones[status.tone]} transition-all duration-300 glass overflow-hidden`}>
+            <div className={`mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border ${(statusTones as Record<string, string>)[status.tone]} transition-all duration-300 glass overflow-hidden`}>
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <span className="flex h-2.5 w-2.5 relative shrink-0">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${status.tone === 'loading' ? 'bg-indigo-400' : status.tone === 'success' ? 'bg-emerald-400' : status.tone === 'error' ? 'bg-rose-400' : 'bg-gray-400'}`}></span>
@@ -287,29 +285,29 @@ export default function App() {
         </div>
       ) : (
         /* FULL IDE WORKSPACE */
-        <AIWorkspace
-          repoPath={repoPath}
-          repoId={activeRepoId}
-          architecture={architecture}
-          graphNodes={graphNodes}
-          graphEdges={graphEdges}
-          selectedNode={selectedNode}
-          isArchitectureLoading={isArchitectureLoading}
-          isGraphLoadingReactFlow={isGraphLoadingReactFlow}
-          onNodeClick={handleNodeClick}
-          onExplainFile={handleExplainFile}
-          onGetArchitecture={handleGetArchitecture}
-          getFileColor={getFileColor}
-          callGraph={callGraph}
-          graphSearch={graphSearch}
-          setGraphSearch={setGraphSearch}
-          selectedFunc={selectedFunc}
-          setSelectedFunc={setSelectedFunc}
-          filteredFunctions={filteredFunctions}
-          functionCallers={functionCallers}
-          isGraphLoading={isGraphLoading}
-          onGetCallGraph={handleGetCallGraph}
-        />
+        React.createElement(AIWorkspace as any, {
+          repoPath,
+          repoId: activeRepoId,
+          architecture,
+          graphNodes,
+          graphEdges,
+          selectedNode,
+          isArchitectureLoading,
+          isGraphLoadingReactFlow,
+          onNodeClick: handleNodeClick,
+          onExplainFile: handleExplainFile,
+          onGetArchitecture: handleGetArchitecture,
+          getFileColor,
+          callGraph,
+          graphSearch,
+          setGraphSearch,
+          selectedFunc,
+          setSelectedFunc,
+          filteredFunctions,
+          functionCallers,
+          isGraphLoading,
+          onGetCallGraph: handleGetCallGraph,
+        })
       )}
     </div>
   );

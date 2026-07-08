@@ -1,8 +1,31 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { getEditorLanguage } from "../../utils/editorLanguage";
 import { runAIActionStream } from "../../services/api";
 import FormatText from "../common/FormatText";
+
+interface MonacoFileViewerProps {
+  filePath: string;
+  content: string;
+  loading: boolean;
+  editorRef?: React.MutableRefObject<any>;
+  onExplainSymbol?: (word: string) => void;
+  onGoToDefinition?: (word: string) => void;
+  onFindReferences?: (word: string) => void;
+  onRunSelectionAction?: (actionId: string, label: string, data: any) => void;
+  onSelectionChange?: (editor: any) => void;
+  onChange?: (value: string) => void;
+  repoPath: string;
+}
+
+interface InlinePanelState {
+  label: string;
+  actionId: string;
+  selectionText: string;
+  resultText: string;
+  isLoading: boolean;
+  previewEdit: any;
+}
 
 export default function MonacoFileViewer({
   filePath,
@@ -16,14 +39,14 @@ export default function MonacoFileViewer({
   onSelectionChange,
   onChange,
   repoPath,
-}) {
+}: MonacoFileViewerProps) {
   const language = getEditorLanguage(filePath);
 
   // Inline AI panel state
-  const [inlinePanel, setInlinePanel] = useState(null); // null | { label, actionId, selectionText, resultText, isLoading, previewEdit }
-  const inlinePanelRef = useRef(null);
+  const [inlinePanel, setInlinePanel] = useState<InlinePanelState | null>(null);
+  const inlinePanelRef = useRef<any>(null);
 
-  const runInlineAction = async (ed, actionId, label) => {
+  const runInlineAction = async (ed: any, actionId: string, label: string) => {
     const model = ed.getModel();
     const selection = ed.getSelection();
     const selectionText = model?.getValueInRange(selection);
@@ -50,15 +73,18 @@ export default function MonacoFileViewer({
 
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-      const reader = response.body.getReader();
+      const body = response.body;
+      if (!body) throw new Error("ReadableStream is not supported or empty body");
+
+      const reader = body.getReader();
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
       let accumulated = "";
 
-      const processLines = (text) => {
+      const processLines = (text: string) => {
         buffer += text;
         const lines = buffer.split("\n");
-        buffer = lines.pop();
+        buffer = lines.pop() || "";
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
@@ -66,7 +92,7 @@ export default function MonacoFileViewer({
             const parsed = JSON.parse(trimmed);
             if (parsed.type === "token") {
               accumulated += parsed.token;
-              setInlinePanel((prev) => ({ ...prev, resultText: accumulated }));
+              setInlinePanel((prev) => prev ? { ...prev, resultText: accumulated } : null);
             }
           } catch { /* ignore */ }
         }
@@ -74,17 +100,20 @@ export default function MonacoFileViewer({
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) { if (buffer.trim()) processLines("\n"); break; }
+        if (done) { 
+          if (buffer.trim()) processLines("\n"); 
+          break; 
+        }
         processLines(decoder.decode(value));
       }
 
-      setInlinePanel((prev) => ({ ...prev, isLoading: false }));
-    } catch (err) {
-      setInlinePanel((prev) => ({ ...prev, resultText: `Error: ${err.message}`, isLoading: false }));
+      setInlinePanel((prev) => prev ? { ...prev, isLoading: false } : null);
+    } catch (err: any) {
+      setInlinePanel((prev) => prev ? { ...prev, resultText: `Error: ${err.message}`, isLoading: false } : null);
     }
   };
 
-  const handleReplaceSelection = (ed) => {
+  const handleReplaceSelection = (ed: any) => {
     if (!inlinePanel || !inlinePanelRef.current) return;
     const { selection } = inlinePanelRef.current;
 
@@ -100,7 +129,7 @@ export default function MonacoFileViewer({
     inlinePanelRef.current = null;
   };
 
-  const handleEditorDidMount = (editor) => {
+  const handleEditorDidMount = (editor: any) => {
     if (editorRef) {
       editorRef.current = editor;
     }
@@ -113,21 +142,21 @@ export default function MonacoFileViewer({
       }
     });
 
-    // Propagate selection changes to parent (Phase 19 AI Workspace)
+    // Propagate selection changes to parent (AI Workspace)
     if (onSelectionChange) {
       editor.onDidChangeCursorSelection(() => {
         onSelectionChange(editor);
       });
     }
 
-    // --- Navigation actions (Phase 13) ---
+    // --- Navigation actions ---
     if (onExplainSymbol) {
       editor.addAction({
         id: "explain-symbol",
         label: "Explain Symbol",
         contextMenuGroupId: "navigation",
         contextMenuOrder: 1.5,
-        run: (ed) => {
+        run: (ed: any) => {
           const position = ed.getPosition();
           const word = ed.getModel().getWordAtPosition(position);
           if (word) onExplainSymbol(word.word);
@@ -141,7 +170,7 @@ export default function MonacoFileViewer({
         label: "Go to Definition",
         contextMenuGroupId: "navigation",
         contextMenuOrder: 1.6,
-        run: (ed) => {
+        run: (ed: any) => {
           const position = ed.getPosition();
           const word = ed.getModel().getWordAtPosition(position);
           if (word) onGoToDefinition(word.word);
@@ -155,7 +184,7 @@ export default function MonacoFileViewer({
         label: "Find References",
         contextMenuGroupId: "navigation",
         contextMenuOrder: 1.7,
-        run: (ed) => {
+        run: (ed: any) => {
           const position = ed.getPosition();
           const word = ed.getModel().getWordAtPosition(position);
           if (word) onFindReferences(word.word);
@@ -163,13 +192,13 @@ export default function MonacoFileViewer({
       });
     }
 
-    // --- Inline AI actions (Phase 15) ---
+    // --- Inline AI actions ---
     editor.addAction({
       id: "ai-explain-selection",
       label: "✨ AI: Explain Selected Code",
       contextMenuGroupId: "ai-inline",
       contextMenuOrder: 2.1,
-      run: (ed) => runInlineAction(ed, "explain", "Explain Code"),
+      run: (ed: any) => runInlineAction(ed, "explain", "Explain Code"),
     });
 
     editor.addAction({
@@ -177,7 +206,7 @@ export default function MonacoFileViewer({
       label: "🔧 AI: Refactor Selected Code",
       contextMenuGroupId: "ai-inline",
       contextMenuOrder: 2.2,
-      run: (ed) => runInlineAction(ed, "refactor", "Refactor Code"),
+      run: (ed: any) => runInlineAction(ed, "refactor", "Refactor Code"),
     });
 
     editor.addAction({
@@ -185,7 +214,7 @@ export default function MonacoFileViewer({
       label: "📝 AI: Generate Docs for Selection",
       contextMenuGroupId: "ai-inline",
       contextMenuOrder: 2.3,
-      run: (ed) => runInlineAction(ed, "generate_docs", "Generate Docs"),
+      run: (ed: any) => runInlineAction(ed, "generate_docs", "Generate Docs"),
     });
 
     editor.addAction({
@@ -193,35 +222,35 @@ export default function MonacoFileViewer({
       label: "🧪 AI: Generate Tests for Selection",
       contextMenuGroupId: "ai-inline",
       contextMenuOrder: 2.4,
-      run: (ed) => runInlineAction(ed, "generate_tests", "Generate Tests"),
+      run: (ed: any) => runInlineAction(ed, "generate_tests", "Generate Tests"),
     });
   };
 
   const options = {
-    readOnly: false, // Allow inline edits via executeEdits
+    readOnly: false,
     minimap: { enabled: true },
-    wordWrap: "on",
+    wordWrap: "on" as const,
     automaticLayout: true,
-    lineNumbers: "on",
+    lineNumbers: "on" as const,
     smoothScrolling: true,
     fontSize: 12,
     fontFamily: "JetBrains Mono, Fira Code, Courier New, monospace",
-    cursorBlinking: "smooth",
+    cursorBlinking: "smooth" as const,
     scrollBeyondLastLine: false,
-    renderLineHighlight: "all",
+    renderLineHighlight: "all" as const,
     contextmenu: true,
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[380px]">
-        <span className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin"></span>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full min-h-[380px] rounded-2xl overflow-hidden border border-white/5 bg-[#1e1e1e] flex flex-col relative">
+    <div className="w-full h-full min-h-[380px] rounded-2xl overflow-hidden border border-border bg-bg flex flex-col relative shadow-md">
       {/* Monaco Editor */}
       <div className="flex-grow min-h-0">
         <Editor
@@ -233,39 +262,41 @@ export default function MonacoFileViewer({
           onMount={handleEditorDidMount}
           loading={
             <div className="flex items-center justify-center h-full">
-              <span className="w-6 h-6 border-2 border-indigo-400/20 border-t-indigo-400 rounded-full animate-spin"></span>
+              <span className="w-6 h-6 border-2 border-accent/20 border-t-accent rounded-full animate-spin"></span>
             </div>
           }
         />
       </div>
 
-      {/* Inline AI Panel (Phase 15) */}
+      {/* Inline AI Panel */}
       {inlinePanel && (
-        <div className="border-t border-indigo-500/30 bg-slate-950/90 flex flex-col" style={{ height: "45%", minHeight: 160 }}>
+        <div className="border-t border-accent-dim/30 bg-slate-950/95 flex flex-col" style={{ height: "45%", minHeight: 160 }}>
           {/* Panel Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 shrink-0">
+          <div className="flex items-center justify-between px-3.5 py-2 border-b border-border bg-panel shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet-600/20 text-violet-400 border border-violet-500/20 font-mono">
+              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-violet/10 text-violet border border-violet/25 font-mono">
                 {inlinePanel.label}
               </span>
               {inlinePanel.isLoading && (
-                <span className="w-3 h-3 border border-indigo-400/20 border-t-indigo-400 rounded-full animate-spin"></span>
+                <span className="w-3 h-3 border border-accent/20 border-t-accent rounded-full animate-spin"></span>
               )}
-              <span className="text-[9px] text-gray-500 font-mono">Selection: {inlinePanel.selectionText.slice(0, 40)}{inlinePanel.selectionText.length > 40 ? "…" : ""}</span>
+              <span className="text-[9px] text-muted font-mono truncate max-w-[200px]">
+                Selection: {inlinePanel.selectionText.slice(0, 40)}{inlinePanel.selectionText.length > 40 ? "…" : ""}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               {!inlinePanel.isLoading && inlinePanel.resultText && (
                 <>
                   <button
                     onClick={() => navigator.clipboard.writeText(inlinePanel.resultText)}
-                    className="px-2 py-0.5 text-[9px] font-bold rounded bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition-all font-mono"
+                    className="px-2.5 py-0.5 text-[9px] font-bold rounded bg-panel-alt border border-border text-soft hover:text-text-strong hover:bg-panel-alt-2 transition-all font-mono cursor-pointer"
                   >
                     Copy
                   </button>
                   {editorRef?.current && (
                     <button
                       onClick={() => handleReplaceSelection(editorRef.current)}
-                      className="px-2 py-0.5 text-[9px] font-bold rounded bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/40 transition-all font-mono"
+                      className="px-2.5 py-0.5 text-[9px] font-bold rounded bg-accent/20 border border-accent-dim text-accent hover:bg-accent/40 transition-all font-mono cursor-pointer"
                     >
                       Replace Selection
                     </button>
@@ -274,7 +305,7 @@ export default function MonacoFileViewer({
               )}
               <button
                 onClick={() => { setInlinePanel(null); inlinePanelRef.current = null; }}
-                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-white/5 border border-white/10 text-gray-500 hover:text-white transition-all font-mono"
+                className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-panel-alt border border-border text-muted hover:text-text-strong transition-all font-mono cursor-pointer"
               >
                 ✕
               </button>
@@ -282,12 +313,12 @@ export default function MonacoFileViewer({
           </div>
 
           {/* Panel Body — streamed result */}
-          <div className="flex-grow overflow-y-auto p-3 text-xs font-mono text-gray-300 leading-relaxed scrollbar-thin">
+          <div className="flex-grow overflow-y-auto p-4 text-xs font-mono text-text leading-relaxed scrollbar-thin">
             {inlinePanel.resultText ? (
               <FormatText text={inlinePanel.resultText} />
             ) : (
               inlinePanel.isLoading && (
-                <span className="text-gray-500 italic animate-pulse">AI is analyzing your selection...</span>
+                <span className="text-muted italic animate-pulse">AI is analyzing your selection...</span>
               )
             )}
           </div>

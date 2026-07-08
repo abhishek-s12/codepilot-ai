@@ -1,6 +1,6 @@
 // Helper to determine node colors
-export const getFileColor = (ext) => {
-  switch (ext) {
+export const getFileColor = (ext: string): string => {
+  switch (ext.toLowerCase()) {
     case ".py":
       return "#3572A5";
     case ".js":

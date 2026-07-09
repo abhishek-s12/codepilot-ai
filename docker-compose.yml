@@ -1,12 +1,5 @@
 version: "3.9"
 
-# ═══════════════════════════════════════════════════════════════════
-# CodePilot AI — Production Docker Compose
-# All secrets come from .env (copy .env.example → .env and fill in)
-# Start: docker-compose up -d
-# Logs:  docker-compose logs -f backend worker
-# ═══════════════════════════════════════════════════════════════════
-
 x-logging: &default-logging
   driver: json-file
   options:
@@ -70,7 +63,7 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:6333/healthz || exit 1"]
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/6333"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -91,7 +84,7 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -107,7 +100,7 @@ services:
     image: codepilot-backend:latest
     container_name: codepilot-migrate
     <<: *app-env
-    command: ["python", "-c", "from services.db_service import init_db; init_db(); print('[Migrate] DB schema ready.')"]
+    command: ["alembic", "upgrade", "head"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,7 +145,16 @@ services:
       dockerfile: Dockerfile
     image: codepilot-backend:latest
     container_name: codepilot-worker
-    command: ["python", "worker.py"]
+    command:
+      - celery
+      - -A
+      - celery_app
+      - worker
+      - --loglevel=info
+      - -Q
+      - indexing,default
+      - --concurrency=4
+      - --hostname=codepilot-worker@%h
     <<: *app-env
     volumes:
       - repo_data:/app/repos
@@ -167,6 +169,23 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    logging: *default-logging
+    restart: unless-stopped
+
+  # ── Celery Flower (Task Monitoring UI) ──────────────────────────────────────
+
+  flower:
+    image: mher/flower:2.0
+    container_name: codepilot-flower
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      FLOWER_BASIC_AUTH: admin:codepilot_flower_pass
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
     logging: *default-logging
     restart: unless-stopped
 
@@ -188,6 +207,98 @@ services:
     logging: *default-logging
     restart: unless-stopped
 
+  # ── Observability Stack (Phase 9) ─────────────────────────────────────────
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: codepilot-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:9090/-/healthy -O /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: codepilot-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-codepilot_grafana_pass}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:3000/api/health -O /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: codepilot-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/config.yml
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:3100/ready -O /dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging: *default-logging
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: codepilot-promtail
+    volumes:
+      - ./observability/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    logging: *default-logging
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: codepilot-otel-collector
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8889:8889"   # Prometheus metrics exporter
+    volumes:
+      - ./observability/otel-collector.yml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      - loki
+      - prometheus
+    logging: *default-logging
+    restart: unless-stopped
+
 # ── Volumes ──────────────────────────────────────────────────────────
 volumes:
   postgres_data:
@@ -195,3 +306,6 @@ volumes:
   qdrant_data:
   minio_data:
   repo_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:

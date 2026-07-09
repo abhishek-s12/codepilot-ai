@@ -1,0 +1,66 @@
+{{- if .Values.flower.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "codepilot-ai.fullname" . }}-flower
+  labels:
+    {{- include "codepilot-ai.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flower
+spec:
+  replicas: {{ .Values.flower.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "codepilot-ai.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flower
+  template:
+    metadata:
+      labels:
+        {{- include "codepilot-ai.labels" . | nindent 8 }}
+        app.kubernetes.io/component: flower
+    spec:
+      containers:
+        - name: flower
+          image: mher/flower:2.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - celery
+            - --broker={{ include "codepilot-ai.redisUrl" . }}
+            - flower
+            - --port=5555
+          env:
+            - name: FLOWER_BASIC_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "codepilot-ai.fullname" . }}-secrets
+                  key: FLOWER_BASIC_AUTH
+          ports:
+            - name: http
+              containerPort: 5555
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.flower.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "codepilot-ai.fullname" . }}-flower
+  labels:
+    {{- include "codepilot-ai.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flower
+spec:
+  type: {{ .Values.flower.service.type }}
+  ports:
+    - port: {{ .Values.flower.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "codepilot-ai.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: flower
+{{- end }}

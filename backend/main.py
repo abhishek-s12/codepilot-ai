@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import time
 from collections import defaultdict
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 from api.repository import router as repo_router
 from api.scanner import router as scanner_router
 from api.indexer import router as indexer_router
@@ -134,6 +136,25 @@ settings = get_settings()
 
 app = FastAPI(title=settings.api_title, version=settings.api_version)
 
+# ── Prometheus Metrics (/metrics endpoint) ────────────────────────────────────
+Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untemplated=True,
+    should_respect_env_var=True,
+    excluded_handlers=["/health", "/health/live", "/health/ready", "/metrics"],
+).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+
+# ── OpenTelemetry Setup ───────────────────────────────────────────────────────
+try:
+    from observability.otel_setup import setup_otel
+    setup_otel(app=app)
+    
+    from observability.instrumentation import instrument_psycopg2, instrument_redis
+    instrument_psycopg2()
+    instrument_redis()
+except Exception as otel_err:
+    print(f"[App Startup] OTEL setup warning: {otel_err}")
+
 
 # Validate configuration variables (fail-fast)
 def validate_config():
@@ -154,9 +175,34 @@ def validate_config():
         )
 
 
-validate_config()
+def check_services_connectivity():
+    if settings.enforce_strict_auth:
+        print("[App Startup] Strict checks enabled. Verifying Redis and Database connectivity...")
+        # Check Redis
+        try:
+            from services.redis_service import get_redis
+            r = get_redis()
+            if r is None:
+                raise ConnectionError("Redis is not available")
+            r.ping()
+        except Exception as e:
+            raise RuntimeError(f"Strict Startup Check Failed: Redis is unreachable: {e}")
 
-# Initialize the SQLite database on app load
+        # Check DB
+        try:
+            from services.db_service import get_db, use_sqlite
+            conn = get_db()
+            conn.close()
+            if use_sqlite:
+                raise ConnectionError("PostgreSQL pool could not be initialized. Check your DATABASE_URL.")
+        except Exception as e:
+            raise RuntimeError(f"Strict Startup Check Failed: Database is unreachable: {e}")
+        print("[App Startup] All required services are reachable.")
+
+
+check_services_connectivity()
+
+# Initialize database on app load
 init_db()
 
 # Ensure S3 storage bucket exists on app load

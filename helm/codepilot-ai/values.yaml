@@ -1,0 +1,185 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# CodePilot AI — Helm values.yaml
+# Override any value with: helm upgrade --install codepilot ./helm/codepilot-ai \
+#   --set image.tag=v1.2.3 --set secrets.llmApiKey=sk-xxx
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Container Image ──────────────────────────────────────────────────────────
+image:
+  repository: ghcr.io/abhishek-s12/codepilot-ai
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# ── Service Account ───────────────────────────────────────────────────────────
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# ── Backend Deployment ────────────────────────────────────────────────────────
+backend:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  service:
+    type: ClusterIP
+    port: 8000
+
+# ── Celery Worker Deployment ──────────────────────────────────────────────────
+worker:
+  replicaCount: 2
+  concurrency: 4
+  queues: "indexing,default"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 75
+
+# ── Celery Flower ─────────────────────────────────────────────────────────────
+flower:
+  enabled: true
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 5555
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# ── Ingress ───────────────────────────────────────────────────────────────────
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: codepilot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: codepilot-tls
+  #   hosts:
+  #     - codepilot.example.com
+
+# ── Application Secrets ───────────────────────────────────────────────────────
+# ⚠️  Do NOT commit real values to git. Use --set or external secrets manager.
+secrets:
+  llmApiKey: ""
+  jwtSecret: "codepilot_secret_key_change_in_production"
+  githubClientId: ""
+  githubClientSecret: ""
+  googleClientId: ""
+  googleClientSecret: ""
+  flowerBasicAuth: "admin:codepilot_flower_pass"
+  grafanaAdminPassword: "codepilot_grafana_pass"
+
+# ── Application Config (non-secret) ──────────────────────────────────────────
+config:
+  corsOrigins: '["https://codepilot.example.com"]'
+  llmBaseUrl: "https://openrouter.ai/api/v1"
+  llmModel: "openai/gpt-4o-mini"
+  llmAppName: "CodePilot AI"
+  llmSiteUrl: "https://codepilot.example.com"
+  allowSandboxLogin: "false"
+  enforceStrictAuth: "true"
+  environment: "production"
+
+# ── PostgreSQL (bitnami sub-chart) ────────────────────────────────────────────
+postgresql:
+  enabled: true
+  auth:
+    username: codepilot
+    password: codepilot_pass_123
+    database: codepilot
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "256Mi"
+
+# ── Redis (bitnami sub-chart) ─────────────────────────────────────────────────
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+
+# ── MinIO (bitnami sub-chart) ─────────────────────────────────────────────────
+minio:
+  enabled: true
+  auth:
+    rootUser: minio_user
+    rootPassword: minio_password_123
+  defaultBuckets: "codepilot-storage"
+  persistence:
+    enabled: true
+    size: 50Gi
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+
+# ── Pod annotations / labels ──────────────────────────────────────────────────
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podLabels: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+# ── Node selection ────────────────────────────────────────────────────────────
+nodeSelector: {}
+tolerations: []
+affinity: {}

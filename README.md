@@ -44,6 +44,18 @@ Understanding a large or unfamiliar codebase is a significant challenge when joi
 
 ---
 
+# 📚 Project Documentation
+
+For comprehensive guides and architecture diagrams, check out our new **[documentation/](documentation/)** folder:
+* **[Introduction](documentation/introduction.md)** — High-level details of Codexa (CodePilot AI).
+* **[Getting Started Guide](documentation/getting-started.md)** — Step-by-step local development setup.
+* **[System Architecture](documentation/architecture.md)** — Component layouts, data flows, and tracing.
+* **[Developer & Operations Guide](documentation/development-guide.md)** — Alembic migrations, testing, and troubleshooting.
+* **[Production Deployment Guide](documentation/production-deployment.md)** — Kubernetes & Helm chart deployment.
+* **[Design System Guidelines](documentation/design-system.md)** — Visual hierarchy, palettes, and rules.
+
+---
+
 # ✨ Features
 
 | Feature                         |    Status    | Description                                                                                 |

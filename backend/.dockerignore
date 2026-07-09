@@ -9,7 +9,6 @@ __pycache__/
 chroma_db/
 repos/
 embeddings/
-vector_store/
 archives/
 *.db
 codepilot.db

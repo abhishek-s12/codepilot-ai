@@ -109,7 +109,45 @@ def get_db():
         return SqliteConnectionWrapper(conn)
 
 
+def run_alembic_migrations():
+    import os
+    from alembic.config import Config
+    from alembic import command
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ini_path = os.path.join(base_dir, "alembic.ini")
+    
+    alembic_cfg = Config(ini_path)
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_url)
+    
+    print("[DB] Running Alembic migrations...")
+    command.upgrade(alembic_cfg, "head")
+    print("[DB] Alembic migrations completed successfully.")
+
+
 def init_db():
+    global use_sqlite
+    # Establish connection once to determine if SQLite or Postgres
+    try:
+        conn = get_db()
+        conn.close()
+    except Exception as e:
+        print(f"[DB Error] Failed to establish database connection during init: {e}")
+        use_sqlite = True
+
+    if use_sqlite:
+        print("[DB] Using local SQLite database. Initializing table structure directly.")
+        init_sqlite_db()
+    else:
+        try:
+            run_alembic_migrations()
+        except Exception as e:
+            print(f"[DB Warning] Alembic migrations failed: {e}. Falling back to SQLite.")
+            use_sqlite = True
+            init_sqlite_db()
+
+
+def init_sqlite_db():
     conn = get_db()
     cursor = conn.cursor()
     try:

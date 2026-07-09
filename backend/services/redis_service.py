@@ -46,45 +46,25 @@ def set_cached_response(prompt_hash: str, response: str, expire_seconds: int = 8
         print(f"[Redis Cache] Write error: {e}")
 
 
-INDEXING_QUEUE_KEY = "indexing_queue"
 INDEXING_PROGRESS_PREFIX = "indexing_progress:"
 
 
 def enqueue_indexing_task(repo_path: str, repo_id: str, user_id: str) -> bool:
-    client = get_redis()
-    if client is None:
-        return False
+    """
+    Enqueue a repository indexing task via Celery.
+    Replaces the old Redis rpush approach.
+    """
     try:
-        task_data = {
-            "repo_path": repo_path,
-            "repo_id": repo_id,
-            "user_id": user_id,
-        }
-        client.rpush(INDEXING_QUEUE_KEY, json.dumps(task_data))
+        from tasks.indexing_tasks import index_repository_task
+
+        index_repository_task.apply_async(
+            args=[repo_path, repo_id, user_id],
+            queue="indexing",
+        )
         return True
     except Exception as e:
-        print(f"[Redis Queue] Enqueue error: {e}")
+        print(f"[Celery] Failed to enqueue indexing task: {e}")
         return False
-
-
-def dequeue_indexing_task(timeout: int = 0) -> dict:
-    client = get_redis()
-    if client is None:
-        import time
-
-        time.sleep(1)
-        return None
-    try:
-        res = client.blpop(INDEXING_QUEUE_KEY, timeout=timeout)
-        if res:
-            return json.loads(res[1])
-        return None
-    except Exception as e:
-        print(f"[Redis Queue] Dequeue error: {e}")
-        import time
-
-        time.sleep(1)
-        return None
 
 
 def update_indexing_progress(repo_path: str, progress_data: dict) -> bool:
@@ -116,36 +96,26 @@ def get_indexing_progress(repo_path: str) -> dict:
         return None
 
 
-BACKGROUND_JOBS_QUEUE = "background_jobs"
-
-
 def enqueue_background_job(job_type: str, payload: dict) -> bool:
-    """Enqueues a background task to the Redis-backed distributed queue."""
-    client = get_redis()
-    if client is None:
-        return False
+    """
+    Enqueue a background S3/storage job via Celery.
+    Replaces the old Redis rpush approach.
+    """
     try:
-        job_data = {"job_type": job_type, "payload": payload}
-        client.rpush(BACKGROUND_JOBS_QUEUE, json.dumps(job_data))
+        if job_type == "archive_and_upload":
+            from tasks.indexing_tasks import archive_and_upload_task
+
+            archive_and_upload_task.apply_async(
+                kwargs=payload,
+                queue="default",
+            )
+        else:
+            print(f"[Celery] Unknown job_type '{job_type}' — skipping.")
+            return False
         return True
     except Exception as e:
-        print(f"[Redis Queue] Enqueue background job error: {e}")
+        print(f"[Celery] Failed to enqueue background job '{job_type}': {e}")
         return False
-
-
-def dequeue_background_job(timeout: int = 0) -> dict:
-    """Blocks and retrieves a background task from the Redis distributed queue."""
-    client = get_redis()
-    if client is None:
-        return None
-    try:
-        res = client.blpop(BACKGROUND_JOBS_QUEUE, timeout=timeout)
-        if res:
-            return json.loads(res[1])
-        return None
-    except Exception as e:
-        print(f"[Redis Queue] Dequeue background job error: {e}")
-        return None
 
 
 def acquire_repo_lock(repo_name: str, expire_seconds: int = 300) -> bool:

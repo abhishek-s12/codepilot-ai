@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { WifiOff, FileCode } from "lucide-react";
+import { WifiOff, FileCode, AlertTriangle } from "lucide-react";
 import GitStatusWidget from "./GitStatusWidget";
 import AIStatusWidget from "./AIStatusWidget";
 import RepositoryStatusWidget from "./RepositoryStatusWidget";
@@ -33,6 +33,13 @@ export default function StatusBar({
   const [openWidget, setOpenWidget] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Retry indicator state — populated by the Axios response interceptor
+  const [retryInfo, setRetryInfo] = useState<{
+    attempt: number;
+    maxAttempts: number;
+  } | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const toggleWidget = (widgetId: string) => {
     setOpenWidget((prev) => (prev === widgetId ? null : widgetId));
   };
@@ -46,6 +53,26 @@ export default function StatusBar({
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  // Listen for API retry events dispatched by the Axios interceptor
+  useEffect(() => {
+    const handleRetry = (e: Event) => {
+      const { attempt, maxAttempts } = (e as CustomEvent<{ attempt: number; maxAttempts: number; delay: number }>).detail;
+      setRetryInfo({ attempt, maxAttempts });
+
+      // Auto-clear the indicator 4 s after the last retry event
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = setTimeout(() => {
+        setRetryInfo(null);
+      }, 4000);
+    };
+
+    window.addEventListener("api_request_retry", handleRetry);
+    return () => {
+      window.removeEventListener("api_request_retry", handleRetry);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
   }, []);
 
   return (
@@ -78,13 +105,24 @@ export default function StatusBar({
         </div>
       </div>
 
-      {/* Middle connection warnings */}
-      {isOffline && (
-        <div className="flex items-center gap-1 text-danger font-bold animate-pulse select-none">
-          <WifiOff className="w-3 h-3" />
-          <span>OFFLINE</span>
-        </div>
-      )}
+      {/* Middle: connection warnings + retry indicator */}
+      <div className="flex items-center gap-3">
+        {isOffline && (
+          <div className="flex items-center gap-1 text-danger font-bold animate-pulse select-none">
+            <WifiOff className="w-3 h-3" />
+            <span>OFFLINE</span>
+          </div>
+        )}
+
+        {retryInfo && (
+          <div className="flex items-center gap-1 text-amber-400 font-bold animate-pulse select-none">
+            <AlertTriangle className="w-3 h-3" />
+            <span>
+              Retry {retryInfo.attempt}/{retryInfo.maxAttempts}…
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Right side telemetry widgets */}
       <div className="flex items-center gap-4.5 select-none font-semibold">

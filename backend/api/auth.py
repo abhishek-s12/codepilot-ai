@@ -658,3 +658,112 @@ def callback_google(code: str):
 
     frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
     return RedirectResponse(url=frontend_redirect)
+
+
+@router.get("/sso/login")
+def login_sso():
+    """Redirect to Okta / OIDC auth page, or perform mock sign-in in sandbox."""
+    if not settings.sso_client_id or not settings.sso_metadata_url:
+        if settings.allow_sandbox_login:
+            # Sandbox mock SSO flow
+            redirect_url = "http://localhost:8000/auth/sso/callback?code=mock-sso-code"
+            return RedirectResponse(url=redirect_url)
+        raise HTTPException(
+            status_code=400,
+            detail="SSO/SAML client credentials are not configured. Please use the Developer Sandbox Login.",
+        )
+
+    auth_url = f"{settings.sso_metadata_url}/v1/authorize?client_id={settings.sso_client_id}&redirect_uri={settings.sso_redirect_uri}&response_type=code&scope=openid%20email%20profile"
+    return RedirectResponse(url=auth_url)
+
+
+@router.get("/sso/callback")
+def callback_sso(code: str):
+    """Callback endpoint for SSO OAuth2 flow."""
+    if code == "mock-sso-code" and (not settings.sso_client_id or not settings.sso_client_secret):
+        email = "sso-sandbox@codepilot.ai"
+        user_id = "sso-mock-dev"
+        name = "SSO Sandbox Developer"
+        avatar_url = f"https://api.dicebear.com/7.x/bottts/svg?seed={name}"
+    else:
+        if not settings.sso_client_id or not settings.sso_client_secret or not settings.sso_metadata_url:
+            raise HTTPException(
+                status_code=400, detail="SSO Client credentials missing."
+            )
+        
+        token_endpoint = f"{settings.sso_metadata_url}/v1/token"
+        try:
+            token_res = requests.post(
+                token_endpoint,
+                data={
+                    "client_id": settings.sso_client_id,
+                    "client_secret": settings.sso_client_secret,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": settings.sso_redirect_uri,
+                },
+            )
+            token_res.raise_for_status()
+            token_data = token_res.json()
+            access_token = token_data.get("access_token")
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Failed to exchange authorization code: {str(e)}"
+            )
+
+        if not access_token:
+            raise HTTPException(
+                status_code=400, detail="Failed to retrieve access token from SSO provider."
+            )
+
+        userinfo_endpoint = f"{settings.sso_metadata_url}/v1/userinfo"
+        try:
+            user_res = requests.get(
+                userinfo_endpoint,
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            user_res.raise_for_status()
+            user_profile = user_res.json()
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Failed to retrieve user profile from SSO provider: {str(e)}"
+            )
+
+        email = user_profile.get("email")
+        user_id = f"sso-{user_profile.get('sub')}"
+        name = user_profile.get("name") or "SSO User"
+        avatar_url = (
+            user_profile.get("picture")
+            or f"https://api.dicebear.com/7.x/bottts/svg?seed={name}"
+        )
+
+    create_user(user_id=user_id, email=email, name=name, avatar_url=avatar_url)
+
+    user = get_user(user_id)
+    token_version = user["token_version"] if user and "token_version" in user else 1
+
+    from services.audit_service import log_audit_event
+    log_audit_event(user_id, "sso_login_success", details={"email": email})
+
+    if user and user.get("mfa_enabled"):
+        mfa_temp_token = jwt.encode(
+            {
+                "type": "mfa_temp",
+                "user_id": user_id,
+                "email": email,
+                "token_version": token_version,
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=5),
+            },
+            settings.jwt_secret,
+            algorithm="HS256",
+        )
+        frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
+        return RedirectResponse(url=frontend_redirect)
+
+    token = encode_token(user_id=user_id, email=email, token_version=token_version)
+    refresh_token = encode_refresh_token(
+        user_id=user_id, email=email, token_version=token_version
+    )
+
+    frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
+    return RedirectResponse(url=frontend_redirect)

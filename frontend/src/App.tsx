@@ -27,8 +27,12 @@ import { getFileColor } from "./utils/colors";
 const getInitialToken = (): string => {
   const params = new URLSearchParams(window.location.search);
   const urlToken = params.get("token");
+  const urlRefreshToken = params.get("refresh_token");
   if (urlToken) {
     localStorage.setItem("codepilot_token", urlToken);
+    if (urlRefreshToken) {
+      localStorage.setItem("codepilot_refresh_token", urlRefreshToken);
+    }
     return urlToken;
   }
   return localStorage.getItem("codepilot_token") || "";
@@ -114,6 +118,13 @@ export default function App() {
   } = useExecutionFlow(repoPath, setStatus) as any;
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      handleSignOut();
+      showToast("Session expired. Please log in again.", "error");
+    };
+
+    window.addEventListener("codepilot_unauthorized", handleUnauthorized);
+
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get("token");
     const mfaRequired = params.get("mfa_required") === "true";
@@ -159,6 +170,9 @@ export default function App() {
     };
 
     loadUserAndHistory();
+    return () => {
+      window.removeEventListener("codepilot_unauthorized", handleUnauthorized);
+    };
   }, [token, selectRepositoryFromHistory, showToast]);
 
   const activeRepo = history.find((r: any) => r.repository_path === repoPath);
@@ -190,6 +204,7 @@ export default function App() {
   // Sign out helper
   const handleSignOut = () => {
     localStorage.removeItem("codepilot_token");
+    localStorage.removeItem("codepilot_refresh_token");
     setToken("");
     setUser(null);
     setHistory([]);

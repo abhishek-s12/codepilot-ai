@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, FileText, Search, ArrowLeft, ArrowRight, Download, Shield, Loader2, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Users, FileText, Search, ArrowLeft, ArrowRight, Download, Shield, Loader2, RefreshCw, Key } from "lucide-react";
 import { fetchProjectMembers, updateMemberRole, fetchAuditLogs } from "../../services/api";
 
 interface Member {
@@ -31,7 +32,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ repoPath, repoId, onBack }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<"members" | "audit">("members");
+  const [activeTab, setActiveTab] = useState<"members" | "audit" | "permissions">("members");
   const [error, setError] = useState<string | null>(null);
 
   // Members States
@@ -209,6 +210,18 @@ export default function AdminDashboard({ repoPath, repoId, onBack }: AdminDashbo
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Audit Logs</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("permissions");
+              setError(null);
+            }}
+            className={`px-3 py-1 rounded-lg text-[10px] font-mono font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "permissions" ? "bg-[#FF9D4D]/15 text-[#FF9D4D]" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span>Role Permissions</span>
           </button>
         </div>
       </div>
@@ -400,6 +413,43 @@ export default function AdminDashboard({ repoPath, repoId, onBack }: AdminDashbo
 
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab 3: ROLE PERMISSIONS */}
+        {activeTab === "permissions" && (
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">Permissions Matrix</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-[#1c2230] bg-[#10141B]/40 text-xs font-mono">
+                <thead className="bg-[#0c0f16]/60 text-gray-500 uppercase tracking-wider">
+                  <tr className="border-b border-[#1c2230]">
+                    <th className="p-2 text-left">Capability</th>
+                    <th className="p-2 text-center">Owner</th>
+                    <th className="p-2 text-center">Admin</th>
+                    <th className="p-2 text-center">Member</th>
+                    <th className="p-2 text-center">Viewer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1c2230]">
+                  {[
+                    { capability: "Create Project", owner: true, admin: true, member: false, viewer: false },
+                    { capability: "Delete Project", owner: true, admin: false, member: false, viewer: false },
+                    { capability: "Manage Members", owner: true, admin: true, member: false, viewer: false },
+                    { capability: "View Audit Logs", owner: true, admin: true, member: true, viewer: true },
+                    { capability: "Edit Code", owner: true, admin: true, member: true, viewer: false },
+                  ].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-[#141822]/30">
+                      <td className="p-2 font-medium text-white">{row.capability}</td>
+                      <td className="p-2 text-center">{row.owner ? "✔" : "—"}</td>
+                      <td className="p-2 text-center">{row.admin ? "✔" : "—"}</td>
+                      <td className="p-2 text-center">{row.member ? "✔" : "—"}</td>
+                      <td className="p-2 text-center">{row.viewer ? "✔" : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

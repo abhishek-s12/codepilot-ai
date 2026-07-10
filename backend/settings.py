@@ -95,6 +95,26 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("GOOGLE_CLIENT_SECRET"),
     )
+    sso_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("SSO_ENABLED"),
+    )
+    sso_client_id: str = Field(
+        default="",
+        validation_alias=AliasChoices("SSO_CLIENT_ID"),
+    )
+    sso_client_secret: str = Field(
+        default="",
+        validation_alias=AliasChoices("SSO_CLIENT_SECRET"),
+    )
+    sso_metadata_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("SSO_METADATA_URL"),
+    )
+    sso_redirect_uri: str = Field(
+        default="http://localhost:5173/auth/sso/callback",
+        validation_alias=AliasChoices("SSO_REDIRECT_URI"),
+    )
     s3_endpoint_url: str = Field(
         default="http://127.0.0.1:9000",
         validation_alias=AliasChoices("S3_ENDPOINT_URL"),

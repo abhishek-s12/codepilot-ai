@@ -25,17 +25,77 @@ api.interceptors.request.use(
   }
 );
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Automatically retry failed transient requests (network drops or 5xx status codes) with exponential backoff
+// and handle silent token rotation on 401 Unauthorized
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const { config } = error;
+    const { config, response } = error;
     if (!config) return Promise.reject(error);
 
-    // Initializing retry state
-    (config as any).retryCount = (config as any).retryCount ?? 0;
+    // 1. Handle token refresh on 401 Unauthorized
+    if (response && response.status === 401 && !config._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            config.headers.Authorization = `Bearer ${token}`;
+            return api(config);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
 
-    // Retry settings
+      config._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem("codepilot_refresh_token");
+      if (refreshToken) {
+        try {
+          const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+            refresh_token: refreshToken,
+          });
+          const { token, refresh_token: newRefreshToken } = res.data;
+          
+          localStorage.setItem("codepilot_token", token);
+          localStorage.setItem("codepilot_refresh_token", newRefreshToken);
+          
+          config.headers.Authorization = `Bearer ${token}`;
+          processQueue(null, token);
+          isRefreshing = false;
+          return api(config);
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          isRefreshing = false;
+          localStorage.removeItem("codepilot_token");
+          localStorage.removeItem("codepilot_refresh_token");
+          window.dispatchEvent(new Event("codepilot_unauthorized"));
+          return Promise.reject(refreshError);
+        }
+      } else {
+        localStorage.removeItem("codepilot_token");
+        window.dispatchEvent(new Event("codepilot_unauthorized"));
+      }
+    }
+
+    // 2. Handle transient network/5xx retries
+    (config as any).retryCount = (config as any).retryCount ?? 0;
     const MAX_RETRIES = 3;
     const isNetworkOr5xxError =
       !error.response || (error.response.status >= 500 && error.response.status <= 599);
@@ -43,9 +103,20 @@ api.interceptors.response.use(
     if (isNetworkOr5xxError && (config as any).retryCount < MAX_RETRIES) {
       (config as any).retryCount += 1;
       
-      // Calculate exponential backoff duration (1s, 2s, 4s)
       const backoffDelay = Math.pow(2, (config as any).retryCount) * 1000;
       console.warn(`[API] Retrying request (${(config as any).retryCount}/${MAX_RETRIES}) in ${backoffDelay}ms: ${config.url}`);
+      
+      // Dispatch custom event for UI tracking
+      window.dispatchEvent(
+        new CustomEvent("api_request_retry", {
+          detail: {
+            url: config.url,
+            attempt: (config as any).retryCount,
+            maxAttempts: MAX_RETRIES,
+            delay: backoffDelay,
+          },
+        })
+      );
       
       await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       return api(config);

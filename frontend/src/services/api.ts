@@ -312,6 +312,21 @@ export async function updateComplianceSettings(payload: {
   return response.data;
 }
 
+export async function fetchTokenUsage(): Promise<any[]> {
+  const response = await api.get("/analytics/tokens");
+  return response.data;
+}
+
+export async function fetchCodebaseAnalytics(): Promise<any> {
+  const response = await api.get("/analytics/codebase");
+  return response.data;
+}
+
+export async function fetchWorkspaceActivity(): Promise<any[]> {
+  const response = await api.get("/analytics/activity");
+  return response.data;
+}
+
 export { API_BASE_URL };
 export default api;
 

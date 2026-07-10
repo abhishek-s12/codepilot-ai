@@ -87,6 +87,15 @@ export default function WelcomeDashboard({
       bg: "bg-[#FF9D4D]/10",
       border: "border-[#FF9D4D]/20",
     },
+    {
+      id: "analytics",
+      title: "Usage & ROI Analytics",
+      desc: "Track model tokens consumed, API trends, and codebase health.",
+      icon: Flame,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+      border: "border-amber-400/20",
+    },
   ];
 
   return (

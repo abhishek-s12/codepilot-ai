@@ -24,7 +24,7 @@ import CommandPalette from "../common/CommandPalette";
 import InteractiveTour from "./InteractiveTour";
 import WelcomeDashboard from "./WelcomeDashboard";
 import ProjectHealthDashboard from "./ProjectHealthDashboard";
-import RepositoryAnalytics from "./RepositoryAnalytics";
+import AnalyticsDashboard from "./AnalyticsDashboard";
 import ActivityTimeline from "./ActivityTimeline";
 import BottomPanel from "./BottomPanel";
 import RepositoryGraph from "./RepositoryGraph";
@@ -657,8 +657,7 @@ export default function AIWorkspace({
           )}
 
           {mode === "analytics" && (
-            <RepositoryAnalytics
-              repoPath={repoPath}
+            <AnalyticsDashboard
               onBack={() => setMode("editor")}
             />
           )}

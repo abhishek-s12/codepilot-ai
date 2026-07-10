@@ -49,16 +49,17 @@ def get_codebase_analytics(current_user_id: str = Depends(get_current_user_id)):
         )
         repo_row = cursor.fetchone()
 
-        # Safe unpacking
+        # Safe unpacking — sqlite3.Row has no .get(); convert first
         total_files = 0
         total_chunks = 0
         if repo_row:
-            total_files = repo_row.get("total_files") or repo_row.get(0) or 0
-            total_chunks = repo_row.get("total_chunks") or repo_row.get(1) or 0
-            # If standard SQLite tuple returned
             if isinstance(repo_row, tuple):
                 total_files = repo_row[0] or 0
                 total_chunks = repo_row[1] or 0
+            else:
+                row_dict = dict(repo_row)
+                total_files = row_dict.get("total_files") or 0
+                total_chunks = row_dict.get("total_chunks") or 0
 
         # 2. Fetch counts of nodes by type (functions, classes)
         cursor.execute("SELECT type, COUNT(*) as count FROM graph_nodes GROUP BY type")
@@ -126,8 +127,11 @@ def get_workspace_activity(current_user_id: str = Depends(get_current_user_id)):
         # Aggregate logs by YYYY-MM-DD
         daily_counts = {}
         for r in rows:
-            # Handle tuple or dict row formats
-            ts = r.get("timestamp") or r.get(0) if not isinstance(r, tuple) else r[0]
+            # Handle tuple or sqlite3.Row formats — convert to dict first
+            if isinstance(r, tuple):
+                ts = r[0]
+            else:
+                ts = dict(r).get("timestamp")
             if isinstance(ts, str):
                 try:
                     # SQLite could return string

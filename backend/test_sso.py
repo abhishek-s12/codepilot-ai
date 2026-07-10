@@ -33,6 +33,7 @@ def setup_db():
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _sandbox_settings():
     """Return patch values that enable sandbox and clear SSO credentials."""
     return {
@@ -61,6 +62,7 @@ def _configured_settings():
 # /auth/sso/login
 # ---------------------------------------------------------------------------
 
+
 class TestSSOLogin:
     """Tests for GET /auth/sso/login."""
 
@@ -69,7 +71,9 @@ class TestSSOLogin:
         with patch.multiple(settings, **_sandbox_settings()):
             resp = client.get("/auth/sso/login")
 
-        assert resp.status_code in (302, 307), f"Expected redirect, got {resp.status_code}"
+        assert resp.status_code in (302, 307), (
+            f"Expected redirect, got {resp.status_code}"
+        )
         location = resp.headers.get("location", "")
         assert "sso/callback" in location, f"Expected callback URL, got: {location}"
         assert "mock-sso-code" in location, "Expected mock-sso-code in redirect URL"
@@ -80,9 +84,13 @@ class TestSSOLogin:
         with patch.multiple(settings, **cfg):
             resp = client.get("/auth/sso/login")
 
-        assert resp.status_code in (302, 307), f"Expected redirect, got {resp.status_code}"
+        assert resp.status_code in (302, 307), (
+            f"Expected redirect, got {resp.status_code}"
+        )
         location = resp.headers.get("location", "")
-        assert "accounts.example.com" in location, f"Expected OIDC provider URL, got: {location}"
+        assert "accounts.example.com" in location, (
+            f"Expected OIDC provider URL, got: {location}"
+        )
         assert "client_id=test-client-id" in location
 
     def test_no_sso_config_no_sandbox_returns_400(self):
@@ -104,6 +112,7 @@ class TestSSOLogin:
 # /auth/sso/callback
 # ---------------------------------------------------------------------------
 
+
 class TestSSOCallback:
     """Tests for GET /auth/sso/callback."""
 
@@ -114,7 +123,9 @@ class TestSSOCallback:
         with patch.multiple(settings, **_sandbox_settings()):
             resp = client.get("/auth/sso/callback?code=mock-sso-code")
 
-        assert resp.status_code in (302, 307), f"Expected redirect, got {resp.status_code}"
+        assert resp.status_code in (302, 307), (
+            f"Expected redirect, got {resp.status_code}"
+        )
         location = resp.headers.get("location", "")
         assert "token=" in location, f"Expected JWT in redirect, got: {location}"
         assert "refresh_token=" in location
@@ -146,13 +157,19 @@ class TestSSOCallback:
             "picture": "https://example.com/avatar.png",
         }
 
-        monkeypatch.setattr("api.auth.requests.post", lambda url, data=None, **kw: mock_token_resp)
-        monkeypatch.setattr("api.auth.requests.get", lambda url, headers=None, **kw: mock_userinfo_resp)
+        monkeypatch.setattr(
+            "api.auth.requests.post", lambda url, data=None, **kw: mock_token_resp
+        )
+        monkeypatch.setattr(
+            "api.auth.requests.get", lambda url, headers=None, **kw: mock_userinfo_resp
+        )
 
         with patch.multiple(settings, **cfg):
             resp = client.get("/auth/sso/callback?code=real-auth-code")
 
-        assert resp.status_code in (302, 307), f"Expected redirect, got {resp.status_code}"
+        assert resp.status_code in (302, 307), (
+            f"Expected redirect, got {resp.status_code}"
+        )
         location = resp.headers.get("location", "")
         assert "token=" in location, f"Expected JWT token in redirect, got: {location}"
         assert "refresh_token=" in location
@@ -189,7 +206,9 @@ class TestSSOCallback:
         def fail_get(url, headers=None, **kw):
             raise Exception("Userinfo endpoint timeout")
 
-        monkeypatch.setattr("api.auth.requests.post", lambda url, data=None, **kw: mock_token_resp)
+        monkeypatch.setattr(
+            "api.auth.requests.post", lambda url, data=None, **kw: mock_token_resp
+        )
         monkeypatch.setattr("api.auth.requests.get", fail_get)
 
         with patch.multiple(settings, **cfg):

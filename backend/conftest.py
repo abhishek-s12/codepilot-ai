@@ -7,10 +7,12 @@ settings.enforce_strict_auth = False
 
 from services.db_service import init_db, get_db, create_user, create_repository
 
+
 @pytest.fixture(scope="session", autouse=True)
 def init_test_db():
     settings.enforce_strict_auth = False
     init_db()
+
 
 @pytest.fixture(scope="module")
 def shared_test_db():

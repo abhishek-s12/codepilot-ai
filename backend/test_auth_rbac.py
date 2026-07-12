@@ -10,7 +10,7 @@ from services.auth_service import (
     get_user_id_from_token,
 )
 from api.auth import get_current_user_id
-from services.db_service import init_db, get_db, create_user, create_repository
+from services.db_service import get_db
 from services.auth_validation import (
     verify_repo_access,
     verify_repo_write_access,

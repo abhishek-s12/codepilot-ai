@@ -61,7 +61,9 @@ def _get_user_roles_in_repo_projects(repo_id: str, user_id: str) -> list[str]:
         rows = cursor.fetchall()
         return [row["role"] for row in rows]
     except Exception as e:
-        print(f"[Auth Validation] DB query error in _get_user_roles_in_repo_projects: {e}")
+        print(
+            f"[Auth Validation] DB query error in _get_user_roles_in_repo_projects: {e}"
+        )
         return []
     finally:
         conn.close()

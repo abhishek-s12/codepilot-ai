@@ -8,7 +8,7 @@ settings.enforce_strict_auth = False
 from fastapi.testclient import TestClient
 from main import app
 from services.auth_service import encode_token
-from services.db_service import init_db, get_db, create_user, create_repository
+from services.db_service import get_db
 from services.audit_service import log_audit_event
 
 client = TestClient(app)

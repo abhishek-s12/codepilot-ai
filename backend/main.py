@@ -224,6 +224,7 @@ init_db()
 
 # Ensure S3 storage bucket exists on app load
 import sys
+
 if "pytest" not in sys.modules:
     try:
         from services.storage_service import ensure_bucket_exists

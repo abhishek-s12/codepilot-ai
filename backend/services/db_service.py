@@ -484,7 +484,6 @@ def create_repository(
         conn.close()
 
 
-
 def get_repositories_for_user(user_id: str):
     conn = get_db()
     cursor = conn.cursor()
@@ -522,7 +521,6 @@ def update_repository_status(
         conn.commit()
     finally:
         conn.close()
-
 
 
 def delete_repository(repo_id: str):

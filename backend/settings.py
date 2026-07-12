@@ -51,7 +51,7 @@ class Settings(BaseSettings):
         default=[
             "http://localhost:5173",
             "https://codepilot-ai-wine.vercel.app",
-            "https://codepilot-backend-wx7u.onrender.com",
+            "https://codepilot-api-257937445938.us-central1.run.app",
         ],
         validation_alias=AliasChoices("CORS_ORIGINS"),
     )

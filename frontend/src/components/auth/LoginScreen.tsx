@@ -39,6 +39,7 @@ export default function LoginScreen({
   errorMessage = null,
 }: LoginScreenProps) {
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+  const originParam = `?origin=${encodeURIComponent(window.location.origin)}`;
 
   return (
     <div className="min-h-screen mesh-gradient-bg flex items-center justify-center p-6 relative overflow-hidden">
@@ -125,7 +126,7 @@ export default function LoginScreen({
           <div className="space-y-4">
             {/* GitHub Auth Button */}
             <a
-              href={`${apiBase}/auth/login/github`}
+              href={`${apiBase}/auth/login/github${originParam}`}
               className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-accent hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
             >
               <span aria-hidden="true" className="font-mono text-soft text-sm">⌥</span>
@@ -134,7 +135,7 @@ export default function LoginScreen({
 
             {/* Google Auth Button */}
             <a
-              href={`${apiBase}/auth/login/google`}
+              href={`${apiBase}/auth/login/google${originParam}`}
               className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-secondary hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
             >
               <span aria-hidden="true" className="font-mono text-secondary text-sm">◐</span>
@@ -143,7 +144,7 @@ export default function LoginScreen({
 
             {/* Enterprise SSO Button */}
             <a
-              href={`${apiBase}/auth/sso/login`}
+              href={`${apiBase}/auth/sso/login${originParam}`}
               className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-[#FF9D4D] hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
             >
               <span aria-hidden="true" className="font-mono text-[#FF9D4D] text-sm">🛡️</span>
@@ -152,7 +153,7 @@ export default function LoginScreen({
 
             {/* SAML 2.0 IdP Button */}
             <a
-              href={`${apiBase}/auth/saml/login`}
+              href={`${apiBase}/auth/saml/login${originParam}`}
               className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-violet hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
             >
               <span aria-hidden="true" className="font-mono text-violet text-sm">⬡</span>

@@ -477,7 +477,7 @@ def revoke_personal_api_key(key_id: str, user_id: str = Depends(get_current_user
 
 
 @router.get("/login/github")
-def login_github():
+def login_github(origin: Optional[str] = None):
     """Redirect to GitHub OAuth page."""
     if not settings.github_client_id:
         raise HTTPException(
@@ -485,12 +485,13 @@ def login_github():
             detail="GitHub OAuth client credentials are not configured in backend/.env. Please use the Sandbox Login fallback.",
         )
 
-    auth_url = f"https://github.com/login/oauth/authorize?client_id={settings.github_client_id}&scope=user:email"
+    state = origin or settings.llm_site_url
+    auth_url = f"https://github.com/login/oauth/authorize?client_id={settings.github_client_id}&scope=user:email&state={state}"
     return RedirectResponse(url=auth_url)
 
 
 @router.get("/callback/github")
-def callback_github(code: str):
+def callback_github(code: str, state: Optional[str] = None):
     """GitHub OAuth callback endpoint."""
     if not settings.github_client_id or not settings.github_client_secret:
         raise HTTPException(
@@ -546,6 +547,8 @@ def callback_github(code: str):
     user = get_user(user_id)
     token_version = user["token_version"] if user and "token_version" in user else 1
 
+    frontend_base = state or settings.llm_site_url
+
     # MFA Redirect check
     if user and user.get("mfa_enabled"):
         mfa_temp_token = jwt.encode(
@@ -559,7 +562,7 @@ def callback_github(code: str):
             settings.jwt_secret,
             algorithm="HS256",
         )
-        frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
+        frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
         return RedirectResponse(url=frontend_redirect)
 
     token = encode_token(
@@ -569,12 +572,12 @@ def callback_github(code: str):
         user_id=user_id, email=primary_email, token_version=token_version
     )
 
-    frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
+    frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
     return RedirectResponse(url=frontend_redirect)
 
 
 @router.get("/login/google")
-def login_google():
+def login_google(origin: Optional[str] = None):
     """Redirect to Google OAuth page."""
     if not settings.google_client_id:
         raise HTTPException(
@@ -583,12 +586,13 @@ def login_google():
         )
 
     backend_redirect_uri = "http://localhost:8000/auth/callback/google"
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.google_client_id}&redirect_uri={backend_redirect_uri}&response_type=code&scope=openid%20email%20profile"
+    state = origin or settings.llm_site_url
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.google_client_id}&redirect_uri={backend_redirect_uri}&response_type=code&scope=openid%20email%20profile&state={state}"
     return RedirectResponse(url=auth_url)
 
 
 @router.get("/callback/google")
-def callback_google(code: str):
+def callback_google(code: str, state: Optional[str] = None):
     """Google OAuth callback endpoint."""
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(
@@ -635,6 +639,8 @@ def callback_google(code: str):
     user = get_user(user_id)
     token_version = user["token_version"] if user and "token_version" in user else 1
 
+    frontend_base = state or settings.llm_site_url
+
     # MFA Redirect check
     if user and user.get("mfa_enabled"):
         mfa_temp_token = jwt.encode(
@@ -648,7 +654,7 @@ def callback_google(code: str):
             settings.jwt_secret,
             algorithm="HS256",
         )
-        frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
+        frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
         return RedirectResponse(url=frontend_redirect)
 
     token = encode_token(user_id=user_id, email=email, token_version=token_version)
@@ -656,29 +662,32 @@ def callback_google(code: str):
         user_id=user_id, email=email, token_version=token_version
     )
 
-    frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
+    frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
     return RedirectResponse(url=frontend_redirect)
 
 
 @router.get("/sso/login")
-def login_sso():
+def login_sso(origin: Optional[str] = None):
     """Redirect to Okta / OIDC auth page, or perform mock sign-in in sandbox."""
+    state = origin or settings.llm_site_url
     if not settings.sso_client_id or not settings.sso_metadata_url:
         if settings.allow_sandbox_login:
             # Sandbox mock SSO flow
-            redirect_url = "http://localhost:8000/auth/sso/callback?code=mock-sso-code"
+            import urllib.parse
+
+            redirect_url = f"http://localhost:8000/auth/sso/callback?code=mock-sso-code&state={urllib.parse.quote(state)}"
             return RedirectResponse(url=redirect_url)
         raise HTTPException(
             status_code=400,
             detail="SSO/SAML client credentials are not configured. Please use the Developer Sandbox Login.",
         )
 
-    auth_url = f"{settings.sso_metadata_url}/v1/authorize?client_id={settings.sso_client_id}&redirect_uri={settings.sso_redirect_uri}&response_type=code&scope=openid%20email%20profile"
+    auth_url = f"{settings.sso_metadata_url}/v1/authorize?client_id={settings.sso_client_id}&redirect_uri={settings.sso_redirect_uri}&response_type=code&scope=openid%20email%20profile&state={state}"
     return RedirectResponse(url=auth_url)
 
 
 @router.get("/sso/callback")
-def callback_sso(code: str):
+def callback_sso(code: str, state: Optional[str] = None):
     """Callback endpoint for SSO OAuth2 flow."""
     if code == "mock-sso-code" and (
         not settings.sso_client_id or not settings.sso_client_secret
@@ -755,6 +764,8 @@ def callback_sso(code: str):
 
     log_audit_event(user_id, "sso_login_success", details={"email": email})
 
+    frontend_base = state or settings.llm_site_url
+
     if user and user.get("mfa_enabled"):
         mfa_temp_token = jwt.encode(
             {
@@ -767,7 +778,7 @@ def callback_sso(code: str):
             settings.jwt_secret,
             algorithm="HS256",
         )
-        frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
+        frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?mfa_required=true&mfa_temp_token={mfa_temp_token}"
         return RedirectResponse(url=frontend_redirect)
 
     token = encode_token(user_id=user_id, email=email, token_version=token_version)
@@ -775,7 +786,7 @@ def callback_sso(code: str):
         user_id=user_id, email=email, token_version=token_version
     )
 
-    frontend_redirect = f"{settings.llm_site_url.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
+    frontend_redirect = f"{frontend_base.rstrip('/')}/auth-callback?token={token}&refresh_token={refresh_token}"
     return RedirectResponse(url=frontend_redirect)
 
 
@@ -897,7 +908,7 @@ async def saml_metadata(request: "Request"):
 
 
 @router.get("/saml/login")
-async def saml_login_redirect():
+async def saml_login_redirect(origin: Optional[str] = None):
     """
     Initiates a SAML 2.0 SP-initiated login by redirecting to the IdP SSO URL.
     """
@@ -915,7 +926,7 @@ async def saml_login_redirect():
     # Build a minimal relay state and redirect the browser to the IdP
     import urllib.parse
 
-    relay_state = settings.llm_site_url
+    relay_state = origin or settings.llm_site_url
     redirect_url = (
         f"{settings.saml_idp_sso_url}"
         f"?SAMLRequest=&RelayState={urllib.parse.quote(relay_state)}"
@@ -1070,8 +1081,10 @@ async def saml_callback(request: "Request"):
         user_id=user_id, email=email, token_version=token_version
     )
 
+    relay_state = post_data.get("RelayState") or settings.llm_site_url
+
     frontend_redirect = (
-        f"{settings.llm_site_url.rstrip('/')}/auth-callback"
+        f"{relay_state.rstrip('/')}/auth-callback"
         f"?token={token}&refresh_token={refresh_token}"
     )
     return RedirectResponse(url=frontend_redirect)

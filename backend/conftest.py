@@ -11,6 +11,32 @@ from services.db_service import init_db, get_db, create_user, create_repository
 @pytest.fixture(scope="session", autouse=True)
 def init_test_db():
     settings.enforce_strict_auth = False
+
+    # Drop all tables in the public schema to ensure migrations run from scratch
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT table_name FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+            """
+        )
+        tables = [row["table_name"] for row in cursor.fetchall()]
+        if tables:
+            # Filter out alembic_version so it doesn't try to drop if not needed,
+            # actually dropping alembic_version is good because we want migrations to rerun
+            cursor.execute(f"DROP TABLE {', '.join(tables)} CASCADE")
+            conn.commit()
+    except Exception as e:
+        print(f"[DB Setup Warning] Failed to drop tables: {e}")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+    finally:
+        conn.close()
+
     init_db()
 
 

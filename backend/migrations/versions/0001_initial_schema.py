@@ -27,6 +27,8 @@ def upgrade() -> None:
         sa.Column("email", sa.String(), unique=True, nullable=True),
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("avatar_url", sa.String(), nullable=True),
+        sa.Column("mfa_secret", sa.String(), nullable=True),
+        sa.Column("mfa_enabled", sa.Boolean(), server_default="FALSE", nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),
@@ -280,8 +282,76 @@ def upgrade() -> None:
         ),
     )
 
+    # 15. notifications table
+    op.create_table(
+        "notifications",
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column(
+            "user_id",
+            sa.String(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
+        sa.Column("title", sa.String(), nullable=True),
+        sa.Column("message", sa.String(), nullable=True),
+        sa.Column("read", sa.Boolean(), server_default="FALSE", nullable=True),
+        sa.Column("type", sa.String(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.func.current_timestamp(),
+            nullable=True,
+        ),
+    )
+
+    # 16. compliance_settings table
+    op.create_table(
+        "compliance_settings",
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column("hipaa_mode", sa.Boolean(), server_default="FALSE", nullable=True),
+        sa.Column("sox_mode", sa.Boolean(), server_default="FALSE", nullable=True),
+        sa.Column("retention_days", sa.Integer(), server_default="90", nullable=True),
+        sa.Column(
+            "session_timeout", sa.Boolean(), server_default="TRUE", nullable=True
+        ),
+        sa.Column("slack_enabled", sa.Boolean(), server_default="FALSE", nullable=True),
+        sa.Column("jira_enabled", sa.Boolean(), server_default="FALSE", nullable=True),
+        sa.Column(
+            "github_ent_enabled", sa.Boolean(), server_default="FALSE", nullable=True
+        ),
+    )
+    # Seed default compliance settings
+    op.execute(
+        "INSERT INTO compliance_settings (id, hipaa_mode, sox_mode, retention_days, session_timeout) VALUES ('default', FALSE, FALSE, 90, TRUE) ON CONFLICT DO NOTHING"
+    )
+
+    # 17. reports table
+    op.create_table(
+        "reports",
+        sa.Column("id", sa.String(), primary_key=True),
+        sa.Column(
+            "repository_id",
+            sa.String(),
+            sa.ForeignKey("repositories.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
+        sa.Column("name", sa.String(), nullable=True),
+        sa.Column("report_type", sa.String(), nullable=True),
+        sa.Column("s3_key", sa.String(), nullable=True),
+        sa.Column("file_size", sa.Integer(), nullable=True),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.func.current_timestamp(),
+            nullable=True,
+        ),
+    )
+
 
 def downgrade() -> None:
+    op.drop_table("reports")
+    op.drop_table("compliance_settings")
+    op.drop_table("notifications")
     op.drop_table("telemetry_logs")
     op.drop_table("analytics_cache")
     op.drop_table("llm_cache")

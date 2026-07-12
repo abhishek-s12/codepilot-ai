@@ -64,7 +64,13 @@ def run_alembic_migrations():
 
 
 def init_db():
-    run_alembic_migrations()
+    try:
+        run_alembic_migrations()
+    except Exception as e:
+        print(
+            f"[DB Warning] Database migrations failed or database is unreachable on startup: {e}. "
+            f"The application will continue starting up."
+        )
 
 
 def create_user(user_id: str, email: str, name: str, avatar_url: str):

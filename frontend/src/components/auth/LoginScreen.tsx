@@ -228,7 +228,7 @@ export default function LoginScreen({
         <div className="mt-8 text-center text-xs text-soft font-mono">
           Need help?{" "}
           <a
-            href="mailto:support@codexa.dev"
+            href="mailto:support@codepilot.ai"
             className="text-accent hover:underline hover:text-accent-strong transition-all"
           >
             Support

@@ -49,17 +49,11 @@ def get_codebase_analytics(current_user_id: str = Depends(get_current_user_id)):
         )
         repo_row = cursor.fetchone()
 
-        # Safe unpacking — sqlite3.Row has no .get(); convert first
         total_files = 0
         total_chunks = 0
         if repo_row:
-            if isinstance(repo_row, tuple):
-                total_files = repo_row[0] or 0
-                total_chunks = repo_row[1] or 0
-            else:
-                row_dict = dict(repo_row)
-                total_files = row_dict.get("total_files") or 0
-                total_chunks = row_dict.get("total_chunks") or 0
+            total_files = repo_row["total_files"] or 0
+            total_chunks = repo_row["total_chunks"] or 0
 
         # 2. Fetch counts of nodes by type (functions, classes)
         cursor.execute("SELECT type, COUNT(*) as count FROM graph_nodes GROUP BY type")
@@ -67,9 +61,8 @@ def get_codebase_analytics(current_user_id: str = Depends(get_current_user_id)):
 
         symbols_count = {"classes": 0, "functions": 0, "modules": 0}
         for r in node_rows:
-            d = dict(r) if not isinstance(r, tuple) else {"type": r[0], "count": r[1]}
-            node_type = str(d.get("type")).lower()
-            count = d.get("count") or 0
+            node_type = str(r["type"]).lower()
+            count = r["count"] or 0
             if "class" in node_type:
                 symbols_count["classes"] += count
             elif "function" in node_type or "method" in node_type:
@@ -127,14 +120,9 @@ def get_workspace_activity(current_user_id: str = Depends(get_current_user_id)):
         # Aggregate logs by YYYY-MM-DD
         daily_counts = {}
         for r in rows:
-            # Handle tuple or sqlite3.Row formats — convert to dict first
-            if isinstance(r, tuple):
-                ts = r[0]
-            else:
-                ts = dict(r).get("timestamp")
+            ts = r["timestamp"]
             if isinstance(ts, str):
                 try:
-                    # SQLite could return string
                     date_str = ts.split(" ")[0].split("T")[0]
                 except Exception:
                     continue

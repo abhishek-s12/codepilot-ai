@@ -201,14 +201,10 @@ def check_services_connectivity():
 
         # Check DB
         try:
-            from services.db_service import get_db, use_sqlite
+            from services.db_service import get_db
 
             conn = get_db()
             conn.close()
-            if use_sqlite:
-                raise ConnectionError(
-                    "PostgreSQL pool could not be initialized. Check your DATABASE_URL."
-                )
         except Exception as e:
             raise RuntimeError(
                 f"Strict Startup Check Failed: Database is unreachable: {e}"

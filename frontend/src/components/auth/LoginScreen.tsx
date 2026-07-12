@@ -41,6 +41,12 @@ export default function LoginScreen({
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
   const originParam = `?origin=${encodeURIComponent(window.location.origin)}`;
 
+  if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
+    console.error(
+      "[LoginScreen] VITE_API_BASE_URL is unset in the production build! API requests will fail."
+    );
+  }
+
   return (
     <div className="min-h-screen mesh-gradient-bg flex items-center justify-center p-6 relative overflow-hidden">
 
@@ -56,6 +62,7 @@ export default function LoginScreen({
 
       {/* Floating Monospace Code Tokens */}
       <div aria-hidden="true" className="contents select-none">
+        {/* key={idx} is safe here because FLOATING_TOKENS is a static array that is never reordered, filtered, or mutated */}
         {FLOATING_TOKENS.map((token, idx) => (
           <div
             key={idx}
@@ -95,27 +102,21 @@ export default function LoginScreen({
         </div>
 
         {/* Sliding Modes Switcher */}
-        <div
-          role="tablist"
-          aria-label="Sign-in method"
-          className="sliding-tabs-container mb-8"
-        >
+        <div className="sliding-tabs-container mb-8">
           <div aria-hidden="true" className={`sliding-tab-slider ${showSandboxForm ? "right" : ""}`}></div>
           <button
             type="button"
-            role="tab"
-            aria-selected={!showSandboxForm}
+            disabled={isSubmitting}
             onClick={() => onToggleSandboxForm(false)}
-            className={`sliding-tab-btn ${!showSandboxForm ? "active" : ""}`}
+            className={`sliding-tab-btn ${!showSandboxForm ? "active" : ""} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             OAUTH / SSO
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={showSandboxForm}
+            disabled={isSubmitting}
             onClick={() => onToggleSandboxForm(true)}
-            className={`sliding-tab-btn ${showSandboxForm ? "active" : ""}`}
+            className={`sliding-tab-btn ${showSandboxForm ? "active" : ""} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             Sandbox Mode
           </button>
@@ -127,7 +128,7 @@ export default function LoginScreen({
             {/* GitHub Auth Button */}
             <a
               href={`${apiBase}/auth/login/github${originParam}`}
-              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-accent hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-accent hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent focus-visible:-translate-y-[1px]"
             >
               <span aria-hidden="true" className="font-mono text-soft text-sm">⌥</span>
               <span>Sign in with GitHub</span>
@@ -136,7 +137,7 @@ export default function LoginScreen({
             {/* Google Auth Button */}
             <a
               href={`${apiBase}/auth/login/google${originParam}`}
-              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-secondary hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-secondary hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:border-secondary focus-visible:-translate-y-[1px]"
             >
               <span aria-hidden="true" className="font-mono text-secondary text-sm">◐</span>
               <span>Sign in with Google</span>
@@ -145,7 +146,7 @@ export default function LoginScreen({
             {/* Enterprise SSO Button */}
             <a
               href={`${apiBase}/auth/sso/login${originParam}`}
-              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-[#FF9D4D] hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-[#FF9D4D] hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF9D4D] focus-visible:border-[#FF9D4D] focus-visible:-translate-y-[1px]"
             >
               <span aria-hidden="true" className="font-mono text-[#FF9D4D] text-sm">🛡️</span>
               <span>Enterprise Single Sign-On</span>
@@ -154,14 +155,14 @@ export default function LoginScreen({
             {/* SAML 2.0 IdP Button */}
             <a
               href={`${apiBase}/auth/saml/login${originParam}`}
-              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-violet hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-border bg-panel-alt/50 hover:bg-[#181e29]/75 hover:border-violet hover:-translate-y-[1px] text-text-strong font-semibold text-xs transition-all duration-250 flex items-center justify-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet focus-visible:border-violet focus-visible:-translate-y-[1px]"
             >
               <span aria-hidden="true" className="font-mono text-violet text-sm">⬡</span>
               <span>Sign in with SAML 2.0 IdP</span>
             </a>
           </div>
         ) : (
-          <form onSubmit={onSandboxLogin} className="space-y-5 text-left" noValidate={false}>
+          <form onSubmit={onSandboxLogin} className="space-y-5 text-left">
             <div className="space-y-4">
               <div>
                 <label
@@ -179,7 +180,7 @@ export default function LoginScreen({
                   disabled={isSubmitting}
                   value={sandboxName}
                   onChange={(e) => onSandboxNameChange(e.target.value)}
-                  className="w-full p-3 bg-bg/85 border border-border rounded-xl text-xs text-text-strong outline-none input-focus-glow transition-all font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-3 bg-bg/85 border border-border rounded-xl text-xs text-text-strong outline-none input-focus-glow transition-all font-sans disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   placeholder="name"
                 />
               </div>
@@ -199,7 +200,7 @@ export default function LoginScreen({
                   disabled={isSubmitting}
                   value={sandboxEmail}
                   onChange={(e) => onSandboxEmailChange(e.target.value)}
-                  className="w-full p-3 bg-bg/85 border border-border rounded-xl text-xs text-text-strong outline-none input-focus-glow transition-all font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full p-3 bg-bg/85 border border-border rounded-xl text-xs text-text-strong outline-none input-focus-glow transition-all font-sans disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   placeholder="email"
                 />
               </div>
@@ -216,7 +217,7 @@ export default function LoginScreen({
                 type="submit"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
-                className="w-full py-3 bg-secondary hover:bg-secondary-strong rounded-xl text-xs text-bg font-bold transition-all shadow-md shadow-secondary/15 cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-secondary"
+                className="w-full py-3 bg-secondary hover:bg-secondary-strong rounded-xl text-xs text-bg font-bold transition-all shadow-md shadow-secondary/15 cursor-pointer text-center disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/50"
               >
                 {isSubmitting ? "Connecting…" : "Access Sandbox Panel →"}
               </button>

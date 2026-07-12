@@ -86,7 +86,7 @@ export default function LoginScreen({
         {/* Header Text */}
         <div className="space-y-2 mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-text-strong font-display">
-            Welcome to Codexa
+            Welcome to CodePilot AI
           </h1>
           <p className="text-xs text-text max-w-[280px] mx-auto leading-relaxed">
             Index repositories structurally and discover code insights with AI.
@@ -107,7 +107,7 @@ export default function LoginScreen({
             onClick={() => onToggleSandboxForm(false)}
             className={`sliding-tab-btn ${!showSandboxForm ? "active" : ""}`}
           >
-            OAuth Auth
+            OAUTH / SSO
           </button>
           <button
             type="button"

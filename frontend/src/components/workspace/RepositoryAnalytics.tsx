@@ -58,7 +58,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }: RepositoryAnal
       // Auto generate a detailed summary based on structure
       setLoadingSummary(true);
       setTimeout(() => {
-        const repoName = repoPath.split(/[\\\/]/).pop() ?? "";
+        const repoName = repoPath.split(/[\\/]/).pop() ?? "";
         setAiSummary(
           `This repository (${repoName}) represents an AI-first workspace structure. It utilizes a unified web client built with React, Vite, and TailwindCSS (v4) for maximum layout flexibility, alongside an asynchronous Python backend built with FastAPI, SQLite, and ChromaDB vector store. Most business logic is isolated in Python services (analytics, scan, index, ast chunks) and React custom hooks/state providers in the frontend. DB layers are managed via SQLite caching.`
         );

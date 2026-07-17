@@ -53,8 +53,8 @@ export default function ContextPanel({
   onSendMessage,
   onSelectTab,
 }: ContextPanelProps) {
-  const repoName = repoPath ? repoPath.split(/[\\\/]/).pop() ?? "—" : "—";
-  const fileName = activeFile ? activeFile.split(/[\\\/]/).pop() ?? "—" : "—";
+  const repoName = repoPath ? repoPath.split(/[\\/]/).pop() ?? "—" : "—";
+  const fileName = activeFile ? activeFile.split(/[\\/]/).pop() ?? "—" : "—";
 
   const rows: ContextRow[] = [
     { label: "Repository", value: repoName, color: "indigo" },

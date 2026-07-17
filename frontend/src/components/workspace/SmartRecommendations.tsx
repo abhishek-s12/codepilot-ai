@@ -98,7 +98,7 @@ export default function SmartRecommendations({
   onTriggerAction = () => {},
 }: SmartRecommendationsProps) {
   const ext = activeFile.split(".").pop()?.toLowerCase() ?? "";
-  const fileName = activeFile.split(/[\\\/]/).pop() ?? activeFile;
+  const fileName = activeFile.split(/[\\/]/).pop() ?? activeFile;
 
   const getSmartRecommendations = (): Recommendation[] => [
     { label: "🔍 Explain File Logic", prompt: `Explain the file ${fileName} and summarize its key operations.` },

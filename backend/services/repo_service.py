@@ -281,28 +281,28 @@ def clone_repository(
             f"Repository {repo_name} is currently busy with another operation."
         )
 
-    # Database lifecycle record initialization (Step 6)
-    user_repos = get_repositories_for_user(user_id)
-    repo_id = None
-    for r in user_repos:
-        if r["repository_path"] == repo_path:
-            repo_id = r["id"]
-            break
-
-    if not repo_id:
-        repo_id = str(uuid.uuid4())
-        create_repository(
-            repo_id=repo_id,
-            user_id=user_id,
-            name=repo_name,
-            path=repo_path,
-            branch="main",
-            status="cloning",
-        )
-    else:
-        update_repository_status(repo_id, "cloning")
-
     try:
+        # Database lifecycle record initialization (Step 6)
+        user_repos = get_repositories_for_user(user_id)
+        repo_id = None
+        for r in user_repos:
+            if r["repository_path"] == repo_path:
+                repo_id = r["id"]
+                break
+
+        if not repo_id:
+            repo_id = str(uuid.uuid4())
+            create_repository(
+                repo_id=repo_id,
+                user_id=user_id,
+                name=repo_name,
+                path=repo_path,
+                branch="main",
+                status="cloning",
+            )
+        else:
+            update_repository_status(repo_id, "cloning")
+
         if os.path.exists(repo_path):
             if os.path.exists(os.path.join(repo_path, ".git")):
                 # Lock remains held since background task will be scheduled

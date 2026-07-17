@@ -23,7 +23,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Set sqlalchemy.url from settings
-config.set_main_option("sqlalchemy.url", settings.postgres_url)
+config.set_main_option("sqlalchemy.url", settings.postgres_url.replace("%", "%%"))
 
 # target_metadata can be defined for autogenerate support if using ORM/declarative models
 target_metadata = None

@@ -56,7 +56,7 @@ def run_alembic_migrations():
     ini_path = os.path.join(base_dir, "alembic.ini")
 
     alembic_cfg = Config(ini_path)
-    alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_url)
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_url.replace("%", "%%"))
 
     print("[DB] Running Alembic migrations...")
     command.upgrade(alembic_cfg, "head")

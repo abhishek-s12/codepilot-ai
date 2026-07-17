@@ -44,7 +44,17 @@ FEATURES.md
 matchprompt.txt
 TASK.md
 ISSUES.md
-
-
-
 Claude.md
+
+
+
+# Ignore agent-generated planning documents
+PLAN.md
+TASK_PLAN.md
+IMPLEMENTATION_PLAN.md
+REVIEW_PLAN.md
+backend.zip
+frontend.zip
+other_files.zip
+codepilot.code-workspace
+REFACTORING_PLAN.md

@@ -154,6 +154,18 @@ settings = get_settings()
 
 app = FastAPI(title=settings.api_title, version=settings.api_version)
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging
+
+    logging.exception("Unhandled exception during request processing:")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+    )
+
+
 # ── Prometheus Metrics (/metrics endpoint) ────────────────────────────────────
 Instrumentator(
     should_group_status_codes=True,

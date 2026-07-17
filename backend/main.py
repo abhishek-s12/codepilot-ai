@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import time
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from services.metrics_service import rate_limit_fallback_total
@@ -111,11 +111,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         key = f"{client_ip}:{category}"
         history = self.local_history.get(key, [])
-        history = [
-            t
-            for t in history
-            if current_time - t < self.limit_seconds
-        ]
+        history = [t for t in history if current_time - t < self.limit_seconds]
 
         if len(history) >= max_requests:
             self.local_history[key] = history
@@ -201,7 +197,9 @@ def validate_config():
     if settings.jwt_secret in {"codepilot_secret_key_12345", "REPLACE_ME_JWT_SECRET"}:
         raise RuntimeError("JWT_SECRET must be set to a secure, non-default value.")
     if "REPLACE_ME_DB_PASSWORD" in settings.postgres_url:
-        raise RuntimeError("DATABASE_URL/POSTGRES_URL must not contain default placeholder password.")
+        raise RuntimeError(
+            "DATABASE_URL/POSTGRES_URL must not contain default placeholder password."
+        )
     if settings.s3_secret_key in {"minio_password_123", "REPLACE_ME_S3_SECRET_KEY"}:
         raise RuntimeError("S3_SECRET_KEY must be set to a secure, non-default value.")
 

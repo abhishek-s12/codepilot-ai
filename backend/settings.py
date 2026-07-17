@@ -216,7 +216,9 @@ class Settings(BaseSettings):
     @classmethod
     def validate_postgres_url(cls, v: str) -> str:
         if not v or "REPLACE_ME_DB_PASSWORD" in v:
-            raise ValueError("DATABASE_URL/POSTGRES_URL must not contain default placeholder password.")
+            raise ValueError(
+                "DATABASE_URL/POSTGRES_URL must not contain default placeholder password."
+            )
         return v
 
     @field_validator("s3_secret_key")
@@ -224,21 +226,39 @@ class Settings(BaseSettings):
     def validate_s3_secret_key(cls, v: str) -> str:
         insecure_values = {"minio_password_123", "REPLACE_ME_S3_SECRET_KEY", ""}
         if not v or v in insecure_values:
-            raise ValueError("S3_SECRET_KEY must be set to a secure, non-default value.")
+            raise ValueError(
+                "S3_SECRET_KEY must be set to a secure, non-default value."
+            )
         return v
 
     @model_validator(mode="after")
     def validate_features_config(self) -> "Settings":
         if self.sso_enabled:
-            if not self.sso_client_id or not self.sso_client_secret or not self.sso_metadata_url:
-                raise ValueError("SSO is enabled, but client credentials (SSO_CLIENT_ID, SSO_CLIENT_SECRET, SSO_METADATA_URL) are missing or empty.")
+            if (
+                not self.sso_client_id
+                or not self.sso_client_secret
+                or not self.sso_metadata_url
+            ):
+                raise ValueError(
+                    "SSO is enabled, but client credentials (SSO_CLIENT_ID, SSO_CLIENT_SECRET, SSO_METADATA_URL) are missing or empty."
+                )
         if self.saml_enabled:
-            if not self.saml_sp_private_key or not self.saml_idp_entity_id or not self.saml_idp_sso_url:
-                raise ValueError("SAML is enabled, but client credentials/keys are missing or empty.")
+            if (
+                not self.saml_sp_private_key
+                or not self.saml_idp_entity_id
+                or not self.saml_idp_sso_url
+            ):
+                raise ValueError(
+                    "SAML is enabled, but client credentials/keys are missing or empty."
+                )
         if self.github_client_id and not self.github_client_secret:
-            raise ValueError("GITHUB_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty.")
+            raise ValueError(
+                "GITHUB_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty."
+            )
         if self.google_client_id and not self.google_client_secret:
-            raise ValueError("GOOGLE_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty.")
+            raise ValueError(
+                "GOOGLE_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty."
+            )
         return self
 
 

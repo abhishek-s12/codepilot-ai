@@ -75,7 +75,7 @@ export default function WorkspaceProfiles({ onApplyProfile }: WorkspaceProfilesP
     <div className="space-y-4 select-none text-left">
       <div className="border-b border-[#1c2230]/40 pb-2">
         <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
-          <AppWindow className="w-4 h-4 text-indigo-400" /> Developer Workspace Profiles
+          <AppWindow className="w-4 h-4 text-accent" /> Developer Workspace Profiles
         </h3>
         <p className="text-[10px] text-gray-500">Select preset profiles configured for target engineering disciplines.</p>
       </div>
@@ -96,7 +96,7 @@ export default function WorkspaceProfiles({ onApplyProfile }: WorkspaceProfilesP
               onClick={() => applyProfile(profile.id)}
               className={`p-3 rounded-xl border text-left flex justify-between gap-3 items-start transition-all cursor-pointer ${
                 isSelected
-                  ? "bg-indigo-600/10 border-indigo-500/30 text-white"
+                  ? "bg-accent text-bg/10 border-accent/30 text-white"
                   : "bg-[#141822] border-[#1c2230] text-gray-400 hover:bg-[#1b212f]"
               }`}
             >
@@ -107,7 +107,7 @@ export default function WorkspaceProfiles({ onApplyProfile }: WorkspaceProfilesP
                   <span className="text-[9px] text-gray-500 mt-0.5 block leading-relaxed">{profile.description}</span>
                 </div>
               </div>
-              {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" aria-hidden="true" />}
+              {isSelected && <Check className="w-3.5 h-3.5 text-accent shrink-0 mt-0.5" aria-hidden="true" />}
             </button>
           );
         })}

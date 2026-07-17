@@ -160,11 +160,11 @@ export default function IntegrationsManager() {
 
         {/* JIRA CARD */}
         <div className={`p-4 rounded-2xl border transition-all ${
-          jiraEnabled ? "bg-blue-950/5 border-blue-500/20" : "bg-[#10141B] border-[#1c2230]"
+          jiraEnabled ? "bg-blue-950/5 border-accent/20" : "bg-[#10141B] border-[#1c2230]"
         }`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-accent-dim/10 border border-accent/20 flex items-center justify-center text-accent shrink-0">
                 <Ticket className="w-5 h-5" />
               </div>
               <div className="space-y-0.5">
@@ -184,12 +184,12 @@ export default function IntegrationsManager() {
 
           {jiraEnabled && (
             <div className="mt-3 pt-3 border-t border-blue-500/10 space-y-1.5">
-              <label className="text-[9px] font-mono font-bold uppercase tracking-wider text-blue-400">Jira Instance URL</label>
+              <label className="text-[9px] font-mono font-bold uppercase tracking-wider text-accent">Jira Instance URL</label>
               <input
                 type="text"
                 value={jiraInstance}
                 onChange={(e) => setJiraInstance(e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#0C0F16] border border-blue-500/20 rounded-xl text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-1.5 bg-[#0C0F16] border border-accent/20 rounded-xl text-xs font-mono text-gray-300 focus:outline-none focus:border-blue-500"
               />
             </div>
           )}

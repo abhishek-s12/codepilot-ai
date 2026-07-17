@@ -1,7 +1,12 @@
-// @ts-nocheck
 import { useState } from "react";
 
-const TOUR_STEPS = [
+interface TourStep {
+  target: string;
+  title: string;
+  content: string;
+}
+
+const TOUR_STEPS: TourStep[] = [
   {
     target: "body",
     title: "🚀 Welcome to ChunkWiser!",
@@ -31,7 +36,7 @@ const TOUR_STEPS = [
     target: "command-palette",
     title: "⌨️ Keyboard Shortcuts & Commands",
     content: "Press Ctrl+P or Ctrl+K at any time to open the VS-Code style Command Palette for quick search and navigation.",
-  }
+  },
 ];
 
 export default function InteractiveTour() {
@@ -39,6 +44,11 @@ export default function InteractiveTour() {
   const [isOpen, setIsOpen] = useState(() => {
     return localStorage.getItem("codepilot_tour_done") !== "true";
   });
+
+  const handleComplete = () => {
+    setIsOpen(false);
+    localStorage.setItem("codepilot_tour_done", "true");
+  };
 
   const handleNext = () => {
     if (activeStep < TOUR_STEPS.length - 1) {
@@ -52,24 +62,19 @@ export default function InteractiveTour() {
     handleComplete();
   };
 
-  const handleComplete = () => {
-    setIsOpen(false);
-    localStorage.setItem("codepilot_tour_done", "true");
-  };
-
   if (!isOpen) return null;
 
   const step = TOUR_STEPS[activeStep];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full p-5 rounded-2xl border border-indigo-500/30 bg-[#090d16]/95 backdrop-blur-xl shadow-2xl glass select-none animate-slide-in">
-      <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full filter blur-2xl pointer-events-none"></div>
-      
+    <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full p-5 rounded-2xl border border-accent/30 bg-[#090d16]/95 backdrop-blur-xl shadow-2xl glass select-none animate-slide-in">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-accent-dim rounded-full filter blur-2xl pointer-events-none"></div>
+
       <div className="space-y-4">
         {/* Step Progress Header */}
         <div className="flex justify-between items-center text-[10px] font-mono font-bold tracking-widest text-gray-500">
           <span>CODELAB TOUR</span>
-          <span className="text-indigo-400">
+          <span className="text-accent">
             {activeStep + 1} / {TOUR_STEPS.length}
           </span>
         </div>
@@ -86,17 +91,19 @@ export default function InteractiveTour() {
         <div className="flex items-center justify-between pt-2 border-t border-white/5 shrink-0">
           <button
             onClick={handleSkip}
+            aria-label="Skip tour"
             className="text-[10px] font-bold font-mono text-gray-500 hover:text-gray-300 transition-all uppercase tracking-wider"
           >
             Skip Tour
           </button>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={handleNext}
-              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold font-mono text-[10px] tracking-wider transition-all uppercase shadow-lg shadow-indigo-600/10 active:scale-[0.97]"
+              aria-label={activeStep === TOUR_STEPS.length - 1 ? "Get started" : "Next step"}
+              className="px-3.5 py-1.5 rounded-lg bg-accent text-bg hover:bg-accent-strong text-white font-bold font-mono text-[10px] tracking-wider transition-all uppercase shadow-lg shadow-accent/10 active:scale-[0.97]"
             >
-              {activeStep === TOUR_STEPS.length - 1 ? "Get Started" : "Next â†’"}
+              {activeStep === TOUR_STEPS.length - 1 ? "Get Started" : "Next →"}
             </button>
           </div>
         </div>
@@ -104,4 +111,3 @@ export default function InteractiveTour() {
     </div>
   );
 }
-

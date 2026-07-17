@@ -62,6 +62,9 @@ sequenceDiagram
 ### 3. Database & Caching Tier
 * **PostgreSQL**: Stores relational models (Users, Projects, Audit Logs, API keys, Comments, and Repository Metadata). Versioned migrations are managed using **Alembic**.
 * **Redis Cache**: Caches LLM prompts and database query responses. Also implements client IP-based token-bucket rate limiters.
+  * **Fallback Rate Limiter**: If the Redis server experiences an outage or becomes unavailable, the FastAPI backend automatically falls back to an in-memory client IP rate limiter.
+  * **LRU Memory Capping**: The in-memory fallback rate limiter stores request timestamps in an `OrderedDict` acting as a Least Recently Used (LRU) cache, capped at 10,000 unique client IP-category combinations. This bounds memory consumption and prevents denial-of-service memory-leak vectors.
+  * **Fallback Metrics**: Fallback activation is monitored via the Prometheus counter `codepilot_ai_rate_limit_fallback_total`.
 * **Qdrant Vector Database**: Indexes code-chunk embeddings for high-dimensional semantic search.
 
 ### 4. Storage & Security Tier (MinIO S3)

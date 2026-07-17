@@ -1,9 +1,9 @@
-interface DiffViewerProps {
+interface UnifiedDiffViewerProps {
   diffText: string;
   filename: string | null;
 }
 
-export default function DiffViewer({ diffText, filename }: DiffViewerProps) {
+export default function UnifiedDiffViewer({ diffText, filename }: UnifiedDiffViewerProps) {
   if (!diffText || !diffText.trim()) {
     return (
       <div className="flex items-center justify-center h-full text-muted text-xs font-mono select-none">

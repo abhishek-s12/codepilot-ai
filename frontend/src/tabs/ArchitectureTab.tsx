@@ -168,7 +168,7 @@ export default function ArchitectureTab({
             <button
               onClick={onGetArchitecture}
               disabled={isArchitectureLoading}
-              className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] font-sans flex items-center gap-1 cursor-pointer transition-colors shadow-md"
+              className="px-4 py-1.5 rounded-lg bg-secondary text-bg hover:bg-secondary-strong text-white font-semibold text-[11px] font-sans flex items-center gap-1 cursor-pointer transition-colors shadow-md"
             >
               <span>{isArchitectureLoading ? "Tracing Architecture..." : "Load Graph"}</span>
             </button>
@@ -251,7 +251,7 @@ export default function ArchitectureTab({
                 <div className="flex gap-2">
                   <button
                     onClick={onExplainFile}
-                    className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-[11px] text-white font-bold transition-all cursor-pointer font-sans"
+                    className="flex-1 py-1.5 bg-secondary text-bg hover:bg-secondary-strong rounded-lg text-[11px] text-white font-bold transition-all cursor-pointer font-sans"
                   >
                     Explain File
                   </button>
@@ -299,7 +299,7 @@ export default function ArchitectureTab({
         </div>
       ) : (
         <div className="py-24 text-center text-muted border border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-4 bg-panel/30 max-w-lg mx-auto w-full px-6 select-none font-sans">
-          <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+          <div className="w-12 h-12 rounded-full bg-secondary-dim/10 flex items-center justify-center text-secondary">
             <IconCpu className="w-6 h-6" />
           </div>
           <div className="space-y-1">
@@ -311,7 +311,7 @@ export default function ArchitectureTab({
           <button
             onClick={onGetArchitecture}
             disabled={isArchitectureLoading}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
+            className="px-5 py-2.5 rounded-xl bg-secondary text-bg hover:bg-secondary-strong text-white font-bold text-xs transition-all cursor-pointer shadow-lg shadow-secondary/10"
           >
             {isArchitectureLoading ? "Tracing Architecture..." : "Generate Architecture Visuals"}
           </button>

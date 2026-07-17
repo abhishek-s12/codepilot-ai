@@ -1,6 +1,13 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Eye, EyeOff, LayoutGrid, Zap } from "lucide-react";
+
+type SplitMode = "single" | "split-h" | "split-v";
+
+const SPLIT_OPTIONS: { id: SplitMode; label: string }[] = [
+  { id: "single", label: "Single View" },
+  { id: "split-h", label: "Split Horizontal" },
+  { id: "split-v", label: "Split Vertical" },
+];
 
 export default function LayoutManager() {
   const [showExplorer, setShowExplorer] = useState(() => {
@@ -9,14 +16,14 @@ export default function LayoutManager() {
   const [showAIHelper, setShowAIHelper] = useState(() => {
     return localStorage.getItem("layout-show-ai") !== "false";
   });
-  const [editorSplit, setEditorSplit] = useState(() => {
-    return localStorage.getItem("layout-editor-split") || "single"; // single | split-h | split-v
+  const [editorSplit, setEditorSplit] = useState<SplitMode>(() => {
+    return (localStorage.getItem("layout-editor-split") as SplitMode) || "single";
   });
   const [zenMode, setZenMode] = useState(() => {
     return localStorage.getItem("layout-zen-mode") === "true";
   });
 
-  const updatePreference = (key, val, setter) => {
+  function updatePreference<T>(key: string, val: T, setter: React.Dispatch<React.SetStateAction<T>>) {
     setter(val);
     localStorage.setItem(key, String(val));
     // Apply configurations dynamically
@@ -30,7 +37,7 @@ export default function LayoutManager() {
         }
       }
     }
-  };
+  }
 
   return (
     <div className="space-y-4 select-none text-left">
@@ -46,9 +53,10 @@ export default function LayoutManager() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => updatePreference("layout-show-explorer", !showExplorer, setShowExplorer)}
+              aria-pressed={showExplorer}
               className={`p-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer text-[10px] font-mono font-bold ${
                 showExplorer
-                  ? "bg-indigo-600/10 border-indigo-500/30 text-indigo-400"
+                  ? "bg-accent text-bg/10 border-accent/30 text-accent"
                   : "bg-[#141822] border-[#1c2230] text-gray-500"
               }`}
             >
@@ -58,9 +66,10 @@ export default function LayoutManager() {
 
             <button
               onClick={() => updatePreference("layout-show-ai", !showAIHelper, setShowAIHelper)}
+              aria-pressed={showAIHelper}
               className={`p-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer text-[10px] font-mono font-bold ${
                 showAIHelper
-                  ? "bg-indigo-600/10 border-indigo-500/30 text-indigo-400"
+                  ? "bg-accent text-bg/10 border-accent/30 text-accent"
                   : "bg-[#141822] border-[#1c2230] text-gray-500"
               }`}
             >
@@ -73,19 +82,16 @@ export default function LayoutManager() {
         {/* Editor splitting */}
         <div className="space-y-1.5 pt-2">
           <span className="text-[9px] uppercase font-bold text-gray-500 tracking-wider font-mono flex items-center gap-1">
-            <LayoutGrid className="w-3 h-3 text-indigo-400" /> Editor Split Mode
+            <LayoutGrid className="w-3 h-3 text-accent" /> Editor Split Mode
           </span>
           <div className="flex bg-[#0c0f16] border border-[#1c2230] p-1 rounded-xl">
-            {[
-              { id: "single", label: "Single View" },
-              { id: "split-h", label: "Split Horizontal" },
-              { id: "split-v", label: "Split Vertical" },
-            ].map((btn) => (
+            {SPLIT_OPTIONS.map((btn) => (
               <button
                 key={btn.id}
                 onClick={() => updatePreference("layout-editor-split", btn.id, setEditorSplit)}
+                aria-pressed={editorSplit === btn.id}
                 className={`flex-1 py-1 rounded-lg text-[9.5px] font-mono font-bold transition-all cursor-pointer ${
-                  editorSplit === btn.id ? "bg-indigo-600/15 text-indigo-400 border border-indigo-500/20" : "text-gray-500 hover:text-gray-300"
+                  editorSplit === btn.id ? "bg-accent text-bg/15 text-accent border border-accent/20" : "text-gray-500 hover:text-gray-300"
                 }`}
               >
                 {btn.label}
@@ -98,9 +104,10 @@ export default function LayoutManager() {
         <div className="pt-2 border-t border-border">
           <button
             onClick={() => updatePreference("layout-zen-mode", !zenMode, setZenMode)}
+            aria-pressed={zenMode}
             className={`w-full p-3 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
               zenMode
-                ? "bg-purple-600/10 border-purple-500/40 text-purple-400 shadow-md shadow-purple-500/5 animate-pulse"
+                ? "bg-violet-dim/10 border-violet-theme/40 text-violet-theme shadow-md shadow-violet-theme/5 animate-pulse"
                 : "bg-panel border-border text-text hover:text-text-strong"
             }`}
           >
@@ -111,11 +118,10 @@ export default function LayoutManager() {
                 <span className="text-[9px] text-muted block">Hides sidebars, docks, and notifications.</span>
               </div>
             </div>
-            <Zap className={`w-4 h-4 ${zenMode ? 'text-purple-400 fill-purple-400/20' : 'text-muted'}`} />
+            <Zap className={`w-4 h-4 ${zenMode ? "text-violet-theme fill-violet-theme/20" : "text-muted"}`} />
           </button>
         </div>
       </div>
     </div>
   );
 }
-

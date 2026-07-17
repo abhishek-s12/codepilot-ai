@@ -1,6 +1,21 @@
-// @ts-nocheck
 import { IconSparkles, IconLink, IconDatabase, IconCheck } from "../icons/Icons";
 import WelcomeChecklist from "./WelcomeChecklist";
+
+interface IndexingProgress {
+  stage: string;
+  message: string;
+  progress: number;
+}
+
+interface OnboardingPanelProps {
+  indexingProgress: IndexingProgress | null;
+  repoUrl: string;
+  setRepoUrl: (url: string) => void;
+  accessToken: string;
+  setAccessToken: (token: string) => void;
+  isCloning: boolean;
+  onIndexRepository: () => void;
+}
 
 export default function OnboardingPanel({
   indexingProgress,
@@ -10,7 +25,7 @@ export default function OnboardingPanel({
   setAccessToken,
   isCloning,
   onIndexRepository,
-}) {
+}: OnboardingPanelProps) {
   const steps = [
     { id: "scan", label: "Scanning repository" },
     { id: "read", label: "Reading and chunking files" },
@@ -18,7 +33,7 @@ export default function OnboardingPanel({
     { id: "save", label: "Saving index" }
   ];
 
-  const getStepState = (stepId, progress, stage) => {
+  const getStepState = (stepId: string, progress: number, stage: string): "completed" | "active" | "failed" | "pending" => {
     if (stage === "Failed") return "failed";
     
     switch (stepId) {
@@ -49,7 +64,7 @@ export default function OnboardingPanel({
         <div className="p-8 rounded-3xl border border-white/10 bg-gray-900/50 backdrop-blur-xl shadow-2xl glass space-y-6">
           <div className="space-y-2 text-center">
             <h3 className="text-lg font-bold text-white flex items-center justify-center gap-2.5">
-              <span className="w-4 h-4 border-2 border-indigo-400/20 border-t-indigo-400 rounded-full animate-spin"></span>
+              <span className="w-4 h-4 border-2 border-secondary/20 border-t-secondary rounded-full animate-spin"></span>
               {indexingProgress.stage}
             </h3>
             <p className="text-xs text-gray-400 leading-relaxed font-mono">{indexingProgress.message}</p>
@@ -59,12 +74,12 @@ export default function OnboardingPanel({
           <div className="relative pt-1">
             <div className="flex mb-2 items-center justify-between">
               <div>
-                <span className="text-[10px] font-semibold inline-block py-1 px-2.5 uppercase rounded-full bg-indigo-500/20 text-indigo-300">
+                <span className="text-[10px] font-semibold inline-block py-1 px-2.5 uppercase rounded-full bg-secondary-dim/20 text-secondary">
                   Progress Stage
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-xs font-semibold inline-block text-indigo-300 font-mono">
+                <span className="text-xs font-semibold inline-block text-secondary font-mono">
                   {indexingProgress.progress}%
                 </span>
               </div>
@@ -72,7 +87,7 @@ export default function OnboardingPanel({
             <div className="overflow-hidden h-2.5 mb-4 text-xs flex rounded-full bg-white/5 border border-white/5">
               <div
                 style={{ width: `${indexingProgress.progress}%` }}
-                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-600 transition-all duration-300"
+                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-secondary text-bg transition-all duration-300"
               ></div>
             </div>
           </div>
@@ -92,7 +107,7 @@ export default function OnboardingPanel({
                       state === "completed"
                         ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"
                         : state === "active"
-                        ? "bg-indigo-500/5 border-indigo-500/30 text-indigo-300 animate-pulse-glow"
+                        ? "bg-secondary-dim/5 border-secondary/30 text-secondary animate-pulse-glow"
                         : "bg-white/2 border-white/5 text-gray-500"
                     }`}
                   >
@@ -101,8 +116,8 @@ export default function OnboardingPanel({
                         <IconCheck className="w-3.5 h-3.5" />
                       </span>
                     ) : state === "active" ? (
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400">
-                        <span className="w-2.5 h-2.5 border-2 border-indigo-400/20 border-t-indigo-400 rounded-full animate-spin"></span>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-dim/20 text-secondary">
+                        <span className="w-2.5 h-2.5 border-2 border-secondary/20 border-t-secondary rounded-full animate-spin"></span>
                       </span>
                     ) : (
                       <span className="h-5 w-5 shrink-0 rounded-full border border-white/10 flex items-center justify-center">
@@ -121,10 +136,10 @@ export default function OnboardingPanel({
       ) : (
         <div className="space-y-10">
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-secondary/30 bg-secondary-dim/10 text-secondary text-xs font-semibold uppercase tracking-wider mb-2">
               <IconSparkles className="w-3.5 h-3.5" /> Workspace Configured
             </div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-indigo-400 tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-secondary tracking-tight">
               Analyze codebases instantly.
             </h1>
             <p className="text-sm text-gray-400 max-w-xl mx-auto leading-relaxed">
@@ -135,7 +150,7 @@ export default function OnboardingPanel({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
             {/* Input Card */}
             <div className="md:col-span-2 p-8 rounded-3xl border border-white/10 bg-gray-900/50 backdrop-blur-xl shadow-2xl relative overflow-hidden glass">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full filter blur-3xl pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-48 h-48 bg-secondary-dim/5 rounded-full filter blur-3xl pointer-events-none"></div>
               
               <div className="space-y-6">
                 <div>
@@ -144,7 +159,7 @@ export default function OnboardingPanel({
                   </label>
                   <div className="relative rounded-2xl shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
-                      <IconLink className="w-5 h-5 text-indigo-400" />
+                      <IconLink className="w-5 h-5 text-secondary" />
                     </div>
                     <input
                       type="url"
@@ -152,7 +167,7 @@ export default function OnboardingPanel({
                       onChange={(e) => setRepoUrl(e.target.value)}
                       placeholder="https://github.com/owner/repository"
                       disabled={isCloning}
-                      className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-black/40 border border-white/10 focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/70 text-white placeholder-gray-500 focus:outline-none transition-all font-mono text-[14px]"
+                      className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-black/40 border border-white/10 focus:border-secondary focus:ring-1 focus:ring-secondary/70 text-white placeholder-gray-500 focus:outline-none transition-all font-mono text-[14px]"
                     />
                   </div>
                 </div>
@@ -163,7 +178,7 @@ export default function OnboardingPanel({
                   </label>
                   <div className="relative rounded-2xl shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
-                      <span className="text-indigo-400 font-mono text-xs">🔑</span>
+                      <span className="text-secondary font-mono text-xs">🔑</span>
                     </div>
                     <input
                       type="password"
@@ -171,7 +186,7 @@ export default function OnboardingPanel({
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                       disabled={isCloning}
-                      className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-black/40 border border-white/10 focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/70 text-white placeholder-gray-500 focus:outline-none transition-all font-mono text-[14px]"
+                      className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-black/40 border border-white/10 focus:border-secondary focus:ring-1 focus:ring-secondary/70 text-white placeholder-gray-500 focus:outline-none transition-all font-mono text-[14px]"
                     />
                   </div>
                 </div>
@@ -180,7 +195,7 @@ export default function OnboardingPanel({
                   <button
                     onClick={onIndexRepository}
                     disabled={isCloning || !repoUrl.trim()}
-                    className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 text-white font-semibold text-sm transition-all duration-150 flex items-center gap-2 shadow-lg shadow-indigo-600/20 active:scale-[0.98]"
+                    className="px-6 py-3.5 rounded-xl bg-secondary text-bg hover:bg-secondary-strong disabled:bg-secondary text-bg/50 text-white font-semibold text-sm transition-all duration-150 flex items-center gap-2 shadow-lg shadow-secondary/20 active:scale-[0.98]"
                   >
                     {isCloning ? (
                       <>

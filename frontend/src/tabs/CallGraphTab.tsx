@@ -79,7 +79,7 @@ export default function CallGraphTab({
           <button
             onClick={onGetCallGraph}
             disabled={isGraphLoading}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
+            className="px-5 py-2.5 rounded-xl bg-secondary text-bg hover:bg-secondary-strong text-white font-bold text-xs transition-all cursor-pointer shadow-lg shadow-secondary/10"
           >
             {isGraphLoading ? "Mapping Code..." : "Map Code Call Mappings"}
           </button>

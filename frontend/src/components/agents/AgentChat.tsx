@@ -1,27 +1,53 @@
-// @ts-nocheck
 import { useState, useRef, useCallback } from "react";
 import AgentSelector from "./AgentSelector";
 import AgentResponse from "./AgentResponse";
 import AgentHistory from "./AgentHistory";
 import { runAgentChatStream } from "../../services/agents";
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+  agent: string;
+  streaming?: boolean;
+}
+
+interface ReportEntry {
+  id: number;
+  timestamp: string;
+  message: string;
+  agent_type: string;
+  collaborate: boolean;
+  response: string;
+}
+
+interface AgentChatProps {
+  repoPath: string;
+  activeFile?: string;
+  activeSymbol?: string;
+  selectionText?: string;
+}
+
+function capitalizeFirst(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export default function AgentChat({
   repoPath,
   activeFile,
   activeSymbol,
   selectionText,
-}) {
+}: AgentChatProps) {
   const [agent, setAgent] = useState("auto");
   const [collaborateMode, setCollaborateMode] = useState(false);
-  
+
   // Streaming state
   const [isStreaming, setIsStreaming] = useState(false);
-  const [messages, setMessages] = useState([]); // Array of { role, content, agent }
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
-  
+
   // History of reports
-  const [reportHistory, setReportHistory] = useState([]);
-  const streamAbortRef = useRef(null);
+  const [reportHistory, setReportHistory] = useState<ReportEntry[]>([]);
+  const streamAbortRef = useRef<AbortController | null>(null);
 
   const handleStop = useCallback(() => {
     if (streamAbortRef.current) {
@@ -30,7 +56,7 @@ export default function AgentChat({
     setIsStreaming(false);
   }, []);
 
-  const handleSend = async (e) => {
+  const handleSend = async (e: React.FormEvent | null) => {
     if (e) e.preventDefault();
     const query = inputText.trim();
     if (!query || isStreaming) return;
@@ -38,8 +64,8 @@ export default function AgentChat({
     setInputText("");
     setIsStreaming(true);
 
-    const userMessage = { role: "user", content: query, agent: "user" };
-    const assistantMessage = { role: "assistant", content: "", agent, streaming: true };
+    const userMessage: Message = { role: "user", content: query, agent: "user" };
+    const assistantMessage: Message = { role: "assistant", content: "", agent, streaming: true };
     setMessages([userMessage, assistantMessage]);
 
     // Create payload
@@ -54,7 +80,7 @@ export default function AgentChat({
     };
 
     let accumulatedResponse = "";
-    
+
     try {
       const controller = new AbortController();
       streamAbortRef.current = controller;
@@ -66,7 +92,7 @@ export default function AgentChat({
 
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
 
-      const reader = response.body.getReader();
+      const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -76,18 +102,18 @@ export default function AgentChat({
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = lines.pop(); // keep trailing incomplete line
+        buffer = lines.pop() ?? "";
 
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
           try {
-            const parsed = JSON.parse(trimmed);
+            const parsed = JSON.parse(trimmed) as { type?: string; token?: string };
             if (parsed.type === "token" && parsed.token) {
               accumulatedResponse += parsed.token;
               setMessages([
                 userMessage,
-                { role: "assistant", content: accumulatedResponse, agent, streaming: true }
+                { role: "assistant", content: accumulatedResponse, agent, streaming: true },
               ]);
             }
           } catch {
@@ -99,7 +125,7 @@ export default function AgentChat({
       // Finalize message state
       setMessages([
         userMessage,
-        { role: "assistant", content: accumulatedResponse, agent, streaming: false }
+        { role: "assistant", content: accumulatedResponse, agent, streaming: false },
       ]);
 
       // Archive report in history
@@ -112,19 +138,19 @@ export default function AgentChat({
           agent_type: agent,
           collaborate: collaborateMode,
           response: accumulatedResponse,
-        }
+        },
       ]);
-
-    } catch (err) {
-      if (err.name === "AbortError") {
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.name === "AbortError") {
         setMessages([
           userMessage,
-          { role: "assistant", content: accumulatedResponse + "\n\n*(Stopped)*", agent, streaming: false }
+          { role: "assistant", content: accumulatedResponse + "\n\n*(Stopped)*", agent, streaming: false },
         ]);
       } else {
         setMessages([
           userMessage,
-          { role: "assistant", content: `Error: ${err.message}`, agent, streaming: false }
+          { role: "assistant", content: `Error: ${error.message}`, agent, streaming: false },
         ]);
       }
     } finally {
@@ -133,13 +159,13 @@ export default function AgentChat({
     }
   };
 
-  const handleSelectHistory = (entry) => {
+  const handleSelectHistory = (entry: ReportEntry) => {
     // Restore historical session messages
     setAgent(entry.agent_type);
     setCollaborateMode(entry.collaborate);
     setMessages([
       { role: "user", content: entry.message, agent: "user" },
-      { role: "assistant", content: entry.response, agent: entry.agent_type, streaming: false }
+      { role: "assistant", content: entry.response, agent: entry.agent_type, streaming: false },
     ]);
   };
 
@@ -158,8 +184,8 @@ export default function AgentChat({
       <div className="flex-1 overflow-y-auto scrollbar-thin p-3.5 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center gap-4 px-6 select-none">
-            <div className="w-10 h-10 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center">
-              <span className="text-violet-400 text-lg">🤖</span>
+            <div className="w-10 h-10 rounded-xl bg-violet-dim/10 border border-violet-500/20 flex items-center justify-center">
+              <span className="text-violet-theme text-lg">🤖</span>
             </div>
             <div>
               <p className="text-white font-semibold text-xs mb-1">AI Agents Coordinator</p>
@@ -173,14 +199,14 @@ export default function AgentChat({
             <div key={idx}>
               {m.role === "user" ? (
                 <div className="flex justify-end mb-4">
-                  <div className="max-w-[85%] px-3 py-2 rounded-xl rounded-tr-sm bg-violet-600/20 border border-violet-500/20 text-gray-200 text-[11px] leading-relaxed font-mono whitespace-pre-wrap">
+                  <div className="max-w-[85%] px-3 py-2 rounded-xl rounded-tr-sm bg-violet-theme/20 border border-violet-500/20 text-gray-200 text-[11px] leading-relaxed font-mono whitespace-pre-wrap">
                     {m.content}
                   </div>
                 </div>
               ) : (
                 <AgentResponse
                   content={m.content}
-                  isStreaming={m.streaming}
+                  isStreaming={m.streaming ?? false}
                   agentName={m.agent}
                 />
               )}
@@ -207,9 +233,9 @@ export default function AgentChat({
             placeholder={
               collaborateMode
                 ? "Run Collaboration review on active file..."
-                : `Ask the ${agent.capitalize()} Agent a question...`
+                : `Ask the ${capitalizeFirst(agent)} Agent a question...`
             }
-            className="flex-1 bg-white/4 border border-white/8 rounded-lg px-3 py-2 text-[11px] text-gray-300 placeholder-gray-600 font-mono outline-none focus:border-violet-500/40 focus:bg-violet-500/5 transition-all disabled:opacity-50"
+            className="flex-1 bg-white/4 border border-white/8 rounded-lg px-3 py-2 text-[11px] text-gray-300 placeholder-gray-600 font-mono outline-none focus:border-violet-theme/40 focus:bg-violet-dim/5 transition-all disabled:opacity-50"
           />
           {isStreaming ? (
             <button
@@ -223,7 +249,7 @@ export default function AgentChat({
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className="px-3.5 py-2 text-[10px] font-mono font-bold rounded-lg bg-violet-600 border border-violet-500 text-white hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0"
+              className="px-3.5 py-2 text-[10px] font-mono font-bold rounded-lg bg-violet-theme border border-violet-500 text-white hover:bg-violet-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0"
             >
               Ask
             </button>
@@ -233,9 +259,3 @@ export default function AgentChat({
     </div>
   );
 }
-
-// Simple capitalize helper
-String.prototype.capitalize = function() {
-  return this.charAt(0).toUpperCase() + this.slice(1);
-};
-

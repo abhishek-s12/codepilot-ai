@@ -1,4 +1,3 @@
-// @ts-nocheck
 const AGENT_LIST = [
   { value: "auto", label: "🤖 Auto Coordinator" },
   { value: "architecture", label: "🧩 Architecture Specialist" },
@@ -10,16 +9,24 @@ const AGENT_LIST = [
   { value: "review", label: "🔍 Code Review Specialist" },
 ];
 
+interface AgentSelectorProps {
+  selectedAgent: string;
+  onSelectAgent?: (agent: string) => void;
+  collaborateMode: boolean;
+  onToggleCollaboration?: (enabled: boolean) => void;
+  disabled?: boolean;
+}
+
 export default function AgentSelector({
   selectedAgent,
   onSelectAgent,
   collaborateMode,
   onToggleCollaboration,
   disabled,
-}) {
+}: AgentSelectorProps) {
   return (
     <div className="flex flex-col gap-3 p-3.5 bg-panel border-b border-border shrink-0 select-none">
-      
+
       {/* Dropdown selector */}
       <div className="flex flex-col gap-1.5">
         <label className="text-[11px] font-medium text-muted">
@@ -51,7 +58,7 @@ export default function AgentSelector({
         <div className="flex flex-col leading-none">
           <span className="text-[11px] font-medium text-text-strong">Agent Collaboration Mode</span>
           <span className="text-[9px] text-muted mt-0.5">
-            Runs Architecture, Security, & Performance agents sequentially
+            Runs Architecture, Security, &amp; Performance agents sequentially
           </span>
         </div>
       </label>
@@ -59,4 +66,3 @@ export default function AgentSelector({
     </div>
   );
 }
-

@@ -1,16 +1,26 @@
-﻿// @ts-nocheck
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { fetchProjectActivity } from "../../services/collaboration";
 
-export default function ActivityFeed({ projectId }) {
-  const [feed, setFeed] = useState([]);
+interface ActivityItem {
+  timestamp: string;
+  author: string;
+  message: string;
+  path: string;
+}
+
+interface ActivityFeedProps {
+  projectId?: string;
+}
+
+export default function ActivityFeed({ projectId }: ActivityFeedProps) {
+  const [feed, setFeed] = useState<ActivityItem[]>([]);
 
   const loadFeed = useCallback(async () => {
     if (!projectId) return;
     try {
       const res = await fetchProjectActivity(projectId);
-      setFeed(res || []);
+      setFeed((res as ActivityItem[]) || []);
     } catch (err) {
       console.error("[ActivityFeed] Load error:", err);
     }
@@ -24,7 +34,7 @@ export default function ActivityFeed({ projectId }) {
 
   return (
     <div className="w-full h-full flex flex-col min-h-0 bg-[#07090f] text-gray-300">
-      
+
       {/* Title */}
       <div className="flex items-center justify-between px-3 h-8 border-b border-white/5 bg-[#090c14] shrink-0 select-none">
         <span className="text-[9px] font-bold text-gray-500 font-mono uppercase tracking-widest">
@@ -32,6 +42,7 @@ export default function ActivityFeed({ projectId }) {
         </span>
         <button
           onClick={loadFeed}
+          aria-label="Reload activity feed"
           className="text-gray-500 hover:text-gray-300 text-[8px] font-mono"
         >
           Reload
@@ -62,7 +73,7 @@ export default function ActivityFeed({ projectId }) {
                   </span>
                 </div>
                 <p className="text-[10px] text-gray-400 font-mono italic">
-                  "{item.message}"
+                  &ldquo;{item.message}&rdquo;
                 </p>
                 <span className="text-[8px] text-gray-500 font-mono select-none truncate">
                   File: {item.path}
@@ -76,4 +87,3 @@ export default function ActivityFeed({ projectId }) {
     </div>
   );
 }
-

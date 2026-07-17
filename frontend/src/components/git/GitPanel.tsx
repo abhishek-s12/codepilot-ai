@@ -9,7 +9,7 @@ import {
 } from "../../services/git";
 import BranchSelector from "./BranchSelector";
 import CommitHistory, { GitCommitItem } from "./CommitHistory";
-import DiffViewer from "./DiffViewer";
+import UnifiedDiffViewer from "../common/UnifiedDiffViewer";
 import PRReview from "./PRReview";
 
 const GIT_SUB_TABS = [
@@ -399,7 +399,7 @@ export default function GitPanel({ repoPath }: GitPanelProps) {
           {activeSubTab === "pr" ? (
             <PRReview reviewData={prReviewData} isLoading={isPRLoading} />
           ) : (
-            <DiffViewer diffText={diffText} filename={selectedFile || selectedCommitSha} />
+            <UnifiedDiffViewer diffText={diffText} filename={selectedFile || selectedCommitSha} />
           )}
         </div>
       </div>

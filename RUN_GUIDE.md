@@ -90,7 +90,7 @@ Open another **new** terminal window, navigate to the `frontend` directory, inst
 
 ```powershell
 cd frontend
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 

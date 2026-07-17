@@ -70,9 +70,9 @@ export default function ActionCenter({
       title: "Document File",
       desc: "Generate professional docstrings and summaries.",
       icon: Code,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/20",
+      color: "text-accent",
+      bg: "bg-accent-dim/10",
+      border: "border-accent/20",
       prompt: `Generate developer documentation, comments, and docstrings for ${activeFileName || "active file"}.`,
     },
     {

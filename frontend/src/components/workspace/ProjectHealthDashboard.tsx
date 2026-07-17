@@ -1,13 +1,37 @@
-// @ts-nocheck
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { fetchRepositoryAnalytics } from "../../services/api";
 import { AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 
-export default function ProjectHealthDashboard({ repoPath, onBack }) {
-  const [data, setData] = useState(null);
+interface AnalyticsData {
+  repository_health?: number;
+  files_indexed?: number;
+  functions?: number;
+  classes?: number;
+  dependency_count?: number;
+  cyclomatic_complexity?: number;
+  average_function_length?: number;
+}
+
+interface AIInsight {
+  type: "warning" | "info" | "success";
+  text: string;
+}
+
+interface Badge {
+  label: string;
+  active: boolean;
+}
+
+interface ProjectHealthDashboardProps {
+  repoPath?: string;
+  onBack?: () => void;
+}
+
+export default function ProjectHealthDashboard({ repoPath, onBack }: ProjectHealthDashboardProps) {
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadHealth = useCallback(async () => {
     if (!repoPath) return;
@@ -15,7 +39,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
     setError(null);
     try {
       const result = await fetchRepositoryAnalytics(repoPath);
-      setData(result);
+      setData(result as AnalyticsData);
     } catch (err) {
       console.error(err);
       setError("Failed to calculate repository health statistics.");
@@ -52,7 +76,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
                 Go Back
               </button>
             )}
-            <button onClick={loadHealth} className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] font-sans">
+            <button onClick={loadHealth} className="px-3 py-1.5 rounded-lg bg-accent text-bg hover:bg-accent-strong text-white font-bold text-[11px] font-sans">
               Retry Audit
             </button>
           </div>
@@ -74,7 +98,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
   const scoreProgressColor = healthScore >= 90 ? "border-t-emerald-500" : healthScore >= 75 ? "border-t-amber-500" : "border-t-rose-500";
 
   // Badges lists
-  const badges = [
+  const badges: Badge[] = [
     { label: "AI Ready", active: true },
     { label: "Indexed", active: true },
     { label: "Tests Passing", active: true },
@@ -84,14 +108,14 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
   ];
 
   // Dynamic AI Insights compiled from code metrics
-  const aiInsights = [];
+  const aiInsights: AIInsight[] = [];
   if (cyclomaticComplexity > 3.0) {
     aiInsights.push({
       type: "warning",
       text: `High average cyclomatic complexity detected (${cyclomaticComplexity}). Refactoring large control flows is recommended.`,
     });
   }
-  if (data.average_function_length > 40) {
+  if ((data.average_function_length ?? 0) > 40) {
     aiInsights.push({
       type: "warning",
       text: `Long function blocks detected (average ${data.average_function_length} LOC). Consider splitting functions into smaller modules.`,
@@ -124,7 +148,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
   return (
     <div className="flex-1 bg-[#090b10] overflow-y-auto p-6 sm:p-8 select-text scrollbar-thin text-left flex flex-col min-h-0 font-sans">
       <div className="max-w-4xl mx-auto space-y-6 w-full">
-        
+
         {/* Header Block */}
         <div className="flex items-center justify-between border-b border-[#1c2230] pb-4.5 select-none">
           <div className="space-y-1">
@@ -132,6 +156,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
               {onBack && (
                 <button
                   onClick={onBack}
+                  aria-label="Go back"
                   className="px-2.5 py-1 text-[11px] font-sans font-semibold rounded bg-white/5 border border-[#1c2230] text-gray-400 hover:text-white transition-colors cursor-pointer mr-1"
                 >
                   ← Back
@@ -143,6 +168,7 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
           </div>
           <button
             onClick={loadHealth}
+            aria-label="Recalculate health score"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141822] hover:bg-[#1b212f] border border-[#1c2230] text-[11px] text-gray-300 font-sans font-semibold hover:text-white transition-all cursor-pointer"
           >
             <RefreshCw className="w-3 h-3 text-gray-500" />
@@ -176,8 +202,8 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
             <div className="grid grid-cols-2 gap-x-5 gap-y-3">
               {[
                 { label: "Code Quality Index", val: `${healthScore}%`, color: "text-emerald-400" },
-                { label: "Documentation Coverage", val: "88%", color: "text-indigo-400" },
-                { label: "Automated Test Coverage", val: "85%", color: "text-indigo-400" },
+                { label: "Documentation Coverage", val: "88%", color: "text-accent" },
+                { label: "Automated Test Coverage", val: "85%", color: "text-accent" },
                 { label: "Dependency Status", val: "100% Up to date", color: "text-emerald-400" },
                 { label: "Security Vulnerabilities", val: "0 detected", color: "text-emerald-400" },
                 { label: "Cyclomatic Complexity", val: `${cyclomaticComplexity} / low`, color: "text-emerald-400" },
@@ -247,7 +273,6 @@ export default function ProjectHealthDashboard({ repoPath, onBack }) {
 
 function LoaderSpinner() {
   return (
-    <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin inline-block"></div>
+    <div className="w-10 h-10 border-4 border-accent/20 border-t-accent rounded-full animate-spin inline-block"></div>
   );
 }
-

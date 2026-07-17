@@ -1,6 +1,18 @@
-// @ts-nocheck
+interface PatchToolbarProps {
+  status: "idle" | "generating" | "ready" | "applied" | "rejected";
+  instruction: string | null;
+  isStreaming: boolean;
+  hasUndo: boolean;
+  onApply: () => void;
+  onReject: () => void;
+  onCopy: () => void;
+  onDownload: () => void;
+  onUndo: () => void;
+  onStop: () => void;
+}
+
 export default function PatchToolbar({
-  status,           // "idle" | "generating" | "ready" | "applied" | "rejected"
+  status,
   instruction,
   isStreaming,
   hasUndo,
@@ -10,11 +22,11 @@ export default function PatchToolbar({
   onDownload,
   onUndo,
   onStop,
-}) {
+}: PatchToolbarProps) {
   const statusConfig = {
     idle:       { label: "No patch",         color: "text-gray-500",   dot: "bg-gray-600" },
-    generating: { label: "Generatingâ€¦",      color: "text-amber-400",  dot: "bg-amber-400 animate-pulse" },
-    ready:      { label: "Ready to review",  color: "text-indigo-400", dot: "bg-indigo-400" },
+    generating: { label: "Generating…",      color: "text-amber-400",  dot: "bg-amber-400 animate-pulse" },
+    ready:      { label: "Ready to review",  color: "text-accent",     dot: "bg-accent" },
     applied:    { label: "Patch applied",    color: "text-emerald-400",dot: "bg-emerald-400" },
     rejected:   { label: "Patch rejected",   color: "text-rose-400",   dot: "bg-rose-500" },
   };
@@ -118,4 +130,3 @@ export default function PatchToolbar({
     </div>
   );
 }
-

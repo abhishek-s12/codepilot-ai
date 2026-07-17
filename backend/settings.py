@@ -2,7 +2,7 @@ from functools import lru_cache
 import json
 from typing import Any
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     )
 
     postgres_url: str = Field(
-        default="postgresql://codepilot:codepilot_pass_123@127.0.0.1:5435/codepilot",
+        default="postgresql://codepilot:REPLACE_ME_DB_PASSWORD@127.0.0.1:5435/codepilot",
         validation_alias=AliasChoices("DATABASE_URL", "POSTGRES_URL"),
     )
     redis_url: str = Field(
@@ -79,7 +79,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("LLM_SITE_URL", "OPENROUTER_SITE_URL"),
     )
     jwt_secret: str = Field(
-        default="codepilot_secret_key_12345",
+        default="REPLACE_ME_JWT_SECRET",
         validation_alias=AliasChoices("JWT_SECRET"),
     )
     github_client_id: str = Field(
@@ -131,7 +131,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("S3_ACCESS_KEY"),
     )
     s3_secret_key: str = Field(
-        default="minio_password_123",
+        default="REPLACE_ME_S3_SECRET_KEY",
         validation_alias=AliasChoices("S3_SECRET_KEY"),
     )
     s3_bucket_name: str = Field(
@@ -203,6 +203,43 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins_field(cls, v: Any) -> list[str]:
         return parse_cors_origins(v)
+
+    @field_validator("jwt_secret")
+    @classmethod
+    def validate_jwt_secret(cls, v: str) -> str:
+        insecure_values = {"codepilot_secret_key_12345", "REPLACE_ME_JWT_SECRET", ""}
+        if not v or v in insecure_values:
+            raise ValueError("JWT_SECRET must be set to a secure, non-default value.")
+        return v
+
+    @field_validator("postgres_url")
+    @classmethod
+    def validate_postgres_url(cls, v: str) -> str:
+        if not v or "REPLACE_ME_DB_PASSWORD" in v:
+            raise ValueError("DATABASE_URL/POSTGRES_URL must not contain default placeholder password.")
+        return v
+
+    @field_validator("s3_secret_key")
+    @classmethod
+    def validate_s3_secret_key(cls, v: str) -> str:
+        insecure_values = {"minio_password_123", "REPLACE_ME_S3_SECRET_KEY", ""}
+        if not v or v in insecure_values:
+            raise ValueError("S3_SECRET_KEY must be set to a secure, non-default value.")
+        return v
+
+    @model_validator(mode="after")
+    def validate_features_config(self) -> "Settings":
+        if self.sso_enabled:
+            if not self.sso_client_id or not self.sso_client_secret or not self.sso_metadata_url:
+                raise ValueError("SSO is enabled, but client credentials (SSO_CLIENT_ID, SSO_CLIENT_SECRET, SSO_METADATA_URL) are missing or empty.")
+        if self.saml_enabled:
+            if not self.saml_sp_private_key or not self.saml_idp_entity_id or not self.saml_idp_sso_url:
+                raise ValueError("SAML is enabled, but client credentials/keys are missing or empty.")
+        if self.github_client_id and not self.github_client_secret:
+            raise ValueError("GITHUB_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty.")
+        if self.google_client_id and not self.google_client_secret:
+            raise ValueError("GOOGLE_CLIENT_ID is set, but GITHUB_CLIENT_SECRET is missing or empty.")
+        return self
 
 
 @lru_cache

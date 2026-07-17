@@ -1,5 +1,9 @@
-// @ts-nocheck
-export default function WelcomeChecklist({ repoUrl, repoPath }) {
+interface WelcomeChecklistProps {
+  repoUrl?: string;
+  repoPath?: string;
+}
+
+export default function WelcomeChecklist({ repoUrl, repoPath }: WelcomeChecklistProps) {
   // Check localStorage keys and repoPath to determine checklist state
   const connected = Boolean(repoUrl) || Boolean(repoPath);
   const indexed = Boolean(repoPath) || localStorage.getItem("codepilot_indexed") === "true";
@@ -20,17 +24,17 @@ export default function WelcomeChecklist({ repoUrl, repoPath }) {
 
   return (
     <div className="p-6 rounded-3xl border border-border bg-panel backdrop-blur-xl shadow-xl relative overflow-hidden space-y-4">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-32 h-32 bg-accent-dim rounded-full filter blur-3xl pointer-events-none"></div>
       
       {/* Header */}
       <div className="flex justify-between items-center shrink-0">
         <div>
-          <h4 className="text-[11px] font-medium text-indigo-400">
+          <h4 className="text-[11px] font-medium text-accent">
             🚀 Onboarding Checklist
           </h4>
           <p className="text-[11px] text-muted">Complete these steps to master the workspace.</p>
         </div>
-        <span className="text-[11px] font-medium bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full shrink-0">
+        <span className="text-[11px] font-medium bg-accent-dim/20 text-accent px-2 py-0.5 rounded-full shrink-0">
           {progressPercent}% Done
         </span>
       </div>
@@ -38,7 +42,7 @@ export default function WelcomeChecklist({ repoUrl, repoPath }) {
       {/* Progress mini bar */}
       <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden shrink-0">
         <div
-          className="h-full bg-indigo-600 transition-all duration-300"
+          className="h-full bg-accent text-bg transition-all duration-300"
           style={{ width: `${progressPercent}%` }}
         ></div>
       </div>

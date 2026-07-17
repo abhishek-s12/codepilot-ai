@@ -41,7 +41,7 @@ export interface Repository {
   files_indexed: number;
   chunks_indexed: number;
   created_at?: string;
-  status?: "indexed" | "indexing" | "error" | "pending";
+  status?: "completed" | "indexed" | "indexing" | "failed" | "error" | "pending" | "cloning" | "uploading" | "uploaded" | "restoring";
 }
 
 // CONFIDENT (revised): useRepository.ts reads `cloneRes.path`, not `repo_path`.

@@ -1,10 +1,17 @@
 import { useState, useCallback } from "react";
 import { fetchFlow, getErrorMessage } from "../services/api";
 
+export interface UseExecutionFlowResult {
+  flowData: any;
+  setFlowData: React.Dispatch<React.SetStateAction<any>>;
+  isFlowLoading: boolean;
+  handleGetFlow: () => Promise<void>;
+}
+
 export default function useExecutionFlow(
   repoPath: string,
   setStatus: (status: any) => void
-) {
+): UseExecutionFlowResult {
   const [flowData, setFlowData] = useState<any>(null);
   const [isFlowLoading, setIsFlowLoading] = useState<boolean>(false);
 

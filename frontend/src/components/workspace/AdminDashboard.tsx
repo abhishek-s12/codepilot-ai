@@ -160,7 +160,7 @@ export default function AdminDashboard({ repoPath, repoId, onBack }: AdminDashbo
     if (act.includes("update") || act.includes("edit") || act.includes("index")) {
       return "bg-amber-500/10 text-amber-400 border-amber-500/20";
     }
-    return "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+    return "bg-accent-dim/10 text-accent border-accent/20";
   };
 
   return (

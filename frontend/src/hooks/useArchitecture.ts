@@ -2,11 +2,31 @@ import { useState, useCallback } from "react";
 import { fetchArchitecture, fetchRepositoryGraph, getErrorMessage, fetchFileContent } from "../services/api";
 import { MarkerType, Node, Edge } from "@xyflow/react";
 
+export interface UseArchitectureResult {
+  architecture: string;
+  setArchitecture: React.Dispatch<React.SetStateAction<string>>;
+  graphNodes: Node[];
+  setGraphNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+  graphEdges: Edge[];
+  setGraphEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+  selectedNode: any;
+  setSelectedNode: React.Dispatch<React.SetStateAction<any>>;
+  isArchitectureLoading: boolean;
+  isGraphLoadingReactFlow: boolean;
+  previewContent: string;
+  setPreviewContent: React.Dispatch<React.SetStateAction<string>>;
+  isPreviewLoading: boolean;
+  setIsPreviewLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  handleGetArchitecture: () => Promise<void>;
+  handleNodeClick: (event: any, node: any) => Promise<void>;
+  error: string | null;
+}
+
 export default function useArchitecture(
   repoPath: string,
   setStatus: (status: any) => void,
   getFileColor: (ext: string) => string
-) {
+): UseArchitectureResult {
   const [architecture, setArchitecture] = useState<string>("");
   const [graphNodes, setGraphNodes] = useState<Node[]>([]);
   const [graphEdges, setGraphEdges] = useState<Edge[]>([]);

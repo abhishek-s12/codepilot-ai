@@ -1,10 +1,40 @@
-// @ts-nocheck
 import { Sparkles } from "lucide-react";
 
-export function AIInsightCards({ insights = [] }) {
+interface Insight {
+  type: string;
+  title: string;
+  description: string;
+}
+
+interface InsightStyle {
+  bg: string;
+  badge: string;
+  icon: string;
+}
+
+interface Recommendation {
+  label: string;
+  prompt: string;
+}
+
+interface FrameworkAdvisor {
+  title: string;
+  items: Recommendation[];
+}
+
+interface AIInsightCardsProps {
+  insights?: Insight[];
+}
+
+interface SmartRecommendationsProps {
+  activeFile?: string;
+  onTriggerAction?: (prompt: string) => void;
+}
+
+export function AIInsightCards({ insights = [] }: AIInsightCardsProps) {
   if (insights.length === 0) return null;
 
-  const getInsightStyle = (type) => {
+  const getInsightStyle = (type: string): InsightStyle => {
     switch (type) {
       case "security":
         return {
@@ -20,13 +50,13 @@ export function AIInsightCards({ insights = [] }) {
         };
       case "debt":
         return {
-          bg: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
+          bg: "bg-accent-dim/10 border-accent/20 text-accent",
           badge: "Technical Debt",
           icon: "💸",
         };
       case "best_practice":
         return {
-          bg: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+          bg: "bg-accent-dim/10 border-accent/20 text-accent",
           badge: "Best Practice",
           icon: "💡",
         };
@@ -66,20 +96,17 @@ export function AIInsightCards({ insights = [] }) {
 export default function SmartRecommendations({
   activeFile = "",
   onTriggerAction = () => {},
-}) {
-  const ext = activeFile.split(".").pop().toLowerCase();
-  const fileName = activeFile.split(/[\\/]/).pop();
+}: SmartRecommendationsProps) {
+  const ext = activeFile.split(".").pop()?.toLowerCase() ?? "";
+  const fileName = activeFile.split(/[\\\/]/).pop() ?? activeFile;
 
-  const getSmartRecommendations = () => {
-    const list = [
-      { label: "🔍 Explain File Logic", prompt: `Explain the file ${fileName} and summarize its key operations.` },
-      { label: "🧪 Generate Unit Tests", prompt: `Create comprehensive automated unit tests for functions defined in ${fileName}.` },
-      { label: "🧼 Review Code Quality", prompt: `Scan the file ${fileName} for code quality issues, style guidelines, and compliance.` },
-    ];
-    return list;
-  };
+  const getSmartRecommendations = (): Recommendation[] => [
+    { label: "🔍 Explain File Logic", prompt: `Explain the file ${fileName} and summarize its key operations.` },
+    { label: "🧪 Generate Unit Tests", prompt: `Create comprehensive automated unit tests for functions defined in ${fileName}.` },
+    { label: "🧼 Review Code Quality", prompt: `Scan the file ${fileName} for code quality issues, style guidelines, and compliance.` },
+  ];
 
-  const getFrameworkAdvisor = () => {
+  const getFrameworkAdvisor = (): FrameworkAdvisor | null => {
     if (["js", "jsx", "ts", "tsx"].includes(ext)) {
       return {
         title: "React Framework Advisor",
@@ -101,7 +128,7 @@ export default function SmartRecommendations({
     return null;
   };
 
-  const getAIInsights = () => {
+  const getAIInsights = (): Insight[] => {
     if (ext === "py") {
       return [
         {
@@ -145,18 +172,19 @@ export default function SmartRecommendations({
 
   return (
     <div className="space-y-5 p-4 rounded-2xl bg-panel border border-border text-left select-none animate-fade-in">
-      
+
       {/* File Action suggestions */}
       <div className="space-y-2">
-        <span className="text-[11px] font-medium text-indigo-400 flex items-center gap-1.5 pb-1 border-b border-border">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Smart Suggestions ({fileName})
+        <span className="text-[11px] font-medium text-accent flex items-center gap-1.5 pb-1 border-b border-border">
+          <Sparkles className="w-3.5 h-3.5 text-accent" /> Smart Suggestions ({fileName})
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {recommendations.map((rec, idx) => (
             <button
               key={idx}
               onClick={() => onTriggerAction(rec.prompt)}
-              className="p-2 text-left rounded-xl bg-bg hover:bg-panel-alt border border-border hover:border-indigo-500/20 text-gray-300 hover:text-white transition-all text-[11px] font-sans truncate cursor-pointer"
+              aria-label={rec.label}
+              className="p-2 text-left rounded-xl bg-bg hover:bg-panel-alt border border-border hover:border-accent/20 text-gray-300 hover:text-white transition-all text-[11px] font-sans truncate cursor-pointer"
             >
               {rec.label}
             </button>
@@ -175,6 +203,7 @@ export default function SmartRecommendations({
               <button
                 key={idx}
                 onClick={() => onTriggerAction(item.prompt)}
+                aria-label={item.label}
                 className="p-2 text-left rounded-xl bg-bg hover:bg-panel-alt border border-border text-[11px] text-text hover:text-text-strong transition-all font-sans truncate cursor-pointer"
               >
                 {item.label}
@@ -194,4 +223,3 @@ export default function SmartRecommendations({
     </div>
   );
 }
-

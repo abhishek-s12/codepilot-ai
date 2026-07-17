@@ -183,7 +183,7 @@ export default function LoginScreen({
         <div className="absolute -bottom-[15%] -right-[15%] w-[650px] h-[650px] rounded-full bg-radial from-[#B69CFF]/8 via-[#B69CFF]/0 to-transparent filter blur-[100px] animate-orb-2 opacity-80"></div>
 
         {/* Orb 3: Faint Indigo Glow - Center Right */}
-        <div className="absolute top-[20%] right-[10%] w-[550px] h-[550px] rounded-full bg-radial from-indigo-500/6 via-transparent to-transparent filter blur-[110px] animate-orb-3 opacity-90"></div>
+        <div className="absolute top-[20%] right-[10%] w-[550px] h-[550px] rounded-full bg-radial from-[#B69CFF]/6 via-transparent to-transparent filter blur-[110px] animate-orb-3 opacity-90"></div>
       </div>
 
       {/* ABSTRACT INTELLIGENCE GRID: Faint grid lines and matrix overlay */}
@@ -236,7 +236,7 @@ export default function LoginScreen({
           
           {/* Logo Title */}
           <div className="flex items-center gap-3">
-            <img src={iconUrl} alt="ChunkWiser Brand Logo" className="w-10 h-10 object-contain rounded-xl shadow-lg shadow-indigo-500/10" />
+            <img src={iconUrl} alt="ChunkWiser Brand Logo" className="w-10 h-10 object-contain rounded-xl shadow-lg shadow-violet-theme/10" />
             <span className="text-xl font-bold tracking-wider text-text-strong font-display">ChunkWiser</span>
           </div>
 
@@ -317,10 +317,10 @@ export default function LoginScreen({
                   <span className="text-[#B69CFF]">import</span> <span className="text-white">{"{"} chunk {"}"}</span> <span className="text-[#B69CFF]">from</span> <span className="text-emerald-400">"cw"</span>;
                 </div>
                 <div>
-                  <span className="text-[#FF9D4D]">const</span> <span className="text-blue-400">repo</span> = <span className="text-[#FF9D4D]">await</span> <span className="text-emerald-300">chunk</span>(<span className="text-emerald-400">"./src"</span>);
+                  <span className="text-[#FF9D4D]">const</span> <span className="text-accent">repo</span> = <span className="text-[#FF9D4D]">await</span> <span className="text-emerald-300">chunk</span>(<span className="text-emerald-400">"./src"</span>);
                 </div>
                 <div>
-                  <span className="text-[#FF9D4D]">const</span> <span className="text-blue-400">nodes</span> = <span className="text-blue-300">repo.embed</span>();
+                  <span className="text-[#FF9D4D]">const</span> <span className="text-accent">nodes</span> = <span className="text-blue-300">repo.embed</span>();
                 </div>
                 <div className="h-2"></div>
                 <div>
@@ -385,7 +385,7 @@ export default function LoginScreen({
 
             {/* Header: Brand Logo & Title */}
             <div className="flex flex-col items-center text-center mb-6">
-              <img src={iconUrl} alt="ChunkWiser" className="w-12 h-12 object-contain rounded-2xl shadow-xl shadow-indigo-500/10 mb-3 animate-pulse" />
+              <img src={iconUrl} alt="ChunkWiser" className="w-12 h-12 object-contain rounded-2xl shadow-xl shadow-violet-theme/10 mb-3 animate-pulse" />
               <h2 className="text-xl font-bold tracking-tight text-text-strong font-display">Welcome back</h2>
               <p className="text-xs text-soft mt-1">Login to your account</p>
             </div>
@@ -458,6 +458,7 @@ export default function LoginScreen({
                       />
                       <button
                         type="button"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 text-muted hover:text-text-strong transition-colors"
                       >
@@ -491,7 +492,7 @@ export default function LoginScreen({
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-gradient-to-r from-[#B69CFF] via-[#7FE3E8] to-[#B69CFF] text-[#06080C] font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98] cursor-pointer animate-gradient-shift"
+                    className="w-full py-2.5 bg-gradient-to-r from-[#B69CFF] via-[#7FE3E8] to-[#B69CFF] text-[#06080C] font-bold rounded-xl text-xs transition-all shadow-md shadow-violet-theme/10 hover:shadow-violet-theme/20 active:scale-[0.98] cursor-pointer animate-gradient-shift"
                   >
                     Login
                   </button>

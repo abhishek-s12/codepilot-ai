@@ -62,7 +62,7 @@ export default function FormatText({ text }: FormatTextProps) {
 
         if (line.trim().startsWith("## ")) {
           return (
-            <h2 key={idx} className="text-lg font-bold text-violet-400 mt-5 border-b border-border pb-1 font-display">
+            <h2 key={idx} className="text-lg font-bold text-violet-theme mt-5 border-b border-border pb-1 font-display">
               {line.trim().substring(3)}
             </h2>
           );

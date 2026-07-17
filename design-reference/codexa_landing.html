@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Codexa — Codebase Intelligence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+      :root {
+        --ink: #0a0d12;
+        --panel: #10141b;
+        --panel-2: #141924;
+        --line: #222834;
+        --text: #e8ecf2;
+        --muted: #8a93a3;
+        --muted-2: #5c6472;
+        --amber: #ff9d4d;
+        --amber-dim: #8a5a2e;
+        --cyan: #7fe3e8;
+        --cyan-dim: #3d6e70;
+        --diff-add: #4ade80;
+        --diff-del: #f87171;
+        --font-display: "Space Grotesk", sans-serif;
+        --font-body: "IBM Plex Sans", sans-serif;
+        --font-mono: "IBM Plex Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: var(--font-body);
+        line-height: 1.5;
+        overflow-x: hidden;
+        background-image: radial-gradient(
+          circle at 1px 1px,
+          rgba(255, 255, 255, 0.035) 1px,
+          transparent 0
+        );
+        background-size: 28px 28px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      ::selection {
+        background: var(--amber);
+        color: var(--ink);
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 32px;
+      }
+
+      .path-label {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--muted-2);
+        letter-spacing: 0.02em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .path-label .seg {
+        color: var(--muted);
+      }
+      .path-label .seg.active {
+        color: var(--amber);
+      }
+      .path-label .slash {
+        color: var(--line);
+      }
+
+      /* ---------- NAV ---------- */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(10, 13, 18, 0.82);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 32px;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      .logo {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 19px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: -0.01em;
+      }
+      .logo .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        background: var(--amber);
+        box-shadow: 0 0 12px rgba(255, 157, 77, 0.7);
+      }
+      .navlinks {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+      }
+      .navlinks a {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--muted);
+        transition: color 0.15s ease;
+      }
+      .navlinks a:hover {
+        color: var(--cyan);
+      }
+      .navcta {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--ink);
+        background: var(--text);
+        padding: 9px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition:
+          background 0.15s ease,
+          transform 0.15s ease;
+      }
+      .navcta:hover {
+        background: var(--amber);
+        transform: translateY(-1px);
+      }
+      .navlinks-wrap {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+      }
+
+      /* ---------- HERO ---------- */
+      .hero {
+        position: relative;
+        padding: 96px 0 64px;
+        border-bottom: 1px solid var(--line);
+        overflow: hidden;
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 48px;
+        align-items: center;
+      }
+      h1 {
+        font-family: var(--font-display);
+        font-size: 56px;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        font-weight: 700;
+        margin-bottom: 22px;
+      }
+      h1 .accent {
+        color: var(--amber);
+      }
+      h1 .accent2 {
+        color: var(--cyan);
+      }
+      .hero p.lede {
+        font-size: 17px;
+        color: var(--muted);
+        max-width: 480px;
+        margin-bottom: 34px;
+      }
+      .hero-ctas {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 44px;
+      }
+      .btn-primary {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        background: var(--amber);
+        color: #1a1000;
+        padding: 13px 22px;
+        border-radius: 7px;
+        font-weight: 500;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 157, 77, 0.25);
+      }
+      .btn-secondary {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        border: 1px solid var(--line);
+        color: var(--text);
+        padding: 13px 22px;
+        border-radius: 7px;
+        transition:
+          border-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .btn-secondary:hover {
+        border-color: var(--cyan);
+        color: var(--cyan);
+      }
+
+      .hero-stats {
+        display: flex;
+        gap: 36px;
+      }
+      .stat b {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 22px;
+        color: var(--text);
+      }
+      .stat span {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted-2);
+      }
+
+      /* ---------- TRACE VISUAL ---------- */
+      .trace-panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+      }
+      .trace-panel .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--muted-2);
+      }
+      .trace-panel .dots {
+        display: flex;
+        gap: 6px;
+      }
+      .trace-panel .dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+      svg.trace {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .trace-line {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.5;
+      }
+      .trace-line.active {
+        stroke: var(--amber);
+        stroke-dasharray: 6 420;
+        animation: flow 3.6s linear infinite;
+      }
+      @keyframes flow {
+        0% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: -426;
+        }
+      }
+      .trace-node {
+        fill: var(--panel-2);
+        stroke: var(--line);
+        stroke-width: 1.3;
+      }
+      .trace-node.hot {
+        stroke: var(--amber);
+      }
+      .trace-node.cool {
+        stroke: var(--cyan);
+      }
+      .trace-label {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      .trace-label.hot {
+        fill: var(--amber);
+      }
+      .trace-label.cool {
+        fill: var(--cyan);
+      }
+      .pulse {
+        fill: var(--amber);
+        filter: drop-shadow(0 0 6px rgba(255, 157, 77, 0.8));
+      }
+      .trace-log {
+        margin-top: 16px;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--muted-2);
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      .trace-log .l1 {
+        color: var(--muted);
+      }
+      .trace-log .arrow {
+        color: var(--amber);
+      }
+
+      /* ---------- MARQUEE / TRUST ---------- */
+      .trust {
+        padding: 26px 0;
+        border-bottom: 1px solid var(--line);
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        color: var(--muted-2);
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      .trust .tag {
+        border: 1px solid var(--line);
+        padding: 5px 11px;
+        border-radius: 5px;
+      }
+
+      /* ---------- SECTIONS ---------- */
+      section.block {
+        padding: 88px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 52px;
+        gap: 24px;
+      }
+      h2 {
+        font-family: var(--font-display);
+        font-size: 34px;
+        letter-spacing: -0.015em;
+        font-weight: 600;
+        max-width: 560px;
+      }
+      .section-desc {
+        color: var(--muted);
+        font-size: 15px;
+        max-width: 320px;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .feature-card {
+        background: var(--panel);
+        padding: 28px 26px;
+        transition: background 0.2s ease;
+      }
+      .feature-card:hover {
+        background: var(--panel-2);
+      }
+      .feature-card .fpath {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted-2);
+        margin-bottom: 16px;
+      }
+      .feature-card h3 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+      .feature-card p {
+        font-size: 13.5px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .feature-card .glyph {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        font-family: var(--font-mono);
+        font-size: 14px;
+        border: 1px solid var(--line);
+      }
+      .glyph.amber {
+        color: var(--amber);
+        border-color: var(--amber-dim);
+      }
+      .glyph.cyan {
+        color: var(--cyan);
+        border-color: var(--cyan-dim);
+      }
+      .glyph.diff {
+        color: var(--diff-add);
+        border-color: #265939;
+      }
+
+      /* ---------- DIFF SHOWCASE ---------- */
+      .diff-showcase {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 56px;
+        align-items: center;
+      }
+      .code-window {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .code-window .cw-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--line);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted-2);
+      }
+      .code-window .cw-head .dots span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--line);
+        display: inline-block;
+        margin-right: 5px;
+      }
+      pre.code {
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.8;
+        padding: 18px 20px;
+        overflow-x: auto;
+        color: var(--muted);
+      }
+      pre.code .del {
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--diff-del);
+        display: block;
+        padding: 0 20px;
+        margin: 0 -20px;
+      }
+      pre.code .add {
+        background: rgba(74, 222, 128, 0.08);
+        color: var(--diff-add);
+        display: block;
+        padding: 0 20px;
+        margin: 0 -20px;
+      }
+      pre.code .kw {
+        color: var(--cyan);
+      }
+      pre.code .fn {
+        color: var(--amber);
+      }
+
+      .diff-text h2 {
+        margin-bottom: 18px;
+      }
+      .diff-text p {
+        color: var(--muted);
+        font-size: 15px;
+        margin-bottom: 24px;
+        max-width: 460px;
+      }
+      .checklist {
+        list-style: none;
+      }
+      .checklist li {
+        display: flex;
+        gap: 12px;
+        font-size: 14px;
+        color: var(--text);
+        padding: 11px 0;
+        border-top: 1px solid var(--line);
+      }
+      .checklist li:last-child {
+        border-bottom: 1px solid var(--line);
+      }
+      .checklist li .ck {
+        font-family: var(--font-mono);
+        color: var(--diff-add);
+        font-size: 13px;
+      }
+
+      /* ---------- CTA ---------- */
+      .cta-block {
+        padding: 110px 0;
+        text-align: center;
+        position: relative;
+      }
+      .cta-block h2 {
+        max-width: 620px;
+        margin: 0 auto 16px;
+        font-size: 40px;
+      }
+      .cta-block p {
+        color: var(--muted);
+        margin-bottom: 34px;
+        font-size: 15px;
+      }
+      .cta-row {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+      }
+
+      footer {
+        padding: 40px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted-2);
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      footer .flinks {
+        display: flex;
+        gap: 20px;
+      }
+      footer a:hover {
+        color: var(--cyan);
+      }
+
+      @media (max-width: 860px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 38px;
+        }
+        .feature-grid {
+          grid-template-columns: 1fr;
+        }
+        .diff-showcase {
+          grid-template-columns: 1fr;
+        }
+        .navlinks {
+          display: none;
+        }
+        .section-head {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="logo"><span class="dot"></span>codexa</div>
+        <div class="navlinks-wrap">
+          <div class="navlinks">
+            <a href="#index">index</a>
+            <a href="#graph">graph</a>
+            <a href="#agent">agent</a>
+            <a href="#security">security</a>
+          </div>
+          <a class="navcta" href="#cta">Open workspace →</a>
+        </div>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <div class="path-label">
+            <span class="seg">codexa</span><span class="slash">/</span
+            ><span class="seg active">index.tsx</span>
+          </div>
+          <h1>
+            Your codebase,<br />indexed down to<br />the
+            <span class="accent">function</span> it
+            <span class="accent2">calls</span>.
+          </h1>
+          <p class="lede">
+            Codexa parses every file into its AST, embeds it locally, and lets
+            you ask questions, trace execution, and ship patches — with
+            citations back to the exact lines that answered you.
+          </p>
+          <div class="hero-ctas">
+            <a class="btn-primary" href="#cta">Index a repository →</a>
+            <a class="btn-secondary" href="#graph">See the call graph</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat"><b>384-dim</b><span>local embeddings</span></div>
+            <div class="stat"><b>&lt;40ms</b><span>vector recall</span></div>
+            <div class="stat"><b>7</b><span>one-click AI actions</span></div>
+          </div>
+        </div>
+
+        <div class="trace-panel">
+          <div class="panel-head">
+            <span>logic_flow_explainer.trace()</span>
+            <div class="dots"><span></span><span></span><span></span></div>
+          </div>
+          <svg
+            class="trace"
+            viewBox="0 0 460 260"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path class="trace-line" d="M40,40 L40,90 L230,90 L230,40" />
+            <path class="trace-line" d="M230,90 L230,150 L230,150" />
+            <path class="trace-line" d="M230,150 L120,150 L120,200" />
+            <path class="trace-line" d="M230,150 L340,150 L340,200" />
+            <path
+              class="trace-line active"
+              d="M40,40 L40,90 L230,90 L230,150 L340,150 L340,200"
+            />
+
+            <rect
+              class="trace-node hot"
+              x="4"
+              y="18"
+              width="72"
+              height="30"
+              rx="6"
+            />
+            <text class="trace-label hot" x="40" y="37" text-anchor="middle">
+              main.py
+            </text>
+
+            <rect
+              class="trace-node"
+              x="194"
+              y="74"
+              width="90"
+              height="30"
+              rx="6"
+            />
+            <text class="trace-label" x="239" y="93" text-anchor="middle">
+              /auth/login
+            </text>
+
+            <rect
+              class="trace-node hot"
+              x="184"
+              y="134"
+              width="110"
+              height="30"
+              rx="6"
+            />
+            <text class="trace-label hot" x="239" y="153" text-anchor="middle">
+              auth_service.py
+            </text>
+
+            <rect
+              class="trace-node cool"
+              x="70"
+              y="194"
+              width="98"
+              height="30"
+              rx="6"
+            />
+            <text class="trace-label cool" x="119" y="213" text-anchor="middle">
+              postgres query
+            </text>
+
+            <rect
+              class="trace-node"
+              x="290"
+              y="194"
+              width="100"
+              height="30"
+              rx="6"
+            />
+            <text class="trace-label" x="340" y="213" text-anchor="middle">
+              returns JSON
+            </text>
+
+            <circle class="pulse" r="4">
+              <animateMotion
+                dur="3.6s"
+                repeatCount="indefinite"
+                path="M40,40 L40,90 L230,90 L230,150 L340,150 L340,200"
+              />
+            </circle>
+          </svg>
+          <div class="trace-log">
+            <span class="l1">request</span> <span class="arrow">→</span> main.py
+            <span class="arrow">→</span> /auth/login
+            <span class="arrow">→</span> auth_service.py
+            <span class="arrow">→</span> query db
+            <span class="arrow">→</span> 200 OK
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="trust wrap">
+      <span>reads</span>
+      <span class="tag">Python AST</span>
+      <span class="tag">Qdrant</span>
+      <span class="tag">MiniLM-L6-v2</span>
+      <span class="tag">OpenRouter</span>
+      <span class="tag">GitHub OAuth</span>
+      <span class="tag">S3 / MinIO</span>
+    </div>
+
+    <section class="block" id="index">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Every file, chunked by meaning — not by line count.</h2>
+          <p class="section-desc">
+            Six services doing the quiet work underneath every question you ask.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="fpath">src/index/scanner.ts</div>
+            <div class="glyph amber">◆</div>
+            <h3>Recursive scanner</h3>
+            <p>
+              Walks the workspace, skips the noise — node_modules, dist, .git —
+              and extracts size, extension, and line counts as it goes.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="fpath">src/index/ast-parser.ts</div>
+            <div class="glyph amber">◆</div>
+            <h3>AST-based parsing</h3>
+            <p>
+              Classes, functions, decorators, and imports are discovered
+              structurally, then chunked along their natural boundaries.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="fpath">src/index/embeddings.ts</div>
+            <div class="glyph cyan">●</div>
+            <h3>Local embeddings</h3>
+            <p>
+              Every chunk becomes a 384-dimensional vector on-device, using
+              all-MiniLM-L6-v2 — no embedding API bill, ever.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="fpath">src/index/vector-store.ts</div>
+            <div class="glyph cyan">●</div>
+            <h3>Qdrant vector store</h3>
+            <p>
+              Deterministic collections, one per repository, ranked by cosine
+              similarity when a query comes in.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="fpath">src/ai/rag.ts</div>
+            <div class="glyph amber">◆</div>
+            <h3>Cited chat</h3>
+            <p>
+              Answers link back to the file and line that produced them, with
+              prompt and completion tokens tracked per turn.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="fpath">src/ai/actions.ts</div>
+            <div class="glyph diff">✓</div>
+            <h3>One-click actions</h3>
+            <p>
+              Explain, test, refactor, document, audit, and profile a file —
+              seven prompts tuned for a single right-click.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="graph">
+      <div class="wrap diff-showcase">
+        <div class="code-window">
+          <div class="cw-head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            auth_service.py — diff preview
+          </div>
+          <pre class="code"><span class="del">- def login(user, pw):</span>
+<span class="del">-     if user.pw == pw:</span>
+<span class="add">+ def login(user, pw):</span>
+<span class="add">+     if verify_hash(user.pw, pw):</span>
+      <span class="kw">return</span> <span class="fn">issue_token</span>(user)
+      <span class="kw">raise</span> AuthError(<span style="color:#8A93A3">"invalid credentials"</span>)</pre>
+        </div>
+        <div class="diff-text">
+          <div class="path-label">
+            <span class="seg">codexa</span><span class="slash">/</span
+            ><span class="seg active">agent/workspace.tsx</span>
+          </div>
+          <h2>The agent reads the call graph before it writes a line.</h2>
+          <p>
+            Give it a goal — "add email verification" — and it scans imports and
+            call paths to work out exactly which files need to change, then
+            applies patches as a reviewable diff.
+          </p>
+          <ul class="checklist">
+            <li>
+              <span class="ck">✓</span> Dependency-aware task checklist,
+              generated from your actual imports
+            </li>
+            <li>
+              <span class="ck">✓</span> Live status per task: todo, running,
+              completed, failed
+            </li>
+            <li>
+              <span class="ck">✓</span> Every patch lands as a git diff —
+              accept, reject, or edit inline
+            </li>
+            <li>
+              <span class="ck">✓</span> Interactive call graph to jump straight
+              to a declaration
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="security">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Built for a team, not just a solo tab.</h2>
+          <p class="section-desc">
+            Role-scoped access, live cursors, and an audit trail that doesn't
+            miss a membership change.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="fpath">src/auth/rbac.ts</div>
+            <div class="glyph amber">◆</div>
+            <h3>Owner → Viewer roles</h3>
+            <p>
+              Repository and workspace permissions are checked at the membership
+              level, so multi-tenant data never leaks across teams.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="fpath">src/realtime/ws.ts</div>
+            <div class="glyph cyan">●</div>
+            <h3>Shared cursors</h3>
+            <p>
+              See teammates move through a file live, and drop comments directly
+              on a function or symbol.
+            </p>
+          </div>
+          <div class="feature-card">
+            <div class="fpath">src/auth/keys.ts</div>
+            <div class="glyph diff">✓</div>
+            <h3>Personal API keys</h3>
+            <p>
+              SHA-256 hashed sk_mock_ keys for scripts, CLIs, and IDE
+              extensions, alongside rotating JWTs for the app itself.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-block" id="cta">
+      <div class="wrap">
+        <div class="path-label" style="justify-content: center">
+          <span class="seg">codexa</span><span class="slash">/</span
+          ><span class="seg active">get-started.tsx</span>
+        </div>
+        <h2>Point it at a repository. It'll know it in minutes.</h2>
+        <p>
+          Clone, index, and ask your first question — free while you're
+          evaluating.
+        </p>
+        <div class="cta-row">
+          <a class="btn-primary" href="#">Open workspace →</a>
+          <a class="btn-secondary" href="#">Read the docs</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="wrap">
+      <div class="logo" style="font-size: 15px">
+        <span class="dot"></span>codexa
+      </div>
+      <div class="flinks">
+        <a href="#">docs</a>
+        <a href="#">changelog</a>
+        <a href="#">github</a>
+        <a href="#">status</a>
+      </div>
+      <div>© 2026 Codexa</div>
+    </footer>
+  </body>
+</html>

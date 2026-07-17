@@ -1,5 +1,18 @@
-﻿// @ts-nocheck
-export default function AgentHistory({ history = [], onSelect }) {
+interface HistoryEntry {
+  id: number;
+  timestamp: string;
+  message: string;
+  agent_type: string;
+  collaborate: boolean;
+  response: string;
+}
+
+interface AgentHistoryProps {
+  history?: HistoryEntry[];
+  onSelect?: (entry: HistoryEntry) => void;
+}
+
+export default function AgentHistory({ history = [], onSelect }: AgentHistoryProps) {
   if (history.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-700 text-[10px] font-mono select-none">
@@ -40,7 +53,7 @@ export default function AgentHistory({ history = [], onSelect }) {
               </div>
               <div className="flex items-center justify-between text-[8px] text-gray-500 font-mono">
                 <span className="capitalize">{entry.agent_type} Agent</span>
-                {entry.collaborate && <span className="text-violet-400">Collaboration</span>}
+                {entry.collaborate && <span className="text-violet-theme">Collaboration</span>}
               </div>
             </button>
           );
@@ -49,4 +62,3 @@ export default function AgentHistory({ history = [], onSelect }) {
     </div>
   );
 }
-

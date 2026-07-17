@@ -1,9 +1,14 @@
-﻿// @ts-nocheck
 import { DiffEditor } from "@monaco-editor/react";
 import { getEditorLanguage } from "../../utils/editorLanguage";
 
-export default function DiffViewer({ original, modified, filePath }) {
-  const language = getEditorLanguage(filePath);
+interface DiffViewerProps {
+  original?: string | null;
+  modified?: string | null;
+  filePath?: string | null;
+}
+
+export default function DiffViewer({ original, modified, filePath }: DiffViewerProps) {
+  const language = filePath ? getEditorLanguage(filePath) : undefined;
 
   if (!original && !modified) {
     return (
@@ -19,12 +24,12 @@ export default function DiffViewer({ original, modified, filePath }) {
       <div className="flex shrink-0 border-b border-white/5 bg-[#0d1117]">
         <div className="flex-1 px-4 py-1.5 border-r border-white/5">
           <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-rose-400">
-            â† Original
+            ← Original
           </span>
         </div>
         <div className="flex-1 px-4 py-1.5">
           <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-emerald-400">
-            Modified â†’
+            Modified →
           </span>
         </div>
       </div>
@@ -55,4 +60,3 @@ export default function DiffViewer({ original, modified, filePath }) {
     </div>
   );
 }
-

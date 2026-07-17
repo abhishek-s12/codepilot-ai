@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Codexa — Settings & RBAC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#0A0D12; --panel:#10141B; --panel-2:#141924; --panel-3:#181E29;
+    --line:#222834; --text:#E8ECF2; --muted:#8A93A3; --muted-2:#5C6472;
+    --amber:#FF9D4D; --amber-dim:#8A5A2E; --cyan:#7FE3E8; --cyan-dim:#3D6E70;
+    --diff-add:#4ADE80; --diff-del:#F87171; --violet:#B69CFF;
+    --font-display:'Space Grotesk', sans-serif; --font-body:'IBM Plex Sans', sans-serif; --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink); color:var(--text); font-family:var(--font-body);
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size:28px 28px;
+  }
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--amber); color:var(--ink);}
+
+  .shell{display:grid; grid-template-columns:220px 1fr; min-height:100vh;}
+
+  .sidebar{border-right:1px solid var(--line); background:var(--panel); padding:20px 0;}
+  .logo{font-family:var(--font-display); font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; padding:0 20px 22px;}
+  .logo .dot{width:8px; height:8px; border-radius:2px; background:var(--amber); box-shadow:0 0 8px rgba(255,157,77,0.7);}
+  .nav-label{font-family:var(--font-mono); font-size:10px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.07em; padding:0 20px 8px; margin-top:14px;}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:8px 20px; font-size:13px; color:var(--muted); border-left:2px solid transparent; cursor:pointer;}
+  .nav-item .ic{width:16px; text-align:center; font-family:var(--font-mono); font-size:12px; color:var(--muted-2);}
+  .nav-item:hover{background:var(--panel-2); color:var(--text);}
+  .nav-item.active{background:var(--panel-2); color:var(--text); border-left:2px solid var(--amber);}
+  .nav-item.active .ic{color:var(--amber);}
+
+  .main{padding:32px 40px 80px; max-width:960px;}
+  .path-label{font-family:var(--font-mono); font-size:12px; color:var(--muted-2); margin-bottom:10px;}
+  .path-label span{color:var(--amber);}
+  h1{font-family:var(--font-display); font-size:26px; font-weight:600; margin-bottom:6px;}
+  .page-sub{color:var(--muted); font-size:13.5px; margin-bottom:36px; max-width:560px;}
+
+  .settings-tabs{display:flex; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:32px; width:fit-content;}
+  .s-tab{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); background:var(--panel); padding:9px 16px; cursor:pointer;}
+  .s-tab.on{color:var(--amber); background:var(--panel-2);}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; margin-bottom:24px;}
+  .card-head{padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+  .card-head .t{font-family:var(--font-display); font-weight:600; font-size:14.5px;}
+  .card-head .d{font-size:11.5px; color:var(--muted-2); margin-top:2px; font-family:var(--font-mono);}
+
+  /* invite */
+  .invite-row{display:flex; gap:10px; padding:18px 20px;}
+  .invite-row input{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:7px;
+    padding:10px 13px; color:var(--text); font-size:13px; outline:none; font-family:var(--font-body);
+  }
+  .role-select{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:10px 13px;
+    font-family:var(--font-mono); font-size:12px; color:var(--muted); cursor:pointer;
+  }
+  .btn-primary{font-family:var(--font-mono); font-size:12.5px; background:var(--amber); color:#1A1000; padding:10px 16px; border-radius:7px; font-weight:500; cursor:pointer; white-space:nowrap;}
+
+  /* member table */
+  .member-row{display:grid; grid-template-columns:2fr 1fr 1fr 0.6fr; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); gap:10px;}
+  .member-row:last-child{border-bottom:none;}
+  .member-row.hd{background:var(--panel-2); font-family:var(--font-mono); font-size:10px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.05em; padding:11px 20px;}
+  .member-id{display:flex; align-items:center; gap:10px;}
+  .m-av{width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--ink); flex-shrink:0;}
+  .m-av.a1{background:var(--amber);} .m-av.a2{background:var(--cyan);} .m-av.a3{background:var(--violet);} .m-av.a4{background:#F87171;}
+  .m-name{font-size:13px; font-weight:500;}
+  .m-email{font-family:var(--font-mono); font-size:11px; color:var(--muted-2); margin-top:1px;}
+  .role-pill{
+    font-family:var(--font-mono); font-size:11px; padding:4px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; width:fit-content;
+  }
+  .role-pill.owner{color:var(--amber); background:rgba(255,157,77,0.1); border:1px solid var(--amber-dim);}
+  .role-pill.admin{color:var(--cyan); background:rgba(127,227,232,0.1); border:1px solid var(--cyan-dim);}
+  .role-pill.developer{color:var(--diff-add); background:rgba(74,222,128,0.1); border:1px solid #265939;}
+  .role-pill.viewer{color:var(--muted); background:var(--panel-2); border:1px solid var(--line);}
+  .m-active{font-family:var(--font-mono); font-size:11.5px; color:var(--muted);}
+  .m-remove{font-family:var(--font-mono); font-size:11px; color:var(--diff-del); cursor:pointer; text-align:right;}
+
+  /* permission matrix */
+  .matrix{width:100%; border-collapse:collapse;}
+  .matrix th, .matrix td{padding:12px 16px; text-align:center; border-bottom:1px solid var(--line); font-size:12px;}
+  .matrix th{font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.04em; font-weight:500;}
+  .matrix td:first-child, .matrix th:first-child{text-align:left; font-family:var(--font-body); color:var(--text); font-size:13px;}
+  .matrix tr:last-child td{border-bottom:none;}
+  .yes{color:var(--diff-add); font-family:var(--font-mono);}
+  .no{color:var(--muted-2); font-family:var(--font-mono);}
+  .matrix th.owner{color:var(--amber);}
+  .matrix th.admin{color:var(--cyan);}
+  .matrix th.developer{color:var(--diff-add);}
+  .matrix th.viewer{color:var(--muted);}
+
+  /* strict mode */
+  .strict-row{display:flex; align-items:center; justify-content:space-between; padding:18px 20px;}
+  .strict-row .t{font-size:13.5px; font-weight:500;}
+  .strict-row .d{font-family:var(--font-mono); font-size:11.5px; color:var(--muted-2); margin-top:4px; max-width:440px; line-height:1.5;}
+  .toggle{width:38px; height:21px; border-radius:11px; background:var(--diff-add); position:relative; cursor:pointer; flex-shrink:0;}
+  .toggle::after{content:''; position:absolute; width:17px; height:17px; border-radius:50%; background:var(--ink); top:2px; right:2px;}
+  .toggle.off{background:var(--line);}
+  .toggle.off::after{right:auto; left:2px;}
+
+  .audit-item{display:flex; gap:12px; padding:13px 20px; border-bottom:1px solid var(--line); font-size:12.5px;}
+  .audit-item:last-child{border-bottom:none;}
+  .audit-item .time{font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2); flex-shrink:0; width:70px;}
+  .audit-item .txt b{font-weight:600;}
+  .audit-item .txt{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="logo"><span class="dot"></span>codexa</div>
+    <div class="nav-label">Workspace</div>
+    <div class="nav-item"><span class="ic">▤</span>Repositories</div>
+    <div class="nav-item"><span class="ic">◆</span>Agent tasks</div>
+    <div class="nav-item"><span class="ic">◈</span>Comments</div>
+
+    <div class="nav-label">Manage</div>
+    <div class="nav-item active"><span class="ic">◎</span>Members & roles</div>
+    <div class="nav-item"><span class="ic">⚿</span>API keys</div>
+    <div class="nav-item"><span class="ic">▣</span>Billing</div>
+    <div class="nav-item"><span class="ic">⚙</span>Settings</div>
+  </div>
+
+  <div class="main">
+    <div class="path-label">codexa / settings / <span>members.tsx</span></div>
+    <h1>Members & roles</h1>
+    <div class="page-sub">Access is scoped per workspace and checked against membership on every request — a Viewer on one repository can be an Admin on another.</div>
+
+    <div class="settings-tabs">
+      <div class="s-tab on">Members</div>
+      <div class="s-tab">Roles</div>
+      <div class="s-tab">Audit log</div>
+      <div class="s-tab">Security</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div><div class="t">Invite a member</div><div class="d">they'll get access once they accept</div></div>
+      </div>
+      <div class="invite-row">
+        <input type="email" placeholder="teammate@company.com">
+        <div class="role-select">Developer ⌄</div>
+        <div class="btn-primary">Send invite</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="t">6 members</div></div>
+
+      <div class="member-row hd">
+        <div>Member</div><div>Role</div><div>Last active</div><div style="text-align:right;">Action</div>
+      </div>
+
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a1">RS</div><div><div class="m-name">Riya Sharma</div><div class="m-email">riya@codepilot.ai</div></div></div>
+        <div><span class="role-pill owner">Owner ⌄</span></div>
+        <div class="m-active">Now</div>
+        <div class="m-remove"></div>
+      </div>
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a2">MK</div><div><div class="m-name">Mira Khan</div><div class="m-email">mira@codepilot.ai</div></div></div>
+        <div><span class="role-pill admin">Admin ⌄</span></div>
+        <div class="m-active">14 min ago</div>
+        <div class="m-remove">Remove</div>
+      </div>
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a3">DP</div><div><div class="m-name">Devon Park</div><div class="m-email">devon@codepilot.ai</div></div></div>
+        <div><span class="role-pill developer">Developer ⌄</span></div>
+        <div class="m-active">2 hours ago</div>
+        <div class="m-remove">Remove</div>
+      </div>
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a4">JL</div><div><div class="m-name">Jin Lee</div><div class="m-email">jin@codepilot.ai</div></div></div>
+        <div><span class="role-pill developer">Developer ⌄</span></div>
+        <div class="m-active">1 day ago</div>
+        <div class="m-remove">Remove</div>
+      </div>
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a2" style="background:var(--muted-2);">TC</div><div><div class="m-name">Tara Chen</div><div class="m-email">tara@external.com</div></div></div>
+        <div><span class="role-pill viewer">Viewer ⌄</span></div>
+        <div class="m-active">6 days ago</div>
+        <div class="m-remove">Remove</div>
+      </div>
+      <div class="member-row">
+        <div class="member-id"><div class="m-av a1" style="background:var(--muted-2);">—</div><div><div class="m-name" style="color:var(--muted);">alex@partner.io</div><div class="m-email">invite pending</div></div></div>
+        <div><span class="role-pill viewer">Viewer ⌄</span></div>
+        <div class="m-active">—</div>
+        <div class="m-remove">Cancel</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div><div class="t">Permission matrix</div><div class="d">what each role can do, per repository</div></div></div>
+      <table class="matrix">
+        <tr><th>Action</th><th class="owner">Owner</th><th class="admin">Admin</th><th class="developer">Developer</th><th class="viewer">Viewer</th></tr>
+        <tr><td>Manage billing & seats</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td><td class="no">–</td></tr>
+        <tr><td>Invite / remove members</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td></tr>
+        <tr><td>Delete a repository</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td><td class="no">–</td></tr>
+        <tr><td>Run agent tasks</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
+        <tr><td>Accept / reject patches</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">–</td></tr>
+        <tr><td>Comment on code</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><td>View & chat</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="strict-row">
+        <div>
+          <div class="t">Strict authentication mode</div>
+          <div class="d">When off, this workspace runs in developer sandbox mode — auth checks are bypassed. Disable sandbox before any production use.</div>
+        </div>
+        <div class="toggle"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="t">Recent audit events</div></div>
+      <div class="audit-item"><div class="time">14m</div><div class="txt"><b>Mira Khan</b> changed Jin Lee's role from Viewer to Developer</div></div>
+      <div class="audit-item"><div class="time">2h</div><div class="txt"><b>Riya Sharma</b> invited alex@partner.io as Viewer</div></div>
+      <div class="audit-item"><div class="time">1d</div><div class="txt"><b>Devon Park</b> removed member sam@codepilot.ai</div></div>
+      <div class="audit-item"><div class="time">3d</div><div class="txt"><b>Riya Sharma</b> enabled strict authentication mode</div></div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

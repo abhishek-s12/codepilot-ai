@@ -3,6 +3,7 @@ import {
   fetchUser,
   fetchRepositories,
   loginDeveloper,
+  Repository,
 } from "./services/api";
 
 import ToastContainer from "./components/common/ToastContainer";
@@ -15,10 +16,10 @@ import MfaVerificationModal from "./components/common/MfaVerificationModal";
 
 // Hooks
 import useToast from "./hooks/useToast";
-import useRepository from "./hooks/useRepository";
-import useArchitecture from "./hooks/useArchitecture";
-import useCallGraph from "./hooks/useCallGraph";
-import useExecutionFlow from "./hooks/useExecutionFlow";
+import useRepository, { UseRepositoryResult } from "./hooks/useRepository";
+import useArchitecture, { UseArchitectureResult } from "./hooks/useArchitecture";
+import useCallGraph, { UseCallGraphResult } from "./hooks/useCallGraph";
+import useExecutionFlow, { UseExecutionFlowResult } from "./hooks/useExecutionFlow";
 
 // Utilities
 import { statusTones } from "./utils/constants";
@@ -31,13 +32,6 @@ interface User {
   mfa_enabled?: boolean;
 }
 
-interface RepoHistoryEntry {
-  id: string | number;
-  repository_path: string;
-  repository_name?: string;
-  status: "completed" | "cloning" | "indexing" | "error" | string;
-  [key: string]: unknown;
-}
 
 const TOKEN_KEY = "codepilot_token";
 const REFRESH_TOKEN_KEY = "codepilot_refresh_token";
@@ -103,7 +97,7 @@ export default function App() {
   // Authentication & History States
   const [token, setToken] = useState<string>(getInitialToken);
   const [user, setUser] = useState<User | null>(null);
-  const [history, setHistory] = useState<RepoHistoryEntry[]>([]);
+  const [history, setHistory] = useState<Repository[]>([]);
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [showSandboxForm, setShowSandboxForm] = useState<boolean>(false);
   const [sandboxIdentity] = useState(generateSandboxIdentity);
@@ -115,7 +109,7 @@ export default function App() {
   const [isSubmittingLogin, setIsSubmittingLogin] = useState<boolean>(false);
 
   // Hooks Integration
-  const { toasts, showToast } = useToast() as any;
+  const { toasts, showToast } = useToast();
 
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
@@ -159,7 +153,7 @@ export default function App() {
     selectRepositoryFromHistory,
     handleDeleteRepository,
     handleIndexRepository,
-  } = useRepository(token, showToast, history as any, setHistory as any) as any;
+  }: UseRepositoryResult = useRepository(token, showToast, history, setHistory);
 
   const {
     architecture,
@@ -173,7 +167,7 @@ export default function App() {
     handleGetArchitecture,
     handleNodeClick,
     error: architectureError,
-  } = useArchitecture(repoPath, setStatus, getFileColor) as any;
+  }: UseArchitectureResult = useArchitecture(repoPath, setStatus, getFileColor);
 
   const {
     callGraph,
@@ -185,9 +179,9 @@ export default function App() {
     setSelectedFunc,
     handleGetCallGraph,
     error: callGraphError,
-  } = useCallGraph(repoPath, setStatus) as any;
+  }: UseCallGraphResult = useCallGraph(repoPath, setStatus);
 
-  const { setFlowData } = useExecutionFlow(repoPath, setStatus) as any;
+  const { setFlowData }: UseExecutionFlowResult = useExecutionFlow(repoPath, setStatus);
 
   // Sign out helper
   const handleSignOut = useCallback(() => {
@@ -249,7 +243,7 @@ export default function App() {
           if (!mountedRef.current) return;
           setUser(profile);
 
-          const historyList = (await fetchRepositories()) as unknown as RepoHistoryEntry[];
+          const historyList = await fetchRepositories();
           if (!mountedRef.current) return;
           setHistory(historyList);
 
@@ -325,8 +319,8 @@ export default function App() {
   };
 
   // Handle repository selection override
-  const handleSelectRepository = (repo: RepoHistoryEntry) => {
-    selectRepositoryFromHistory(repo);
+  const handleSelectRepository = (repo: Repository | { repository_path: string; repository_name: string; id?: string | number; status?: string; [key: string]: unknown }) => {
+    selectRepositoryFromHistory(repo as Repository);
     setArchitecture("");
     setCallGraph(null);
     setFlowData(null);
@@ -359,7 +353,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <span className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin inline-block"></span>
+          <span className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin inline-block"></span>
           <p className="text-gray-400 font-medium text-sm">Authenticating ChunkWiser Session...</p>
         </div>
       </div>
@@ -426,7 +420,7 @@ export default function App() {
                     <span
                       className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                         status.tone === "loading"
-                          ? "bg-indigo-400"
+                          ? "bg-accent-strong"
                           : status.tone === "success"
                           ? "bg-emerald-400"
                           : status.tone === "error"
@@ -437,7 +431,7 @@ export default function App() {
                     <span
                       className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
                         status.tone === "loading"
-                          ? "bg-indigo-500"
+                          ? "bg-accent"
                           : status.tone === "success"
                           ? "bg-emerald-500"
                           : status.tone === "error"

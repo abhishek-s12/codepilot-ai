@@ -65,7 +65,7 @@ export default function WelcomeDashboard({
       title: "Generate Architecture",
       desc: "Visualize structural flows and dependency graphs.",
       icon: Code,
-      color: "text-blue-400",
+      color: "text-accent",
       bg: "bg-blue-400/10",
       border: "border-blue-400/20",
     },
@@ -279,9 +279,9 @@ export default function WelcomeDashboard({
             type="button"
             onClick={() => handleOverviewClick("admin")}
             disabled={!hasRepo}
-            className="text-left bg-panel hover:bg-panel-alt border border-border hover:border-indigo-500/25 transition-all rounded-2xl p-5 flex flex-col justify-between shadow-lg cursor-pointer group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-panel disabled:hover:border-border"
+            className="text-left bg-panel hover:bg-panel-alt border border-border hover:border-accent/25 transition-all rounded-2xl p-5 flex flex-col justify-between shadow-lg cursor-pointer group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-panel disabled:hover:border-border"
           >
-            <div className="w-full text-left flex items-center gap-2 text-indigo-400 font-sans text-[11px] font-semibold border-b border-border pb-2 group-hover:text-indigo-300">
+            <div className="w-full text-left flex items-center gap-2 text-accent font-sans text-[11px] font-semibold border-b border-border pb-2 group-hover:text-accent">
               <Shield className="w-3.5 h-3.5" />
               <span>Security & Compliance</span>
             </div>
@@ -290,10 +290,10 @@ export default function WelcomeDashboard({
                 <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 select-none">
                   SOC2 Type II
                 </span>
-                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 select-none">
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-accent-dim/10 border border-accent/20 text-accent select-none">
                   SAML SSO
                 </span>
-                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-400 select-none">
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-violet-dim border border-violet-theme/20 text-violet-theme select-none">
                   Audit Log
                 </span>
               </div>

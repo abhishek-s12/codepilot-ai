@@ -1,13 +1,49 @@
-// @ts-nocheck
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { fetchRepositoryAnalytics } from "../../services/api";
 import { Database, RefreshCw, Loader2, Sparkles } from "lucide-react";
 
-export default function RepositoryAnalytics({ repoPath, onBack }) {
-  const [data, setData] = useState(null);
+interface LanguageStat {
+  language: string;
+  files: number;
+}
+
+interface FileStat {
+  path: string;
+  name: string;
+  size: number;
+  lines: number;
+  extension: string;
+}
+
+interface FolderStat {
+  path: string;
+  size: number;
+  count: number;
+}
+
+interface ComplexityHistogramItem {
+  range: string;
+  count: number;
+}
+
+interface AnalyticsData {
+  languages: LanguageStat[];
+  largest_files: FileStat[];
+  largest_folders: FolderStat[];
+  cyclomatic_complexity: number;
+  complexity_histogram: ComplexityHistogramItem[];
+}
+
+interface RepositoryAnalyticsProps {
+  repoPath?: string;
+  onBack?: () => void;
+}
+
+export default function RepositoryAnalytics({ repoPath, onBack }: RepositoryAnalyticsProps) {
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [aiSummary, setAiSummary] = useState("Computing AI repository architecture summary...");
   const [loadingSummary, setLoadingSummary] = useState(false);
 
@@ -17,12 +53,12 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
     setError(null);
     try {
       const result = await fetchRepositoryAnalytics(repoPath);
-      setData(result);
-      
+      setData(result as unknown as AnalyticsData);
+
       // Auto generate a detailed summary based on structure
       setLoadingSummary(true);
       setTimeout(() => {
-        const repoName = repoPath.split(/[\\/]/).pop();
+        const repoName = repoPath.split(/[\\\/]/).pop() ?? "";
         setAiSummary(
           `This repository (${repoName}) represents an AI-first workspace structure. It utilizes a unified web client built with React, Vite, and TailwindCSS (v4) for maximum layout flexibility, alongside an asynchronous Python backend built with FastAPI, SQLite, and ChromaDB vector store. Most business logic is isolated in Python services (analytics, scan, index, ast chunks) and React custom hooks/state providers in the frontend. DB layers are managed via SQLite caching.`
         );
@@ -42,8 +78,8 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
   }, [loadAnalytics]);
 
   // Determine language colors
-  const getLanguageColor = (lang) => {
-    const colors = {
+  const getLanguageColor = (lang: string) => {
+    const colors: Record<string, string> = {
       ".py": "#3776AB",
       ".js": "#F7DF1E",
       ".jsx": "#61DAFB",
@@ -58,7 +94,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
   };
 
   // Helper for bytes formatting
-  const formatBytes = (bytes) => {
+  const formatBytes = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB"];
@@ -90,7 +126,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
                 Go Back
               </button>
             )}
-            <button onClick={loadAnalytics} className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] font-sans">
+            <button onClick={loadAnalytics} className="px-3 py-1.5 rounded-lg bg-secondary text-bg hover:bg-secondary-strong text-white font-bold text-[11px] font-sans">
               Retry Load
             </button>
           </div>
@@ -106,7 +142,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
   return (
     <div className="flex-1 bg-[#090b10] overflow-y-auto p-6 sm:p-8 select-text scrollbar-thin text-left flex flex-col min-h-0 font-sans">
       <div className="max-w-4xl mx-auto space-y-6 w-full">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#1c2230] pb-4.5 select-none">
           <div className="space-y-1">
@@ -114,13 +150,14 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
               {onBack && (
                 <button
                   onClick={onBack}
+                  aria-label="Go back"
                   className="px-2.5 py-1 text-[11px] font-sans font-semibold rounded bg-white/5 border border-[#1c2230] text-gray-400 hover:text-white transition-colors cursor-pointer mr-1"
                 >
                   ← Back
                 </button>
               )}
               <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-1.5">
-                <Database className="w-4.5 h-4.5 text-indigo-400" />
+                <Database className="w-4.5 h-4.5 text-secondary" />
                 <span>Repository Analytics</span>
               </h2>
             </div>
@@ -128,6 +165,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
           </div>
           <button
             onClick={loadAnalytics}
+            aria-label="Refresh repository statistics"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141822] hover:bg-[#1b212f] border border-[#1c2230] text-[11px] text-gray-300 font-sans font-semibold hover:text-white transition-all cursor-pointer"
           >
             <RefreshCw className="w-3 h-3 text-gray-500" />
@@ -138,18 +176,18 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
         {/* AI Repository Summary */}
         <div className="bg-[#0f1219] border border-[#1c2230] rounded-2xl p-5 space-y-3.5 shadow">
           <div className="flex items-center justify-between border-b border-[#1c2230]/40 pb-2.5 select-none">
-            <div className="flex items-center gap-2 text-indigo-400 font-semibold font-sans text-[11px]">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center gap-2 text-secondary font-semibold font-sans text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-secondary" />
               <span>AI Repository Summary</span>
             </div>
-            {loadingSummary && <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />}
+            {loadingSummary && <Loader2 className="w-3 h-3 text-secondary animate-spin" />}
           </div>
           <p className="text-xs text-gray-300 leading-relaxed font-sans select-text">{aiSummary}</p>
         </div>
 
         {/* Analytics Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          
+
           {/* Languages Distribution */}
           <div className="bg-[#0f1219] border border-[#1c2230] rounded-2xl p-5 space-y-4 shadow select-none">
             <span className="text-[10px] font-sans font-semibold text-gray-500 border-b border-[#1c2230]/40 pb-2 block">
@@ -194,7 +232,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
               <span className="text-[10px] font-sans font-semibold text-gray-500">
                 Control Flow Complexity
               </span>
-              <span className="text-[10px] text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded border border-indigo-500/10 font-sans font-semibold">
+              <span className="text-[10px] text-secondary bg-secondary-dim/5 px-2 py-0.5 rounded border border-secondary/10 font-sans font-semibold">
                 Avg: {data.cyclomatic_complexity} / fn
               </span>
             </div>
@@ -224,7 +262,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
         </div>
         {/* Hotspots / Size details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          
+
           {/* Largest Files */}
           <div className="bg-panel border border-border rounded-2xl p-5 space-y-4 shadow">
             <span className="text-[11px] font-medium text-muted border-b border-border pb-2 block select-none">
@@ -271,7 +309,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
                       </span>
                     </div>
                     <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden select-none">
-                      <div className="h-full bg-indigo-500" style={{ width: `${widthPct}%` }} />
+                      <div className="h-full bg-secondary" style={{ width: `${widthPct}%` }} />
                     </div>
                   </div>
                 );
@@ -307,7 +345,7 @@ export default function RepositoryAnalytics({ repoPath, onBack }) {
 
 function LoaderSpinner() {
   return (
-    <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin inline-block"></div>
+    <div className="w-10 h-10 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin inline-block"></div>
   );
 }
 

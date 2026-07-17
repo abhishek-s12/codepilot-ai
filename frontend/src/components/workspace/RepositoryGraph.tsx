@@ -1,18 +1,18 @@
-// @ts-nocheck
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useMemo, useEffect } from "react";
-import { ReactFlow, MiniMap, Controls, Background } from "@xyflow/react";
+import { ReactFlow, MiniMap, Controls, Background, BackgroundVariant } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Network, Search, Cpu, RefreshCw, Layers, FileText, Bot, Loader2 } from "lucide-react";
 
 export interface RepositoryGraphProps {
   architecture?: any;
-  graphNodes?: any[];
-  graphEdges?: any[];
-  selectedNode?: any;
+  graphNodes?: Node[];
+  graphEdges?: Edge[];
+  selectedNode?: Node | string | null;
   isArchitectureLoading?: boolean;
   isGraphLoadingReactFlow?: boolean;
-  onNodeClick?: (event: any, node: any) => void;
+  onNodeClick?: (event: React.MouseEvent | null, node: Node) => void;
   onExplainFile?: (nodeId: string) => void;
   onOpenFile?: (path: string) => void;
   onGetArchitecture?: () => void;
@@ -37,16 +37,21 @@ export default function RepositoryGraph({
   const [graphMode, setGraphMode] = useState("dependency"); // dependency | call | folder
   const [layoutMode, setLayoutMode] = useState("hierarchical"); // hierarchical | force
   const [searchQuery, setSearchQuery] = useState("");
-  const [inspectorNode, setInspectorNode] = useState(selectedNode);
+  const [inspectorNode, setInspectorNode] = useState<Node | null>(null);
 
   // Sync selection shifts
   useEffect(() => {
     if (selectedNode) {
-      setInspectorNode(selectedNode);
+      const foundNode = typeof selectedNode === "string"
+        ? graphNodes.find((n) => n.id === selectedNode)
+        : selectedNode;
+      setInspectorNode(foundNode || null);
+    } else {
+      setInspectorNode(null);
     }
-  }, [selectedNode]);
+  }, [selectedNode, graphNodes]);
 
-  const handleNodeClickInternal = (event, node) => {
+  const handleNodeClickInternal = (event: React.MouseEvent | null, node: Node) => {
     setInspectorNode(node);
     onNodeClick(event, node);
   };
@@ -57,8 +62,9 @@ export default function RepositoryGraph({
       let opacity = 1;
       let borderGlow = "";
 
+      const label = (node.data?.label as string) || "";
       const matchesSearch = searchQuery.trim()
-        ? node.data?.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ? label.toLowerCase().includes(searchQuery.toLowerCase()) ||
           node.id.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
 
@@ -77,7 +83,7 @@ export default function RepositoryGraph({
           opacity = 0.25;
         }
         if (isSelected) {
-          borderGlow = `0 0 15px ${getFileColor(node.data?.extension || ".py")}`;
+          borderGlow = `0 0 15px ${getFileColor((node.data?.extension as string) || ".py")}`;
         }
       }
 
@@ -86,7 +92,7 @@ export default function RepositoryGraph({
         style: {
           ...node.style,
           opacity,
-          boxShadow: borderGlow || node.style?.boxShadow,
+          boxShadow: borderGlow || (node.style?.boxShadow as string),
         },
       };
     });
@@ -125,22 +131,22 @@ export default function RepositoryGraph({
           strokeWidth,
           opacity,
         },
-        markerEnd: {
+        markerEnd: typeof edge.markerEnd === "object" && edge.markerEnd !== null ? {
           ...edge.markerEnd,
           color: stroke,
-        },
+        } : edge.markerEnd,
       };
     });
   }, [graphEdges, inspectorNode]);
 
   return (
     <div className="space-y-5 animate-fade-in w-full h-[580px] flex flex-col text-left">
-      
+
       {/* Toolbar / Options */}
       <div className="border-b border-border pb-4 flex flex-wrap items-center justify-between gap-4 select-none shrink-0">
         <div className="space-y-1">
           <h2 className="text-xs font-semibold text-white flex items-center gap-2 font-sans">
-            <Network className="w-4 h-4 text-indigo-400" />
+            <Network className="w-4 h-4 text-accent" />
             <span>Interactive Repository Graph</span>
           </h2>
           <p className="text-[11px] text-muted font-sans">
@@ -159,8 +165,9 @@ export default function RepositoryGraph({
               <button
                 key={btn.id}
                 onClick={() => setGraphMode(btn.id)}
+                aria-pressed={graphMode === btn.id}
                 className={`px-2 py-0.5 rounded-lg text-[11px] font-sans font-medium transition-all cursor-pointer ${
-                  graphMode === btn.id ? "bg-indigo-600/15 text-indigo-400 font-semibold" : "text-muted hover:text-text-strong"
+                  graphMode === btn.id ? "bg-accent text-bg/15 text-accent font-semibold" : "text-muted hover:text-text-strong"
                 }`}
               >
                 {btn.label}
@@ -177,8 +184,9 @@ export default function RepositoryGraph({
               <button
                 key={btn.id}
                 onClick={() => setLayoutMode(btn.id)}
+                aria-pressed={layoutMode === btn.id}
                 className={`px-2 py-0.5 rounded-lg text-[11px] font-sans font-medium transition-all cursor-pointer ${
-                  layoutMode === btn.id ? "bg-indigo-600/15 text-indigo-400 font-semibold" : "text-muted hover:text-text-strong"
+                  layoutMode === btn.id ? "bg-accent text-bg/15 text-accent font-semibold" : "text-muted hover:text-text-strong"
                 }`}
               >
                 {btn.label}
@@ -192,7 +200,8 @@ export default function RepositoryGraph({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search nodes..."
-              className="pl-7 pr-2.5 py-1 rounded-xl bg-bg border border-border text-[11px] font-sans text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/50 w-[140px]"
+              aria-label="Search graph nodes"
+              className="pl-7 pr-2.5 py-1 rounded-xl bg-bg border border-border text-[11px] font-sans text-white placeholder-gray-600 focus:outline-none focus:border-accent/50 w-[140px]"
             />
             <Search className="w-3.5 h-3.5 text-gray-600 absolute left-2.5 top-1.5" />
           </div>
@@ -201,9 +210,10 @@ export default function RepositoryGraph({
             <button
               onClick={onGetArchitecture}
               disabled={isArchitectureLoading}
-              className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] font-sans flex items-center gap-1 cursor-pointer transition-colors shadow-md"
+              aria-label="Load dependency graph"
+              className="px-4 py-1.5 rounded-lg bg-accent text-bg hover:bg-accent-strong text-white font-semibold text-[11px] font-sans flex items-center gap-1 cursor-pointer transition-colors shadow-md"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isArchitectureLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isArchitectureLoading ? "animate-spin" : ""}`} />
               <span>Load Graph</span>
             </button>
           )}
@@ -229,12 +239,12 @@ export default function RepositoryGraph({
         </div>
       ) : architecture ? (
         <div className="flex-grow grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5 min-h-0">
-          
+
           {/* React Flow Canvas */}
           <div className="rounded-2xl border border-[#1c2230] bg-[#0c0f16]/60 relative overflow-hidden h-[420px] xl:h-full">
             {isGraphLoadingReactFlow && (
               <div className="absolute inset-0 bg-[#090b10]/60 flex items-center justify-center z-10 animate-fade-in">
-                <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+                <Loader2 className="w-6 h-6 text-accent animate-spin" />
               </div>
             )}
             <ReactFlow
@@ -244,7 +254,7 @@ export default function RepositoryGraph({
               fitView
               proOptions={{ hideAttribution: true }}
             >
-              <Background color="#1c2230" gap={18} size={0.7} variant="dots" />
+              <Background color="#1c2230" gap={18} size={0.7} variant={BackgroundVariant.Dots} />
               <Controls
                 style={{
                   background: "rgba(12, 15, 22, 0.95)",
@@ -254,7 +264,7 @@ export default function RepositoryGraph({
                 }}
               />
               <MiniMap
-                nodeStrokeColor={(n) => getFileColor(n?.data?.extension || ".py")}
+                nodeStrokeColor={(n) => getFileColor((n?.data?.extension as string) || ".py")}
                 nodeColor={() => "rgba(15, 18, 25, 0.95)"}
                 maskColor="rgba(9, 11, 16, 0.7)"
                 style={{
@@ -268,25 +278,25 @@ export default function RepositoryGraph({
 
           {/* Node Inspector Drawer */}
           <div className="bg-[#0f1219] border border-[#1c2230] rounded-2xl p-4.5 flex flex-col justify-between h-[420px] xl:h-full overflow-y-auto select-none">
-            
+
             {inspectorNode ? (
               <div className="space-y-4">
                 <div className="border-b border-[#1c2230]/40 pb-3">
                   <span
                     className="text-[9px] uppercase font-bold px-2 py-0.5 rounded tracking-wider border"
                     style={{
-                      backgroundColor: `${getFileColor(inspectorNode.data?.extension || ".py")}10`,
-                      color: getFileColor(inspectorNode.data?.extension || ".py"),
-                      borderColor: `${getFileColor(inspectorNode.data?.extension || ".py")}30`,
+                      backgroundColor: `${getFileColor((inspectorNode.data?.extension as string) || ".py")}10`,
+                      color: getFileColor((inspectorNode.data?.extension as string) || ".py"),
+                      borderColor: `${getFileColor((inspectorNode.data?.extension as string) || ".py")}30`,
                     }}
                   >
-                    {(inspectorNode.data?.extension || "py").toUpperCase()} File
+                    {((inspectorNode.data?.extension as string) || "py").toUpperCase()} File
                   </span>
                   <h4 className="text-xs font-bold text-white font-mono truncate mt-2">
-                    {inspectorNode.data?.label || inspectorNode.id}
+                    {(inspectorNode.data?.label as string) || inspectorNode.id}
                   </h4>
                   <p className="text-[9px] text-gray-500 font-mono mt-1">
-                    Size: {inspectorNode.data?.size ? `${(inspectorNode.data.size / 1024).toFixed(1)} KB` : "N/A"}
+                    Size: {inspectorNode.data?.size ? `${((inspectorNode.data.size as number) / 1024).toFixed(1)} KB` : "N/A"}
                   </p>
                 </div>
 
@@ -294,7 +304,7 @@ export default function RepositoryGraph({
                 <div className="flex gap-2">
                   <button
                     onClick={() => onExplainFile(inspectorNode.id)}
-                    className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-[10px] font-mono transition-all cursor-pointer flex items-center justify-center gap-1"
+                    className="flex-1 py-1.5 bg-accent text-bg hover:bg-accent-strong text-white font-bold rounded-lg text-[10px] font-mono transition-all cursor-pointer flex items-center justify-center gap-1"
                   >
                     <Bot className="w-3.5 h-3.5" /> Explain File
                   </button>
@@ -308,7 +318,7 @@ export default function RepositoryGraph({
 
                 {/* Info block */}
                 <div className="p-3 bg-white/[0.02] rounded-xl border border-white/5 space-y-1.5 text-[10px] text-gray-400 font-mono text-left">
-                  <span className="font-bold text-indigo-400">Dependencies (Imports):</span>
+                  <span className="font-bold text-accent">Dependencies (Imports):</span>
                   <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1">
                     {graphEdges.filter((e) => e.source === inspectorNode.id).length === 0 ? (
                       <p className="italic text-gray-600 text-[9.5px]">No outbound import dependencies.</p>
@@ -317,7 +327,7 @@ export default function RepositoryGraph({
                         .filter((e) => e.source === inspectorNode.id)
                         .map((e, idx) => (
                           <div key={idx} className="truncate text-gray-300">
-                            â†’ {e.target.split(/[/\\]/).pop()}
+                            → {e.target.split(/[/\\]/).pop()}
                           </div>
                         ))
                     )}
@@ -325,7 +335,7 @@ export default function RepositoryGraph({
                 </div>
 
                 <div className="p-3 bg-white/[0.02] rounded-xl border border-white/5 space-y-1.5 text-[10px] text-gray-400 font-mono text-left">
-                  <span className="font-bold text-purple-400">Dependents (Incoming):</span>
+                  <span className="font-bold text-violet-theme">Dependents (Incoming):</span>
                   <div className="space-y-1 max-h-[140px] overflow-y-auto pr-1">
                     {graphEdges.filter((e) => e.target === inspectorNode.id).length === 0 ? (
                       <p className="italic text-gray-600 text-[9.5px]">No incoming connections.</p>
@@ -334,7 +344,7 @@ export default function RepositoryGraph({
                         .filter((e) => e.target === inspectorNode.id)
                         .map((e, idx) => (
                           <div key={idx} className="truncate text-gray-300">
-                            â† {e.source.split(/[/\\]/).pop()}
+                            ← {e.source.split(/[/\\]/).pop()}
                           </div>
                         ))
                     )}
@@ -358,12 +368,12 @@ export default function RepositoryGraph({
                 <span>Re-Analyze Architecture Report</span>
               </button>
             </div>
-            
+
           </div>
         </div>
       ) : (
         <div className="py-24 text-center text-muted border border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-4 bg-panel/30 max-w-lg mx-auto w-full px-6 select-none">
-          <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+          <div className="w-12 h-12 rounded-full bg-accent-dim/10 flex items-center justify-center text-accent">
             <Network className="w-6 h-6" />
           </div>
           <div className="space-y-1">
@@ -374,7 +384,7 @@ export default function RepositoryGraph({
           </div>
           <button
             onClick={onGetArchitecture}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs font-sans transition-all cursor-pointer shadow-lg shadow-indigo-600/10"
+            className="px-5 py-2.5 rounded-xl bg-accent text-bg hover:bg-accent-strong text-white font-bold text-xs font-sans transition-all cursor-pointer shadow-lg shadow-accent/10"
           >
             Compile Dependency Graph
           </button>
@@ -384,4 +394,3 @@ export default function RepositoryGraph({
     </div>
   );
 }
-

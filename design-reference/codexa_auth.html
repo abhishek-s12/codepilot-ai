@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Codexa — Auth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#0A0D12; --panel:#10141B; --panel-2:#141924; --panel-3:#181E29;
+    --line:#222834; --text:#E8ECF2; --muted:#8A93A3; --muted-2:#5C6472;
+    --amber:#FF9D4D; --amber-dim:#8A5A2E; --cyan:#7FE3E8; --cyan-dim:#3D6E70;
+    --diff-add:#4ADE80; --diff-del:#F87171;
+    --font-display:'Space Grotesk', sans-serif; --font-body:'IBM Plex Sans', sans-serif; --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--ink); color:var(--text); font-family:var(--font-body);}
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--amber); color:var(--ink);}
+
+  .view{display:none; min-height:100vh;}
+  .view.active{display:block;}
+
+  .switcher{
+    position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:99;
+    display:flex; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden;
+  }
+  .switcher button{
+    font-family:var(--font-mono); font-size:11px; background:var(--panel); color:var(--muted);
+    padding:8px 12px; cursor:pointer; border:none;
+  }
+  .switcher button.on{color:var(--amber); background:var(--panel-2);}
+
+  /* ============ LOGIN ============ */
+  .login-shell{
+    display:grid; grid-template-columns:1fr 1fr; min-height:100vh;
+  }
+  .login-visual{
+    background:var(--panel); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; justify-content:space-between;
+    padding:44px; position:relative; overflow:hidden;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+    background-size:26px 26px;
+  }
+  .lv-logo{font-family:var(--font-display); font-weight:700; font-size:17px; display:flex; align-items:center; gap:9px;}
+  .lv-logo .dot{width:8px; height:8px; border-radius:2px; background:var(--amber); box-shadow:0 0 8px rgba(255,157,77,0.7);}
+  .lv-quote{max-width:400px;}
+  .lv-quote .qt{font-family:var(--font-display); font-size:22px; font-weight:600; line-height:1.4; margin-bottom:16px;}
+  .lv-quote .qm{font-family:var(--font-mono); font-size:12px; color:var(--muted-2);}
+  .lv-trace{position:absolute; right:-40px; bottom:-30px; opacity:0.85;}
+
+  .login-form-wrap{display:flex; align-items:center; justify-content:center; padding:40px;}
+  .login-form{width:100%; max-width:360px;}
+  .path-label{font-family:var(--font-mono); font-size:12px; color:var(--muted-2); margin-bottom:16px;}
+  .path-label span{color:var(--amber);}
+  .login-form h1{font-family:var(--font-display); font-size:28px; font-weight:600; margin-bottom:8px;}
+  .login-form .sub{color:var(--muted); font-size:13.5px; margin-bottom:32px;}
+
+  .oauth-btn{
+    display:flex; align-items:center; gap:12px; width:100%;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    padding:12px 16px; margin-bottom:10px; cursor:pointer;
+    font-family:var(--font-body); font-size:13.5px; font-weight:500; color:var(--text);
+    transition:border-color .15s ease;
+  }
+  .oauth-btn:hover{border-color:var(--amber-dim);}
+  .oauth-btn .glyph{font-family:var(--font-mono); font-size:14px; width:18px; text-align:center;}
+  .oauth-btn.gh .glyph{color:var(--text);}
+  .oauth-btn.go .glyph{color:var(--cyan);}
+
+  .divider{display:flex; align-items:center; gap:12px; margin:22px 0; font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2);}
+  .divider::before, .divider::after{content:''; flex:1; height:1px; background:var(--line);}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-bottom:6px;}
+  .field input{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:7px;
+    padding:11px 13px; color:var(--text); font-size:13.5px; outline:none; font-family:var(--font-body);
+  }
+  .field input:focus{border-color:var(--amber-dim);}
+
+  .btn-primary-full{
+    width:100%; text-align:center; font-family:var(--font-mono); font-size:13.5px;
+    background:var(--amber); color:#1A1000; padding:12px; border-radius:7px; font-weight:500;
+    cursor:pointer; margin-top:8px;
+  }
+  .sandbox-note{
+    margin-top:20px; padding:12px 14px; background:var(--panel-2); border:1px solid var(--line); border-radius:8px;
+    font-family:var(--font-mono); font-size:11px; color:var(--muted-2); line-height:1.6;
+  }
+  .sandbox-note b{color:var(--cyan);}
+  .foot-link{text-align:center; margin-top:24px; font-size:12.5px; color:var(--muted);}
+  .foot-link a{color:var(--amber);}
+
+  /* ============ API KEYS ============ */
+  .keys-shell{max-width:840px; margin:0 auto; padding:56px 40px 100px;}
+  .keys-head{margin-bottom:8px;}
+  .keys-head h1{font-family:var(--font-display); font-size:26px; font-weight:600;}
+  .keys-sub{color:var(--muted); font-size:13.5px; margin-top:6px; margin-bottom:32px; max-width:520px;}
+
+  .new-key-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:22px; margin-bottom:32px;
+  }
+  .new-key-box .lbl{font-family:var(--font-mono); font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;}
+  .new-key-row{display:flex; gap:10px;}
+  .new-key-row input{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:7px;
+    padding:11px 13px; color:var(--text); font-size:13px; outline:none; font-family:var(--font-body);
+  }
+  .btn-primary{font-family:var(--font-mono); font-size:13px; background:var(--amber); color:#1A1000; padding:11px 18px; border-radius:7px; font-weight:500; cursor:pointer; white-space:nowrap;}
+
+  .reveal-box{
+    margin-top:16px; background:var(--panel-3); border:1px solid var(--amber-dim); border-radius:8px;
+    padding:14px 16px;
+  }
+  .reveal-box .rk{font-family:var(--font-mono); font-size:13px; color:var(--diff-add); word-break:break-all;}
+  .reveal-box .rw{font-family:var(--font-mono); font-size:11px; color:var(--amber); margin-top:8px;}
+
+  .key-table{background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .key-row{display:grid; grid-template-columns:1.4fr 1fr 1fr 0.6fr; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line);}
+  .key-row:last-child{border-bottom:none;}
+  .key-row.hd{background:var(--panel-2); font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.05em; padding:12px 20px;}
+  .key-name{font-family:var(--font-display); font-weight:600; font-size:13.5px;}
+  .key-hash{font-family:var(--font-mono); font-size:11.5px; color:var(--muted-2); margin-top:3px;}
+  .key-meta{font-family:var(--font-mono); font-size:12px; color:var(--muted);}
+  .key-scope{font-family:var(--font-mono); font-size:10.5px; color:var(--cyan); border:1px solid var(--cyan-dim); background:rgba(127,227,232,0.06); padding:2px 8px; border-radius:9px; display:inline-block;}
+  .revoke{font-family:var(--font-mono); font-size:11.5px; color:var(--diff-del); cursor:pointer; text-align:right;}
+
+  .token-strip{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 20px; margin-top:32px;
+  }
+  .token-strip .t{font-family:var(--font-mono); font-size:12px; color:var(--muted);}
+  .token-strip .t b{color:var(--text); font-weight:500;}
+  .toggle{width:36px; height:20px; border-radius:10px; background:var(--diff-add); position:relative; cursor:pointer;}
+  .toggle::after{content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:var(--ink); top:2px; right:2px;}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button class="on" onclick="showView('login', this)">Login</button>
+  <button onclick="showView('keys', this)">API Keys</button>
+</div>
+
+<!-- ============ LOGIN VIEW ============ -->
+<div class="view active" id="view-login">
+  <div class="login-shell">
+
+    <div class="login-visual">
+      <div class="lv-logo"><span class="dot"></span>codexa</div>
+
+      <div class="lv-quote">
+        <div class="qt">"It found the auth bug before I'd finished reading the file."</div>
+        <div class="qm">— security audit, auth_service.py</div>
+      </div>
+
+      <svg class="lv-trace" width="360" height="220" viewBox="0 0 360 220">
+        <path d="M20,20 L20,70 L180,70 L180,20" fill="none" stroke="#222834" stroke-width="1.5"/>
+        <path d="M180,70 L180,130" fill="none" stroke="#222834" stroke-width="1.5"/>
+        <path d="M180,130 L90,130 L90,180" fill="none" stroke="#222834" stroke-width="1.5"/>
+        <path d="M180,130 L270,130 L270,180" fill="none" stroke="#222834" stroke-width="1.5"/>
+        <path d="M20,20 L20,70 L180,70 L180,130 L270,130 L270,180" fill="none" stroke="#FF9D4D" stroke-width="1.5" stroke-dasharray="6 340">
+          <animate attributeName="stroke-dashoffset" from="0" to="-346" dur="3.6s" repeatCount="indefinite"/>
+        </path>
+        <rect x="0" y="4" width="40" height="26" rx="5" fill="#141924" stroke="#8A5A2E"/>
+        <rect x="140" y="56" width="80" height="26" rx="5" fill="#141924" stroke="#222834"/>
+        <rect x="130" y="116" width="100" height="26" rx="5" fill="#141924" stroke="#8A5A2E"/>
+        <rect x="240" y="166" width="80" height="26" rx="5" fill="#141924" stroke="#3D6E70"/>
+      </svg>
+    </div>
+
+    <div class="login-form-wrap">
+      <div class="login-form">
+        <div class="path-label">codexa / <span>sign-in.tsx</span></div>
+        <h1>Sign in to Codexa</h1>
+        <div class="sub">Index a repository and start asking it questions.</div>
+
+        <div class="oauth-btn gh"><span class="glyph">⌥</span>Continue with GitHub</div>
+        <div class="oauth-btn go"><span class="glyph">◐</span>Continue with Google</div>
+
+        <div class="divider">OR</div>
+
+        <div class="field">
+          <label>Email</label>
+          <input type="email" placeholder="you@company.com">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" placeholder="••••••••••">
+        </div>
+        <div class="btn-primary-full">Sign in →</div>
+
+        <div class="sandbox-note">
+          <b>Developer sandbox mode</b> is enabled for this environment — authentication checks are bypassed for local testing. Disable strict mode enforcement before deploying to production.
+        </div>
+
+        <div class="foot-link">No account? <a href="#">Create one</a></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ API KEYS VIEW ============ -->
+<div class="view" id="view-keys">
+  <div class="keys-shell">
+    <div class="path-label">codexa / settings / <span>api-keys.tsx</span></div>
+    <div class="keys-head"><h1>API keys</h1></div>
+    <div class="keys-sub">Personal keys authenticate CLI tools, IDE extensions, and scripts as you. Each key is hashed with SHA-256 — Codexa never stores it in plain text, and can't show it to you again after creation.</div>
+
+    <div class="new-key-box">
+      <div class="lbl">Create a new key</div>
+      <div class="new-key-row">
+        <input type="text" placeholder="Key name — e.g. \"laptop CLI\" or \"CI pipeline\"">
+        <div class="btn-primary">Generate key</div>
+      </div>
+      <div class="reveal-box">
+        <div class="rk">sk_mock_8f2a1c9e4b7d0f3a6c5e8b1d4f7a0c3e</div>
+        <div class="rw">⚠ Copy this now — it won't be shown again.</div>
+      </div>
+    </div>
+
+    <div class="key-table">
+      <div class="key-row hd">
+        <div>Name</div><div>Scope</div><div>Last used</div><div style="text-align:right;">Action</div>
+      </div>
+      <div class="key-row">
+        <div><div class="key-name">CI pipeline</div><div class="key-hash">sk_mock_••••e8b1</div></div>
+        <div><span class="key-scope">read + write</span></div>
+        <div class="key-meta">2 hours ago</div>
+        <div class="revoke">Revoke</div>
+      </div>
+      <div class="key-row">
+        <div><div class="key-name">VS Code extension</div><div class="key-hash">sk_mock_••••2f4a</div></div>
+        <div><span class="key-scope">read + write</span></div>
+        <div class="key-meta">3 days ago</div>
+        <div class="revoke">Revoke</div>
+      </div>
+      <div class="key-row">
+        <div><div class="key-name">laptop CLI</div><div class="key-hash">sk_mock_••••90dc</div></div>
+        <div><span class="key-scope">read + write</span></div>
+        <div class="key-meta">never used</div>
+        <div class="revoke">Revoke</div>
+      </div>
+    </div>
+
+    <div class="token-strip">
+      <div class="t">Require re-authentication for API keys older than <b>90 days</b></div>
+      <div class="toggle"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showView(name, el){
+    document.querySelectorAll('.switcher button').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    el.classList.add('on');
+    document.getElementById('view-' + name).classList.add('active');
+  }
+</script>
+
+</body>
+</html>

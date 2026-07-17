@@ -1,10 +1,22 @@
-﻿// @ts-nocheck
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useCallback } from "react";
 import { fetchComments, addComment, deleteComment } from "../../services/collaboration";
 
-export default function CommentsPanel({ projectId, activeFile }) {
-  const [comments, setComments] = useState([]);
+interface Comment {
+  id: string;
+  author: string;
+  comment_text: string;
+  line: number;
+  timestamp: string;
+}
+
+interface CommentsPanelProps {
+  projectId?: string;
+  activeFile?: string;
+}
+
+export default function CommentsPanel({ projectId, activeFile }: CommentsPanelProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [lineNum, setLineNum] = useState(1);
 
@@ -12,7 +24,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
     if (!projectId || !activeFile) return;
     try {
       const res = await fetchComments(projectId, activeFile);
-      setComments(res || []);
+      setComments((res as Comment[]) || []);
     } catch (err) {
       console.error("[CommentsPanel] Load error:", err);
     }
@@ -22,7 +34,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
     loadComments();
   }, [loadComments]);
 
-  const handleAddComment = async (e) => {
+  const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || !projectId || !activeFile) return;
     try {
@@ -34,7 +46,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (commentId: string) => {
     try {
       await deleteComment(commentId);
       loadComments();
@@ -53,7 +65,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
 
   return (
     <div className="w-full h-full flex flex-col min-h-0 bg-[#07090f] text-gray-300">
-      
+
       {/* Title */}
       <div className="flex items-center justify-between px-3 h-8 border-b border-white/5 bg-[#090c14] shrink-0 select-none">
         <span className="text-[9px] font-bold text-gray-500 font-mono uppercase tracking-widest">
@@ -61,6 +73,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
         </span>
         <button
           onClick={loadComments}
+          aria-label="Reload comments"
           className="text-gray-500 hover:text-gray-300 text-[8px] font-mono"
         >
           Reload
@@ -80,6 +93,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
                 <span className="text-[10px] font-bold font-mono text-gray-300">{c.author}</span>
                 <button
                   onClick={() => handleDeleteComment(c.id)}
+                  aria-label={`Delete comment by ${c.author}`}
                   className="text-rose-500 hover:text-rose-400 text-[8px] font-mono"
                 >
                   Delete
@@ -121,7 +135,7 @@ export default function CommentsPanel({ projectId, activeFile }) {
           <button
             type="submit"
             disabled={!commentText.trim()}
-            className="px-2.5 py-1.5 text-[9px] font-mono font-bold rounded bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500 transition-all disabled:opacity-40 self-end"
+            className="px-2.5 py-1.5 text-[9px] font-mono font-bold rounded bg-accent text-bg border border-accent/20 hover:bg-accent-strong transition-all disabled:opacity-40 self-end"
           >
             Post
           </button>
@@ -131,4 +145,3 @@ export default function CommentsPanel({ projectId, activeFile }) {
     </div>
   );
 }
-

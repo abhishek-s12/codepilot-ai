@@ -1,24 +1,39 @@
-// @ts-nocheck
 import { useState } from "react";
+import type { Node } from "@xyflow/react";
+
+interface SearchPayload {
+  queryType: string;
+  node: string;
+  targetNode: string | null;
+}
+
+interface KnowledgeSearchProps {
+  nodes?: Node[];
+  onSearchQuery?: (payload: SearchPayload) => void;
+  onResetSearch?: () => void;
+  isLoading?: boolean;
+}
 
 export default function KnowledgeSearch({
   nodes = [],
   onSearchQuery,
   onResetSearch,
   isLoading,
-}) {
+}: KnowledgeSearchProps) {
   const [queryType, setQueryType] = useState("dependers");
   const [startNode, setStartNode] = useState("");
   const [endNode, setEndNode] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!startNode) return;
-    onSearchQuery({
-      queryType,
-      node: startNode,
-      targetNode: queryType === "path" ? endNode : null,
-    });
+    if (onSearchQuery) {
+      onSearchQuery({
+        queryType,
+        node: startNode,
+        targetNode: queryType === "path" ? endNode : null,
+      });
+    }
   };
 
   return (
@@ -89,7 +104,7 @@ export default function KnowledgeSearch({
       {/* Datalist helper */}
       <datalist id="nodes-datalist">
         {nodes.map((n) => (
-          <option key={n.id} value={n.data?.name || n.id} />
+          <option key={n.id} value={((n.data?.name as string) || n.id).toString()} />
         ))}
       </datalist>
 
@@ -98,7 +113,7 @@ export default function KnowledgeSearch({
         <button
           type="submit"
           disabled={isLoading || !startNode}
-          className="flex-1 px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-indigo-600 border border-indigo-500 text-white hover:bg-indigo-500 transition-all disabled:opacity-40"
+          className="flex-1 px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-secondary border border-secondary text-white hover:bg-secondary-strong transition-all disabled:opacity-40"
         >
           {isLoading ? "Querying..." : "Analyze Graph"}
         </button>
@@ -117,4 +132,3 @@ export default function KnowledgeSearch({
     </form>
   );
 }
-

@@ -491,7 +491,7 @@ export default function MonacoFileViewer({
         {onReload && (
           <button
             onClick={onReload}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-lg shadow-indigo-600/10"
+            className="px-5 py-2.5 bg-accent text-bg hover:bg-accent-strong text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-lg shadow-accent/10"
           >
             Reload File
           </button>

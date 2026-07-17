@@ -91,7 +91,7 @@ export default function NotificationCenter() {
       case "security":
         return <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />;
       case "index":
-        return <Database className="w-3.5 h-3.5 text-indigo-400" />;
+        return <Database className="w-3.5 h-3.5 text-accent" />;
       case "system":
       default:
         return <Info className="w-3.5 h-3.5 text-cyan-400" />;

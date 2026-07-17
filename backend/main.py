@@ -3,9 +3,10 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 import time
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from prometheus_fastapi_instrumentator import Instrumentator
+from services.metrics_service import rate_limit_fallback_total
 
 from api.repository import router as repo_router
 from api.scanner import router as scanner_router
@@ -40,10 +41,11 @@ from services.db_service import init_db
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, limit_seconds: int = 60):
+    def __init__(self, app, limit_seconds: int = 60, max_keys: int = 10000):
         super().__init__(app)
         self.limit_seconds = limit_seconds
-        self.local_history = defaultdict(list)
+        self.max_keys = max_keys
+        self.local_history = OrderedDict()
 
     async def dispatch(self, request: Request, call_next):
         if request.method == "OPTIONS":
@@ -105,19 +107,31 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         current_time = time.time()
-        self.local_history[f"{client_ip}:{category}"] = [
+        rate_limit_fallback_total.inc()
+
+        key = f"{client_ip}:{category}"
+        history = self.local_history.get(key, [])
+        history = [
             t
-            for t in self.local_history[f"{client_ip}:{category}"]
+            for t in history
             if current_time - t < self.limit_seconds
         ]
 
-        if len(self.local_history[f"{client_ip}:{category}"]) >= max_requests:
+        if len(history) >= max_requests:
+            self.local_history[key] = history
+            self.local_history.move_to_end(key)
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Too many requests. Please try again later."},
             )
 
-        self.local_history[f"{client_ip}:{category}"].append(current_time)
+        history.append(current_time)
+        self.local_history[key] = history
+        self.local_history.move_to_end(key)
+
+        if len(self.local_history) > self.max_keys:
+            self.local_history.popitem(last=False)
+
         return await call_next(request)
 
 
@@ -175,6 +189,7 @@ def validate_config():
         "s3_secret_key",
         "s3_bucket_name",
         "redis_url",
+        "jwt_secret",
     ]:
         val = getattr(settings, field, "")
         if not val:
@@ -183,6 +198,12 @@ def validate_config():
         raise RuntimeError(
             f"Missing required configuration variables: {', '.join(missing)}"
         )
+    if settings.jwt_secret in {"codepilot_secret_key_12345", "REPLACE_ME_JWT_SECRET"}:
+        raise RuntimeError("JWT_SECRET must be set to a secure, non-default value.")
+    if "REPLACE_ME_DB_PASSWORD" in settings.postgres_url:
+        raise RuntimeError("DATABASE_URL/POSTGRES_URL must not contain default placeholder password.")
+    if settings.s3_secret_key in {"minio_password_123", "REPLACE_ME_S3_SECRET_KEY"}:
+        raise RuntimeError("S3_SECRET_KEY must be set to a secure, non-default value.")
 
 
 def check_services_connectivity():

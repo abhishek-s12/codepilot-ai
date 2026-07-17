@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { Users, Globe, Download, Bell, MessageSquare } from "lucide-react";
 import ShareWorkspace from "./ShareWorkspace";
-import ReportGenerator from "./ReportGenerator";
+const ReportGenerator = lazy(() => import("./ReportGenerator"));
 import ExportManager from "./ExportManager";
 import CommentSystem from "./CommentSystem";
 import NotificationCenter from "./NotificationCenter";
@@ -65,10 +65,12 @@ export default function CollaborationPanel({ activeFile, repoId, onClose }: Coll
         {collabTab === "comments" && <CommentSystem activeFile={activeFile} />}
         {collabTab === "alerts" && React.createElement(NotificationCenter as any)}
         {collabTab === "reports" && (
-          <div className="space-y-4">
-            {React.createElement(ReportGenerator as any, { repositoryId: repoId })}
-            {React.createElement(ExportManager as any)}
-          </div>
+          <Suspense fallback={<div className="p-4 text-[10px] font-mono text-muted animate-pulse">Loading compliance/activity reports...</div>}>
+            <div className="space-y-4">
+              {React.createElement(ReportGenerator as any, { repositoryId: repoId })}
+              {React.createElement(ExportManager as any)}
+            </div>
+          </Suspense>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { Settings, Sparkles, Layout, Keyboard, ShieldAlert, Key, Lock, Sliders, ShieldCheck } from "lucide-react";
 import ThemeManager from "./ThemeManager";
 import LayoutManager from "./LayoutManager";
@@ -6,8 +6,9 @@ import KeyboardShortcutPanel from "./KeyboardShortcutPanel";
 import WorkspaceProfiles from "./WorkspaceProfiles";
 import ApiKeysManager from "./ApiKeysManager";
 import MfaSetup from "./MfaSetup";
-import ComplianceManager from "./ComplianceManager";
-import IntegrationsManager from "./IntegrationsManager";
+
+const ComplianceManager = lazy(() => import("./ComplianceManager"));
+const IntegrationsManager = lazy(() => import("./IntegrationsManager"));
 
 interface WorkspacePreferencesProps {
   onApplyProfile: (profile: any) => void;
@@ -81,8 +82,16 @@ export default function WorkspacePreferences({ onApplyProfile, onClose }: Worksp
         )}
         {prefTab === "apikeys" && React.createElement(ApiKeysManager as any)}
         {prefTab === "security" && React.createElement(MfaSetup as any)}
-        {prefTab === "compliance" && React.createElement(ComplianceManager as any)}
-        {prefTab === "integrations" && React.createElement(IntegrationsManager as any)}
+        {prefTab === "compliance" && (
+          <Suspense fallback={<div className="p-4 text-[10px] font-mono text-muted animate-pulse">Loading Compliance Center...</div>}>
+            {React.createElement(ComplianceManager as any)}
+          </Suspense>
+        )}
+        {prefTab === "integrations" && (
+          <Suspense fallback={<div className="p-4 text-[10px] font-mono text-muted animate-pulse">Loading Integrations...</div>}>
+            {React.createElement(IntegrationsManager as any)}
+          </Suspense>
+        )}
       </div>
 
     </div>

@@ -1,5 +1,13 @@
-﻿// @ts-nocheck
 import { IconCpu, IconNetwork, IconFlow, IconArrowRight } from "../icons/Icons";
+
+interface AnalyzerPanelProps {
+  onGetArchitecture?: () => void;
+  onGetCallGraph?: () => void;
+  onGetFlow?: () => void;
+  isArchitectureLoading?: boolean;
+  isGraphLoading?: boolean;
+  isFlowLoading?: boolean;
+}
 
 export default function AnalyzerPanel({
   onGetArchitecture,
@@ -8,11 +16,11 @@ export default function AnalyzerPanel({
   isArchitectureLoading,
   isGraphLoading,
   isFlowLoading,
-}) {
+}: AnalyzerPanelProps) {
   return (
     <div className="p-5 rounded-2xl border border-white/10 bg-gray-900/40 glass">
       <div className="flex items-center gap-2 mb-4">
-        <IconCpu className="w-4 h-4 text-purple-400" />
+         <IconCpu className="w-4 h-4 text-violet-theme" />
         <h3 className="text-xs uppercase font-bold tracking-wider text-gray-400">Codebase Analyzers</h3>
       </div>
 
@@ -20,13 +28,14 @@ export default function AnalyzerPanel({
         <button
           onClick={onGetArchitecture}
           disabled={isArchitectureLoading}
-          className="w-full px-4 py-3 rounded-xl border border-white/10 hover:border-indigo-500/40 bg-white/5 hover:bg-indigo-500/5 text-left text-sm font-semibold text-white transition-all flex items-center justify-between"
+          aria-label="Retrieve codebase architecture graph"
+          className="w-full px-4 py-3 rounded-xl border border-white/10 hover:border-accent/40 bg-white/5 hover:bg-accent-strong/5 text-left text-sm font-semibold text-white transition-all flex items-center justify-between"
         >
           <span className="flex items-center gap-2.5">
-            <IconCpu className="w-4 h-4 text-indigo-400" /> Codebase Architecture
+            <IconCpu className="w-4 h-4 text-accent" /> Codebase Architecture
           </span>
           {isArchitectureLoading ? (
-            <span className="w-3.5 h-3.5 border-2 border-indigo-400/20 border-t-indigo-400 rounded-full animate-spin"></span>
+            <span className="w-3.5 h-3.5 border-2 border-accent/20 border-t-accent rounded-full animate-spin"></span>
           ) : (
             <IconArrowRight className="w-4 h-4 text-gray-500" />
           )}
@@ -35,13 +44,14 @@ export default function AnalyzerPanel({
         <button
           onClick={onGetCallGraph}
           disabled={isGraphLoading}
-          className="w-full px-4 py-3 rounded-xl border border-white/10 hover:border-purple-500/40 bg-white/5 hover:bg-purple-500/5 text-left text-sm font-semibold text-white transition-all flex items-center justify-between"
+          aria-label="Retrieve code call graph"
+          className="w-full px-4 py-3 rounded-xl border border-white/10 hover:border-violet-theme/40 bg-white/5 hover:bg-violet-dim/5 text-left text-sm font-semibold text-white transition-all flex items-center justify-between"
         >
           <span className="flex items-center gap-2.5">
-            <IconNetwork className="w-4 h-4 text-purple-400" /> Code Call Graph
+            <IconNetwork className="w-4 h-4 text-violet-theme" /> Code Call Graph
           </span>
           {isGraphLoading ? (
-            <span className="w-3.5 h-3.5 border-2 border-purple-400/20 border-t-purple-400 rounded-full animate-spin"></span>
+            <span className="w-3.5 h-3.5 border-2 border-violet-theme/20 border-t-violet-theme rounded-full animate-spin"></span>
           ) : (
             <IconArrowRight className="w-4 h-4 text-gray-500" />
           )}
@@ -50,6 +60,7 @@ export default function AnalyzerPanel({
         <button
           onClick={onGetFlow}
           disabled={isFlowLoading}
+          aria-label="Retrieve execution flow graph"
           className="w-full px-4 py-3 rounded-xl border border-white/10 hover:border-emerald-500/40 bg-white/5 hover:bg-emerald-500/5 text-left text-sm font-semibold text-white transition-all flex items-center justify-between"
         >
           <span className="flex items-center gap-2.5">
@@ -65,4 +76,3 @@ export default function AnalyzerPanel({
     </div>
   );
 }
-

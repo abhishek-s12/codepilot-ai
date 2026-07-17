@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Codexa — Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#0A0D12;
+    --panel:#10141B;
+    --panel-2:#141924;
+    --panel-3:#181E29;
+    --line:#222834;
+    --text:#E8ECF2;
+    --muted:#8A93A3;
+    --muted-2:#5C6472;
+    --amber:#FF9D4D;
+    --amber-dim:#8A5A2E;
+    --cyan:#7FE3E8;
+    --cyan-dim:#3D6E70;
+    --diff-add:#4ADE80;
+    --diff-del:#F87171;
+    --violet:#B69CFF;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'IBM Plex Sans', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--ink); color:var(--text); font-family:var(--font-body);
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0);
+    background-size:28px 28px;
+  }
+  ::selection{background:var(--amber); color:var(--ink);}
+  a{color:inherit;}
+
+  .shell{display:grid; grid-template-columns:220px 1fr; min-height:100vh;}
+
+  /* ---- TOC SIDEBAR ---- */
+  .toc{border-right:1px solid var(--line); background:var(--panel); padding:24px 0; position:sticky; top:0; height:100vh; overflow-y:auto;}
+  .logo{font-family:var(--font-display); font-weight:700; font-size:16px; display:flex; align-items:center; gap:8px; padding:0 20px 6px;}
+  .logo .dot{width:8px; height:8px; border-radius:2px; background:var(--amber); box-shadow:0 0 8px rgba(255,157,77,0.7);}
+  .toc-sub{font-family:var(--font-mono); font-size:11px; color:var(--muted-2); padding:0 20px 22px;}
+  .toc a{
+    display:block; padding:6px 20px; font-family:var(--font-mono); font-size:12px; color:var(--muted);
+    border-left:2px solid transparent; text-decoration:none;
+  }
+  .toc a:hover{color:var(--text); background:var(--panel-2);}
+
+  /* ---- MAIN ---- */
+  .main{padding:56px 56px 120px; max-width:980px;}
+  .doc-eyebrow{font-family:var(--font-mono); font-size:12px; color:var(--muted-2); margin-bottom:14px;}
+  .doc-eyebrow span{color:var(--amber);}
+  h1{font-family:var(--font-display); font-size:38px; font-weight:700; letter-spacing:-0.015em; margin-bottom:12px;}
+  .doc-sub{color:var(--muted); font-size:15px; max-width:560px; margin-bottom:20px;}
+
+  section{margin-top:76px; padding-top:4px; border-top:1px solid var(--line);}
+  section:first-of-type{border-top:none; margin-top:48px;}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:8px; margin-top:36px;}
+  h2{font-family:var(--font-display); font-size:24px; font-weight:600;}
+  .sec-num{font-family:var(--font-mono); font-size:12px; color:var(--muted-2);}
+  .sec-desc{color:var(--muted); font-size:14px; margin-bottom:28px; max-width:560px;}
+
+  /* ---- COLOR SWATCHES ---- */
+  .swatch-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+  .swatch{background:var(--panel); padding:0;}
+  .swatch .chip{height:64px;}
+  .swatch .info{padding:12px 14px;}
+  .swatch .name{font-family:var(--font-display); font-size:13px; font-weight:600;}
+  .swatch .hex{font-family:var(--font-mono); font-size:11px; color:var(--muted-2); margin-top:2px;}
+  .swatch .use{font-size:11px; color:var(--muted); margin-top:6px; line-height:1.4;}
+
+  /* ---- TYPE SCALE ---- */
+  .type-row{display:flex; align-items:baseline; gap:20px; padding:18px 0; border-bottom:1px solid var(--line);}
+  .type-row:first-child{padding-top:0;}
+  .type-meta{width:170px; flex-shrink:0; font-family:var(--font-mono); font-size:11px; color:var(--muted-2); line-height:1.6;}
+  .type-meta b{color:var(--muted); display:block; font-size:12px;}
+  .t-display-1{font-family:var(--font-display); font-weight:700; font-size:44px; letter-spacing:-0.02em;}
+  .t-display-2{font-family:var(--font-display); font-weight:600; font-size:30px; letter-spacing:-0.015em;}
+  .t-display-3{font-family:var(--font-display); font-weight:600; font-size:20px;}
+  .t-body{font-family:var(--font-body); font-size:15px; color:var(--text);}
+  .t-body-sm{font-family:var(--font-body); font-size:13px; color:var(--muted);}
+  .t-mono{font-family:var(--font-mono); font-size:12.5px; color:var(--muted);}
+
+  /* ---- SPACING ---- */
+  .space-row{display:flex; align-items:center; gap:16px; padding:10px 0;}
+  .space-bar{background:var(--amber); height:14px; border-radius:2px;}
+  .space-label{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); width:90px;}
+
+  /* ---- COMPONENT DEMOS ---- */
+  .demo-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:28px; margin-bottom:16px;
+    display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+  }
+  .demo-label{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2);
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px;
+  }
+
+  .btn-primary{font-family:var(--font-mono); font-size:13px; background:var(--amber); color:#1A1000; padding:11px 18px; border-radius:7px; font-weight:500; cursor:pointer;}
+  .btn-secondary{font-family:var(--font-mono); font-size:13px; border:1px solid var(--line); color:var(--text); padding:11px 18px; border-radius:7px; cursor:pointer;}
+  .btn-ghost{font-family:var(--font-mono); font-size:13px; color:var(--muted); padding:11px 4px; cursor:pointer;}
+
+  .badge{font-family:var(--font-mono); font-size:10.5px; padding:3px 9px; border-radius:9px; text-transform:uppercase;}
+  .badge.running{color:var(--cyan); background:rgba(127,227,232,0.1); border:1px solid var(--cyan-dim);}
+  .badge.done{color:var(--diff-add); background:rgba(74,222,128,0.1); border:1px solid #265939;}
+  .badge.todo{color:var(--muted); background:var(--panel-2); border:1px solid var(--line);}
+  .badge.failed{color:var(--diff-del); background:rgba(248,113,113,0.1); border:1px solid #5A2A2A;}
+
+  .health-dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .health-dot.ok{background:var(--diff-add); box-shadow:0 0 6px rgba(74,222,128,0.6);}
+  .health-dot.warn{background:var(--amber); box-shadow:0 0 6px rgba(255,157,77,0.6);}
+  .health-dot.syncing{background:var(--cyan); box-shadow:0 0 6px rgba(127,227,232,0.6);}
+  .health-item{display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px; color:var(--muted);}
+
+  .path-label-demo{font-family:var(--font-mono); font-size:12.5px; color:var(--muted-2); display:flex; align-items:center; gap:8px;}
+  .path-label-demo .active{color:var(--amber);}
+  .path-label-demo .slash{color:var(--line);}
+
+  .cite-demo{font-family:var(--font-mono); font-size:10.5px; color:var(--cyan); border:1px solid var(--cyan-dim); background:rgba(127,227,232,0.06); padding:3px 8px; border-radius:5px;}
+
+  .input-demo{background:var(--ink); border:1px solid var(--line); border-radius:7px; padding:9px 14px; font-family:var(--font-mono); font-size:12.5px; color:var(--muted-2); width:260px;}
+
+  .card-demo{background:var(--panel-2); border:1px solid var(--line); border-radius:10px; padding:16px 18px; width:220px;}
+  .card-demo .cn{font-family:var(--font-display); font-weight:600; font-size:14px;}
+  .card-demo .cp{font-family:var(--font-mono); font-size:10.5px; color:var(--muted-2); margin:2px 0 10px;}
+  .card-demo .cd{font-size:12px; color:var(--muted); line-height:1.5;}
+
+  .diff-demo{font-family:var(--font-mono); font-size:12px; border:1px solid var(--line); border-radius:8px; overflow:hidden; width:280px;}
+  .diff-demo .dl{padding:4px 12px;}
+  .diff-demo .del{background:rgba(248,113,113,0.08); color:var(--diff-del);}
+  .diff-demo .add{background:rgba(74,222,128,0.08); color:var(--diff-add);}
+
+  .glyph-row{display:flex; gap:10px;}
+  .glyph{width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:14px; border:1px solid var(--line);}
+  .glyph.amber{color:var(--amber); border-color:var(--amber-dim);}
+  .glyph.cyan{color:var(--cyan); border-color:var(--cyan-dim);}
+  .glyph.diff{color:var(--diff-add); border-color:#265939;}
+
+  /* ---- PRINCIPLES ---- */
+  .principle{display:flex; gap:16px; padding:20px 0; border-bottom:1px solid var(--line);}
+  .principle:last-child{border-bottom:none;}
+  .principle .pn{font-family:var(--font-mono); font-size:12px; color:var(--amber); width:26px; flex-shrink:0; padding-top:2px;}
+  .principle .pt{font-family:var(--font-display); font-size:15px; font-weight:600; margin-bottom:5px;}
+  .principle .pd{font-size:13px; color:var(--muted); line-height:1.6; max-width:520px;}
+
+  code.inline{font-family:var(--font-mono); background:var(--panel-2); border:1px solid var(--line); padding:1px 6px; border-radius:4px; font-size:12px; color:var(--cyan);}
+
+  .motion-demo{width:60px; height:60px; border-radius:8px; background:var(--panel-2); border:1px solid var(--amber-dim); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; color:var(--amber); cursor:pointer; transition:transform .18s ease, border-color .18s ease;}
+  .motion-demo:hover{transform:translateY(-3px); border-color:var(--amber);}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="toc">
+    <div class="logo"><span class="dot"></span>codexa</div>
+    <div class="toc-sub">design system · v1.0</div>
+    <a href="#principles">Principles</a>
+    <a href="#color">Color</a>
+    <a href="#type">Typography</a>
+    <a href="#spacing">Spacing & grid</a>
+    <a href="#structure">Structural devices</a>
+    <a href="#components">Components</a>
+    <a href="#motion">Motion</a>
+    <a href="#voice">Voice & writing</a>
+  </div>
+
+  <div class="main">
+
+    <div class="doc-eyebrow">codexa / <span>design-system.md</span></div>
+    <h1>Codexa design system</h1>
+    <p class="doc-sub">The visual language behind the landing site, workspace, and dashboard — one token set, so a call-graph node on the marketing page and a call-graph node in the editor read as the same product.</p>
+
+    <section id="principles">
+      <div class="sec-head"><h2>Principles</h2><span class="sec-num">01</span></div>
+      <p class="sec-desc">Four rules that shaped every screen. Break them deliberately, not by default.</p>
+
+      <div class="principle">
+        <div class="pn">A</div>
+        <div><div class="pt">Structure is information</div><div class="pd">File-path breadcrumbs (<code class="inline">codexa/index.tsx</code>) replace numbered steps everywhere, because Codexa's whole subject is a file tree — the device should come from the product, not a generic template.</div></div>
+      </div>
+      <div class="principle">
+        <div class="pn">B</div>
+        <div><div class="pt">Color carries meaning, not decoration</div><div class="pd">Amber marks execution / trace / agent activity. Cyan marks data, embeddings, and search. Green and red are reserved <em>only</em> for real diffs — never used decoratively elsewhere, so when they appear, they mean something.</div></div>
+      </div>
+      <div class="principle">
+        <div class="pn">C</div>
+        <div><div class="pt">Real content over placeholder content</div><div class="pd">Every code sample, trace, and citation in this system uses realistic file names and line numbers from an actual auth flow — not <code class="inline">lorem</code> or <code class="inline">foo/bar</code>.</div></div>
+      </div>
+      <div class="principle">
+        <div class="pn">D</div>
+        <div><div class="pt">Quiet by default, loud on purpose</div><div class="pd">The interface stays near-black and low-contrast at rest. Amber is spent deliberately — on the one active trace, the one modified file, the one thing that needs attention.</div></div>
+      </div>
+    </section>
+
+    <section id="color">
+      <div class="sec-head"><h2>Color</h2><span class="sec-num">02</span></div>
+      <p class="sec-desc">Six named values. Everything else in the UI is a tint or border-opacity of these.</p>
+
+      <div class="swatch-grid">
+        <div class="swatch"><div class="chip" style="background:#0A0D12;"></div><div class="info"><div class="name">Ink</div><div class="hex">#0A0D12</div><div class="use">App background</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#10141B;"></div><div class="info"><div class="name">Panel</div><div class="hex">#10141B</div><div class="use">Cards, sidebars, nav</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#222834;"></div><div class="info"><div class="name">Line</div><div class="hex">#222834</div><div class="use">Borders, dividers</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#E8ECF2;"></div><div class="info"><div class="name">Text</div><div class="hex">#E8ECF2</div><div class="use">Primary text</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#FF9D4D;"></div><div class="info"><div class="name">Amber</div><div class="hex">#FF9D4D</div><div class="use">Trace, agent, primary CTA</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#7FE3E8;"></div><div class="info"><div class="name">Cyan</div><div class="hex">#7FE3E8</div><div class="use">Vectors, data, search</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#4ADE80;"></div><div class="info"><div class="name">Diff add</div><div class="hex">#4ADE80</div><div class="use">Diffs & health only</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#F87171;"></div><div class="info"><div class="name">Diff del</div><div class="hex">#F87171</div><div class="use">Diffs & errors only</div></div></div>
+      </div>
+    </section>
+
+    <section id="type">
+      <div class="sec-head"><h2>Typography</h2><span class="sec-num">03</span></div>
+      <p class="sec-desc">Space Grotesk for anything that names or announces. IBM Plex Sans for anything explaining. IBM Plex Mono for anything the system says about itself — paths, stats, code, status.</p>
+
+      <div class="type-row">
+        <div class="type-meta"><b>Display / 44</b>Space Grotesk 700<br>Hero headlines</div>
+        <div class="t-display-1">Codebase, indexed.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Display / 30</b>Space Grotesk 600<br>Section headers</div>
+        <div class="t-display-2">Every file, chunked by meaning.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Display / 20</b>Space Grotesk 600<br>Card titles</div>
+        <div class="t-display-3">Recursive scanner</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Body / 15</b>IBM Plex Sans 400<br>Paragraphs, descriptions</div>
+        <div class="t-body">Codexa parses every file into its AST, embeds it locally, and lets you ask questions with citations back to the exact lines.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Body sm / 13</b>IBM Plex Sans 400<br>Secondary text</div>
+        <div class="t-body-sm">6 connected — 2 indexing, 4 up to date.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta"><b>Mono / 12.5</b>IBM Plex Mono 400<br>Paths, stats, code</div>
+        <div class="t-mono">auth_service.py : 6–9 · 142 prompt tokens</div>
+      </div>
+    </section>
+
+    <section id="spacing">
+      <div class="sec-head"><h2>Spacing & grid</h2><span class="sec-num">04</span></div>
+      <p class="sec-desc">An 8px base unit. Panels sit on a 1px hairline grid — cards touch, separated only by <code class="inline">var(--line)</code>, never by a gap plus a shadow.</p>
+
+      <div class="space-row"><div class="space-label">4 — tight</div><div class="space-bar" style="width:4px;"></div></div>
+      <div class="space-row"><div class="space-label">8 — inline</div><div class="space-bar" style="width:8px;"></div></div>
+      <div class="space-row"><div class="space-label">14 — card pad</div><div class="space-bar" style="width:14px;"></div></div>
+      <div class="space-row"><div class="space-label">20 — section</div><div class="space-bar" style="width:20px;"></div></div>
+      <div class="space-row"><div class="space-label">32 — block</div><div class="space-bar" style="width:32px;"></div></div>
+      <div class="space-row"><div class="space-label">56 — page</div><div class="space-bar" style="width:56px;"></div></div>
+    </section>
+
+    <section id="structure">
+      <div class="sec-head"><h2>Structural devices</h2><span class="sec-num">05</span></div>
+      <p class="sec-desc">The two recurring devices that replace generic dashboard chrome.</p>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Path eyebrow — replaces numbered steps / breadcrumb nav</div>
+          <div class="path-label-demo">codexa <span class="slash">/</span> agent <span class="slash">/</span> <span class="active">workspace.tsx</span></div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Citation chip — every AI claim links to a real location</div>
+          <span class="cite-demo">auth_service.py : 6–9</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="components">
+      <div class="sec-head"><h2>Components</h2><span class="sec-num">06</span></div>
+      <p class="sec-desc">Built once here, reused verbatim across the landing page, workspace, and dashboard.</p>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Buttons</div>
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div class="btn-primary">Open workspace →</div>
+            <div class="btn-secondary">Read the docs</div>
+            <div class="btn-ghost">Cancel</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Task state badges</div>
+          <div style="display:flex; gap:10px;">
+            <span class="badge todo">Todo</span>
+            <span class="badge running">Running</span>
+            <span class="badge done">Completed</span>
+            <span class="badge failed">Failed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Health indicators</div>
+          <div style="display:flex; gap:20px;">
+            <div class="health-item"><span class="health-dot ok"></span>Indexed</div>
+            <div class="health-item"><span class="health-dot syncing"></span>Syncing</div>
+            <div class="health-item"><span class="health-dot warn"></span>Stale</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Action glyphs — amber for AI actions, cyan for data, green for verified</div>
+          <div class="glyph-row">
+            <div class="glyph amber">◆</div>
+            <div class="glyph cyan">●</div>
+            <div class="glyph diff">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div style="width:100%;">
+          <div class="demo-label">Search input</div>
+          <div class="input-demo">⌕ Ask the codebase…</div>
+        </div>
+      </div>
+
+      <div class="demo-box">
+        <div>
+          <div class="demo-label">Feature / repo card</div>
+          <div class="card-demo">
+            <div class="cn">Local embeddings</div>
+            <div class="cp">src/index/embeddings.ts</div>
+            <div class="cd">384-dimensional vectors, generated on-device with all-MiniLM-L6-v2.</div>
+          </div>
+        </div>
+        <div>
+          <div class="demo-label">Diff block</div>
+          <div class="diff-demo">
+            <div class="dl del">- if user.pw == pw:</div>
+            <div class="dl add">+ if verify_hash(user.pw, pw):</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="motion">
+      <div class="sec-head"><h2>Motion</h2><span class="sec-num">07</span></div>
+      <p class="sec-desc">One orchestrated moment per screen beats scattered hover effects. The landing page spends its motion budget on the trace animation; everywhere else, motion is a 2px lift on hover — nothing more. <code class="inline">prefers-reduced-motion</code> disables all of it.</p>
+      <div class="demo-box">
+        <div>
+          <div class="demo-label">Hover lift (hover me)</div>
+          <div class="motion-demo">hover</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="voice">
+      <div class="sec-head"><h2>Voice & writing</h2><span class="sec-num">08</span></div>
+      <p class="sec-desc">Interface copy rules, condensed.</p>
+      <div class="principle">
+        <div class="pn">1</div>
+        <div><div class="pt">Name what people control</div><div class="pd">"Connect repository," not "configure git provider." A person clones a repo — they don't configure a VCS integration.</div></div>
+      </div>
+      <div class="principle">
+        <div class="pn">2</div>
+        <div><div class="pt">Keep the verb through the whole flow</div><div class="pd">A button that says "Accept patch" is followed by a state that says "Patch accepted" — never "Applied" or "Done."</div></div>
+      </div>
+      <div class="principle">
+        <div class="pn">3</div>
+        <div><div class="pt">Errors state fact, not feeling</div><div class="pd">"Index stale — 6 days ago," not "Oops, something's out of date!" The interface reports; it doesn't apologize.</div></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+</body>
+</html>

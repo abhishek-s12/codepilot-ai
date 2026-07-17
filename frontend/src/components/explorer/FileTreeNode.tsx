@@ -31,7 +31,7 @@ export default function FileTreeNode({ node, selectedPath, onOpenFile }: FileTre
     const e = ext.toLowerCase();
     if (e === ".py") return "text-secondary";
     if (e === ".js" || e === ".jsx") return "text-accent";
-    if (e === ".ts" || e === ".tsx") return "text-blue-400";
+    if (e === ".ts" || e === ".tsx") return "text-accent";
     if (e === ".html") return "text-orange-500";
     if (e === ".css") return "text-teal-400";
     if (e === ".json") return "text-yellow-300";

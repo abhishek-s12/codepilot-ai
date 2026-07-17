@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useRef, KeyboardEvent } from "react";
+import { useState, useCallback, useRef, KeyboardEvent } from "react";
 import { Keyboard, Edit3, Check, X, AlertTriangle } from "lucide-react";
 
 interface Shortcut {
@@ -114,7 +114,7 @@ export default function KeyboardShortcutPanel({
     <div className="space-y-4 select-none text-left">
       <div className="border-b border-[#1c2230]/40 pb-2">
         <h3 className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
-          <Keyboard className="w-4 h-4 text-indigo-400" /> Keyboard Shortcut Mappings
+          <Keyboard className="w-4 h-4 text-accent" /> Keyboard Shortcut Mappings
         </h3>
         <p className="text-[10px] text-gray-500">Configure hotkey bindings for core workspace actions.</p>
       </div>
@@ -141,12 +141,12 @@ export default function KeyboardShortcutPanel({
                       readOnly
                       aria-label={`Press a new key combination for ${shortcut.name}`}
                       className={`px-2 py-0.5 rounded bg-[#0c0f16] border text-white font-bold w-28 text-center focus:outline-none cursor-text ${
-                        hasConflict ? "border-rose-500/60" : "border-indigo-500/40 focus:border-indigo-500"
+                        hasConflict ? "border-rose-500/60" : "border-accent/40 focus:border-accent"
                       }`}
                       placeholder="Press keys…"
                     />
                   ) : (
-                    <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
+                    <span className="px-2 py-0.5 rounded bg-accent-dim/10 text-accent border border-accent/20 font-bold">
                       {shortcut.key}
                     </span>
                   )}

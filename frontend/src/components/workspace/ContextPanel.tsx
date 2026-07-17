@@ -1,5 +1,46 @@
-﻿// @ts-nocheck
 import SmartRecommendations from "./SmartRecommendations";
+
+interface SelectionRange {
+  startLine: number;
+  endLine: number;
+}
+
+interface SendMessagePayload {
+  repo: string;
+  file: string;
+  symbol: string;
+  selection: string;
+  message: string;
+}
+
+interface ContextPanelProps {
+  repoPath?: string;
+  activeFile?: string;
+  activeSymbol?: string;
+  selectionRange?: SelectionRange | null;
+  language?: string;
+  conversationId?: string;
+  isStreaming?: boolean;
+  onSendMessage?: (payload: SendMessagePayload) => void;
+  onSelectTab?: (tab: string) => void;
+}
+
+type ColorKey = "indigo" | "violet" | "cyan" | "amber" | "emerald" | "rose";
+
+interface ContextRow {
+  label: string;
+  value: string;
+  color: ColorKey | null;
+}
+
+const colorMap: Record<ColorKey, string> = {
+  indigo: "text-accent",
+  violet: "text-violet-400",
+  cyan: "text-cyan-400",
+  amber: "text-amber-400",
+  emerald: "text-emerald-400",
+  rose: "text-rose-400",
+};
 
 export default function ContextPanel({
   repoPath,
@@ -11,36 +52,27 @@ export default function ContextPanel({
   isStreaming,
   onSendMessage,
   onSelectTab,
-}) {
-  const repoName = repoPath ? repoPath.split(/[\\/]/).pop() : "â€”";
-  const fileName = activeFile ? activeFile.split(/[\\/]/).pop() : "â€”";
+}: ContextPanelProps) {
+  const repoName = repoPath ? repoPath.split(/[\\\/]/).pop() ?? "—" : "—";
+  const fileName = activeFile ? activeFile.split(/[\\\/]/).pop() ?? "—" : "—";
 
-  const rows = [
+  const rows: ContextRow[] = [
     { label: "Repository", value: repoName, color: "indigo" },
     { label: "Active File", value: fileName, color: "violet" },
-    { label: "Symbol", value: activeSymbol || "â€”", color: "cyan" },
+    { label: "Symbol", value: activeSymbol || "—", color: "cyan" },
     {
       label: "Selection",
-      value: selectionRange ? `Lines ${selectionRange.startLine}â€“${selectionRange.endLine}` : "None",
+      value: selectionRange ? `Lines ${selectionRange.startLine}–${selectionRange.endLine}` : "None",
       color: selectionRange ? "amber" : null,
     },
-    { label: "Language", value: language?.toUpperCase() || "â€”", color: "emerald" },
-    { label: "Session ID", value: conversationId ? conversationId.slice(0, 8) + "â€¦" : "â€”", color: null },
+    { label: "Language", value: language?.toUpperCase() || "—", color: "emerald" },
+    { label: "Session ID", value: conversationId ? conversationId.slice(0, 8) + "…" : "—", color: null },
     {
       label: "Status",
-      value: isStreaming ? "Generatingâ€¦" : "Ready",
+      value: isStreaming ? "Generating…" : "Ready",
       color: isStreaming ? "rose" : "emerald",
     },
   ];
-
-  const colorMap = {
-    indigo: "text-indigo-400",
-    violet: "text-violet-400",
-    cyan: "text-cyan-400",
-    amber: "text-amber-400",
-    emerald: "text-emerald-400",
-    rose: "text-rose-400",
-  };
 
   return (
     <div className="flex flex-col h-full border-l border-white/5 bg-[#090c13]">
@@ -69,7 +101,7 @@ export default function ContextPanel({
               onTriggerAction={(prompt) => {
                 if (onSendMessage) {
                   onSendMessage({
-                    repo: repoPath,
+                    repo: repoPath ?? "",
                     file: activeFile,
                     symbol: activeSymbol || "",
                     selection: "",
@@ -88,9 +120,8 @@ export default function ContextPanel({
       {/* Model badge */}
       <div className="px-3 py-2.5 border-t border-white/5 shrink-0">
         <span className="text-[9px] text-gray-600 font-mono block">Model</span>
-        <span className="text-[10px] text-indigo-400 font-mono font-semibold">OpenRouter LLM</span>
+        <span className="text-[10px] text-accent font-mono font-semibold">OpenRouter LLM</span>
       </div>
     </div>
   );
 }
-

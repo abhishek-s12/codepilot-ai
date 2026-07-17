@@ -12,7 +12,7 @@ import SearchTab from "../../tabs/SearchTab";
 
 // Services
 import { fetchRepositoryFiles } from "../../services/api";
-import type { ArchitectureResponse, RepositoryFileNode } from "../../services/api";
+import type { RepositoryFileNode } from "../../services/api";
 import { runPatchStream, commitPatch } from "../../services/patch";
 import { fetchGitStatus, fetchGitDiff } from "../../services/git";
 
@@ -23,12 +23,9 @@ import SplitLayout from "../common/SplitLayout";
 import CommandPalette from "../common/CommandPalette";
 import InteractiveTour from "./InteractiveTour";
 import WelcomeDashboard from "./WelcomeDashboard";
-import ProjectHealthDashboard from "./ProjectHealthDashboard";
-import AnalyticsDashboard from "./AnalyticsDashboard";
 import ActivityTimeline from "./ActivityTimeline";
 import BottomPanel from "./BottomPanel";
 import RepositoryGraph from "./RepositoryGraph";
-import AdminDashboard from "./AdminDashboard";
 
 // Lazy-loaded components
 const MonacoFileViewer = lazy(() => import("../editor/MonacoFileViewer"));
@@ -36,6 +33,9 @@ const DiffViewer = lazy(() => import("../patch/DiffViewer"));
 const CallGraphTab = lazy(() => import("../../tabs/CallGraphTab"));
 const RepositoryReviewTab = lazy(() => import("../../tabs/RepositoryReviewTab"));
 const AISidebar = lazy(() => import("./AISidebar"));
+const ProjectHealthDashboard = lazy(() => import("./ProjectHealthDashboard"));
+const AnalyticsDashboard = lazy(() => import("./AnalyticsDashboard"));
+const AdminDashboard = lazy(() => import("./AdminDashboard"));
 
 // ─── Types ───────────────────────────────────────────────────────────────
 // Everything below reflects only what THIS file directly reads/writes.
@@ -144,7 +144,7 @@ const INITIAL_PATCH: PatchState = {
 export interface AIWorkspaceProps {
   repoPath: string | null | undefined;
   repoId: string | number | null | undefined;
-  architecture: ArchitectureResponse | null;
+  architecture: string | null;
   // INFERRED as @xyflow/react types per the documented tech stack — confirm
   // against RepositoryGraph.tsx, which isn't provided yet.
   graphNodes: Node[];
@@ -152,7 +152,7 @@ export interface AIWorkspaceProps {
   selectedNode: string | null;
   isArchitectureLoading: boolean;
   isGraphLoadingReactFlow: boolean;
-  onNodeClick: (nodeId: string) => void;
+  onNodeClick: (event: any, node: any) => void;
   onGetArchitecture: () => void;
   getFileColor: (extension: string) => string;
   callGraph: Record<string, string[]> | null;
@@ -686,7 +686,7 @@ export default function AIWorkspace({
   const renderGoalHeader = (title: string) => (
     <div className="h-9 px-3 border-b border-[#1c2230] bg-[#0c0f16] flex items-center justify-between shrink-0 select-none">
       <div className="flex items-center gap-1.5">
-        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
         <span className="text-[10px] font-bold text-gray-300 font-mono uppercase tracking-wider">{title}</span>
       </div>
       <button
@@ -790,7 +790,7 @@ export default function AIWorkspace({
                 <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500 font-mono">Git Changes</span>
                 <button
                   onClick={loadGitStatus}
-                  className="p-1 rounded text-[9px] text-indigo-400 font-mono hover:text-indigo-300"
+                  className="p-1 rounded text-[9px] text-accent font-mono hover:text-accent"
                 >
                   Refresh
                 </button>
@@ -841,7 +841,7 @@ export default function AIWorkspace({
                 </div>
                 <div className="space-y-1.5">
                   <span className="text-[9px] text-gray-600 uppercase font-bold block">Model Configuration</span>
-                  <p className="text-indigo-400">Gemini 1.5 Pro</p>
+                  <p className="text-accent">Gemini 1.5 Pro</p>
                 </div>
               </div>
             </div>
@@ -861,8 +861,8 @@ export default function AIWorkspace({
         {!zenMode && (
           <div
             onMouseDown={handleLeftDrag}
-            className={`w-[3px] h-full cursor-col-resize hover:bg-indigo-500/50 bg-[#1c2230] shrink-0 relative transition-colors ${
-              isDraggingLeft ? "bg-indigo-500/40" : ""
+            className={`w-[3px] h-full cursor-col-resize hover:bg-accent-strong/50 bg-[#1c2230] shrink-0 relative transition-colors ${
+              isDraggingLeft ? "bg-accent/40" : ""
             }`}
           />
         )}
@@ -885,25 +885,31 @@ export default function AIWorkspace({
           )}
 
           {mode === "health" && (
-            <ProjectHealthDashboard
-              repoPath={repoPath}
-              onBack={() => setMode("editor")}
-            />
+            <Suspense fallback={<div className="p-8 text-xs font-mono text-muted animate-pulse">Loading health metrics...</div>}>
+              <ProjectHealthDashboard
+                repoPath={repoPath ?? undefined}
+                onBack={() => setMode("editor")}
+              />
+            </Suspense>
           )}
 
           {mode === "analytics" && (
-            <AnalyticsDashboard
-              onBack={() => setMode("editor")}
-            />
+            <Suspense fallback={<div className="p-8 text-xs font-mono text-muted animate-pulse">Loading analytics dashboard...</div>}>
+              <AnalyticsDashboard
+                onBack={() => setMode("editor")}
+              />
+            </Suspense>
           )}
 
           {mode === "admin" && (
             <ErrorBoundary>
-              <AdminDashboard
-                repoPath={repoPath ?? ""}
-                repoId={activeRepoId ?? null}
-                onBack={() => setMode("editor")}
-              />
+              <Suspense fallback={<div className="p-8 text-xs font-mono text-muted animate-pulse">Loading administration console...</div>}>
+                <AdminDashboard
+                  repoPath={repoPath ?? ""}
+                  repoId={activeRepoId ?? null}
+                  onBack={() => setMode("editor")}
+                />
+              </Suspense>
             </ErrorBoundary>
           )}
 
@@ -923,7 +929,7 @@ export default function AIWorkspace({
                       title={filePath}
                       className={`group flex items-center gap-2 px-3 h-full border-r border-[#1c2230] transition-all cursor-pointer select-none text-[10px] font-mono ${
                         isActive
-                          ? "bg-[#0f1219] text-gray-200 border-t-2 border-t-indigo-500 font-semibold"
+                          ? "bg-[#0f1219] text-gray-200 border-t-2 border-t-accent font-semibold"
                           : "bg-[#0c0f16] text-gray-500 hover:text-gray-300 hover:bg-white/[0.02]"
                       }`}
                     >
@@ -968,7 +974,7 @@ export default function AIWorkspace({
                     }}
                     className={`px-2 py-0.5 rounded border text-[9px] font-mono font-bold transition-all ${
                       bottomPanel
-                        ? "bg-indigo-600/10 text-indigo-400 border-indigo-500/20"
+                        ? "bg-accent text-bg/10 text-accent border-accent/20"
                         : "bg-[#0c0f16] text-gray-500 border-[#1c2230] hover:text-gray-300"
                     }`}
                   >
@@ -1085,8 +1091,8 @@ export default function AIWorkspace({
               {bottomPanel && (
                 <>
                   <div
-                    className={`h-1 cursor-row-resize bg-[#1c2230] hover:bg-indigo-500/30 transition-colors shrink-0 ${
-                      isDraggingBottom ? "bg-indigo-500/40" : ""
+                    className={`h-1 cursor-row-resize bg-[#1c2230] hover:bg-accent-strong/30 transition-colors shrink-0 ${
+                      isDraggingBottom ? "bg-accent/40" : ""
                     }`}
                     onMouseDown={handleBottomDrag}
                   />
@@ -1113,7 +1119,7 @@ export default function AIWorkspace({
                     selectedNode={selectedNode}
                     isArchitectureLoading={isArchitectureLoading}
                     isGraphLoadingReactFlow={isGraphLoadingReactFlow}
-                    onNodeClick={(_event: any, node: any) => onNodeClick(String(node?.id ?? ""))}
+                    onNodeClick={onNodeClick}
                     onExplainFile={(nodeId: string) => {
                       conversation.sendMessage({
                         repo: repoPath ?? "",
@@ -1293,8 +1299,8 @@ export default function AIWorkspace({
                         </div>
                       )}
                       {isPatchStreaming && (
-                        <div className="py-6 flex flex-col items-center justify-center gap-2 text-indigo-400 animate-pulse font-mono text-[10px]">
-                          <span className="w-4 h-4 border border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></span>
+                        <div className="py-6 flex flex-col items-center justify-center gap-2 text-accent animate-pulse font-mono text-[10px]">
+                          <span className="w-4 h-4 border border-accent/20 border-t-accent rounded-full animate-spin"></span>
                           <span>Streaming patch diffs...</span>
                         </div>
                       )}
@@ -1346,8 +1352,8 @@ export default function AIWorkspace({
         {!sidebarCollapsed && (
           <div
             onMouseDown={handleRightDrag}
-            className={`w-[3px] h-full cursor-col-resize hover:bg-indigo-500/50 bg-[#1c2230] shrink-0 relative transition-colors ${
-              isDraggingRight ? "bg-indigo-500/40" : ""
+            className={`w-[3px] h-full cursor-col-resize hover:bg-accent-strong/50 bg-[#1c2230] shrink-0 relative transition-colors ${
+              isDraggingRight ? "bg-accent/40" : ""
             }`}
           />
         )}
@@ -1407,7 +1413,7 @@ export default function AIWorkspace({
       <CommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
-        repoPath={repoPath}
+        repoPath={repoPath ?? undefined}
         onOpenFile={(f: string) => {
           handleExplorerFileOpen(f);
           setMode("editor");

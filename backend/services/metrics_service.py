@@ -85,3 +85,9 @@ repositories_indexed_total = Counter(
     "codepilot_ai_repositories_indexed_total",
     "Total repositories successfully indexed",
 )
+
+# ── Rate Limiter Fallback Metrics ─────────────────────────────────────────────
+rate_limit_fallback_total = Counter(
+    "codepilot_ai_rate_limit_fallback_total",
+    "Total times the local memory rate limiter was activated due to Redis outage",
+)

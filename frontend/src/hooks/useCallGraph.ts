@@ -1,10 +1,22 @@
 import { useState, useCallback } from "react";
 import { fetchCallGraph, getErrorMessage } from "../services/api";
 
+export interface UseCallGraphResult {
+  callGraph: any;
+  setCallGraph: React.Dispatch<React.SetStateAction<any>>;
+  isGraphLoading: boolean;
+  graphSearch: string;
+  setGraphSearch: React.Dispatch<React.SetStateAction<string>>;
+  selectedFunc: string | null;
+  setSelectedFunc: React.Dispatch<React.SetStateAction<string | null>>;
+  handleGetCallGraph: () => Promise<void>;
+  error: string | null;
+}
+
 export default function useCallGraph(
   repoPath: string,
   setStatus: (status: any) => void
-) {
+): UseCallGraphResult {
   const [callGraph, setCallGraph] = useState<any>(null);
   const [isGraphLoading, setIsGraphLoading] = useState<boolean>(false);
   const [graphSearch, setGraphSearch] = useState<string>("");
